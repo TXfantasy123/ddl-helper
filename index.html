@@ -80,6 +80,15 @@
   }
   textarea:focus { border-color: var(--primary); }
   .input-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .ai-switch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ai-switch-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .ai-switch-state { font-size: 12px; font-weight: 700; color: var(--muted); width: 26px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: .2s; }
+  .slider::before { content: ''; position: absolute; left: 3px; bottom: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + .slider { background: var(--primary); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
   button {
     border: none;
     border-radius: 10px;
@@ -255,6 +264,14 @@
 
   <main>
     <section class="panel">
+      <div class="ai-switch-row">
+        <span class="ai-switch-name">🤖 AI 解析</span>
+        <label class="switch">
+          <input type="checkbox" id="aiToggle">
+          <span class="slider"></span>
+        </label>
+        <span class="ai-switch-state" id="aiToggleState">ON</span>
+      </div>
       <textarea id="inputText" placeholder="把班群 / 教务处的通知文字粘贴到这里，例如：&#10;2026年上半年全国大学英语四六级考试报名通知：报名时间为3月20日9:00至3月28日17:00，请同学们登录教务系统报名，缴费截止3月30日。"></textarea>
       <div class="input-actions">
         <button type="button" class="primary" id="parseBtn">✨ 解析成提醒</button>
@@ -377,7 +394,7 @@
       <div class="form-row"><label>模型</label><input id="modelInput" placeholder="如 deepseek-flash"></div>
       <div class="form-row"><label>识图模型</label><input id="visionModelInput" placeholder="留空则同模型"></div>
       <div class="form-row"><label>支持识图</label><input type="checkbox" id="visionFlagInput"></div>
-      <div class="settings-hint">无 key 走本地基础解析；不支持识图则截图按钮置灰</div>
+      <div class="settings-hint">无 key 走本地基础解析；AI 解析关或模型不支持识图时截图按钮置灰</div>
       <div class="input-actions">
         <button type="button" class="primary" id="settingsSaveBtn">保存</button>
       </div>
@@ -424,6 +441,15 @@ function getBaseUrl() { return getSetting(BASE_URL_STORAGE, DEFAULT_BASE_URL).re
 function getModel() { return getSetting(MODEL_STORAGE, DEFAULT_MODEL); }
 function getVisionFlag() { return getSetting(VISION_FLAG_STORAGE, 'true') === 'true'; }
 function getVisionModel() { return getSetting(VISION_MODEL_STORAGE, '') || getModel(); }
+const AI_ENABLED_STORAGE = 'ddl_ai_enabled';
+// AI 解析开关：优先用户手动设置，其次按是否有 key 智能默认（有 key=开，无 key=关）
+function getAiEnabled() {
+  try {
+    const stored = localStorage.getItem(AI_ENABLED_STORAGE);
+    if (stored !== null) return stored === 'true';
+  } catch (e) {}
+  return !!getAPIKey();
+}
 
 // 任务调色板（12 色，创建任务时循环分配）
 const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#6366f1', '#14b8a6', '#a855f7'];
@@ -900,8 +926,8 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   document.getElementById('inputText').value = '';
 
   let results = null;
-  if (getAPIKey()) {
-    // 有 key → 走代理调 API，失败回退 mock
+  if (getAiEnabled() && getAPIKey()) {
+    // AI 开启且有 key → 走代理调 API，失败回退 mock
     toast('AI 解析中，请稍等…');
     try {
       results = await parseWithAI(text);
@@ -909,10 +935,14 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
       results = [mockParse(text)];
       toast('AI解析失败，已用本地规则');
     }
-  } else {
-    // 无 key 且直连 → 直接本地基础解析
+  } else if (!getAPIKey()) {
+    // 无 key → 本地基础解析
     results = [mockParse(text)];
     toast('未设置 API key，已用本地基础解析');
+  } else {
+    // AI 已关闭（用户手动关）→ 本地基础解析
+    results = [mockParse(text)];
+    toast('AI 已关闭，使用本地基础解析');
   }
 
   const total = results.length;
@@ -1355,11 +1385,15 @@ document.getElementById('tplButtons').addEventListener('click', (e) => {
 function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
   if (!btn) return;
-  btn.classList.toggle('disabled', !getVisionFlag());
+  btn.classList.toggle('disabled', !getVisionFlag() || !getAiEnabled() || !getAPIKey());
 }
 document.getElementById('uploadBtn').addEventListener('click', () => {
   if (!getVisionFlag()) {
     toast('当前模型不支持识图，可粘贴文字');
+    return;
+  }
+  if (!getAiEnabled() || !getAPIKey()) {
+    toast('AI 解析未开启，截图识别不可用');
     return;
   }
   document.getElementById('imageInput').click();
@@ -1368,8 +1402,8 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
   const files = Array.from(e.target.files || []);
   if (!files.length) return;
   if (isParsing) return;
-  if (!getAPIKey()) {
-    toast('截图识别需要 API key，可先粘贴文字');
+  if (!getAiEnabled() || !getAPIKey()) {
+    toast('AI 解析未开启，截图识别不可用');
     e.target.value = '';
     return;
   }
@@ -1536,6 +1570,28 @@ document.getElementById('settingsSaveBtn').addEventListener('click', () => {
   toast('已保存');
 });
 
+// AI 解析开关（主界面 on/off）：无 key 时不允许打开；手动切换才写 localStorage
+function updateAiToggle() {
+  const toggle = document.getElementById('aiToggle');
+  const state = document.getElementById('aiToggleState');
+  if (!toggle || !state) return;
+  toggle.checked = getAiEnabled();
+  state.textContent = toggle.checked ? 'ON' : 'OFF';
+}
+document.getElementById('aiToggle').addEventListener('change', (e) => {
+  if (e.target.checked && !getAPIKey()) {
+    e.target.checked = false;
+    updateAiToggle();
+    toast('请先填写 API Key');
+    return;
+  }
+  try {
+    localStorage.setItem(AI_ENABLED_STORAGE, e.target.checked ? 'true' : 'false');
+  } catch (err) { /* 忽略 */ }
+  updateAiToggle();
+  updateUploadBtn();
+});
+
 document.getElementById('clearKeyBtn').addEventListener('click', () => {
   try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) { /* 忽略 */ }
   document.getElementById('apiKeyInput').value = '';
@@ -1614,6 +1670,7 @@ render();
 renderTemplates();
 renderProviders();
 updateUploadBtn();
+updateAiToggle();
 updateStorageHint();
 </script>
 </body>
