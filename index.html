@@ -278,7 +278,9 @@
         <button type="button" class="ghost" id="exampleBtn">填入示例</button>
         <button type="button" class="ghost" id="toggleManualBtn">＋ 手动添加</button>
         <button type="button" class="ghost" id="uploadBtn">📷 上传截图</button>
+        <button type="button" class="ghost" id="docBtn">📄 上传文档</button>
         <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
+        <input type="file" id="docInput" accept=".docx,.pdf" class="hidden">
       </div>
 
       <div class="tpl-row">
@@ -911,23 +913,10 @@ document.getElementById('list').addEventListener('click', (e) => {
 /* ---------- 解析按钮 ---------- */
 let isParsing = false;
 
-document.getElementById('parseBtn').addEventListener('click', async () => {
-  if (isParsing) return; // 防重复点击
-  const text = document.getElementById('inputText').value.trim();
-  if (!text) {
-    toast('请先粘贴通知或上传截图');
-    return;
-  }
-  // 点击后立即进入「解析中」状态：清空输入框、禁用按钮、提示稍等
-  isParsing = true;
-  const btn = document.getElementById('parseBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ 解析中…';
-  document.getElementById('inputText').value = '';
-
+// 解析核心：文本 → AI/mock → 逐条 push + save/render（供粘贴文字、文档解析复用）
+async function doParse(text) {
   let results = null;
   if (getAiEnabled() && getAPIKey()) {
-    // AI 开启且有 key → 走代理调 API，失败回退 mock
     toast('AI 解析中，请稍等…');
     try {
       results = await parseWithAI(text);
@@ -936,11 +925,9 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
       toast('AI解析失败，已用本地规则');
     }
   } else if (!getAPIKey()) {
-    // 无 key → 本地基础解析
     results = [mockParse(text)];
     toast('未设置 API key，已用本地基础解析');
   } else {
-    // AI 已关闭（用户手动关）→ 本地基础解析
     results = [mockParse(text)];
     toast('AI 已关闭，使用本地基础解析');
   }
@@ -964,11 +951,123 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   });
   save();
   render();
+}
 
-  // 恢复按钮
-  isParsing = false;
-  btn.disabled = false;
-  btn.textContent = '✨ 解析成提醒';
+document.getElementById('parseBtn').addEventListener('click', async () => {
+  if (isParsing) return; // 防重复点击
+  const text = document.getElementById('inputText').value.trim();
+  if (!text) {
+    toast('请先粘贴通知或上传截图');
+    return;
+  }
+  isParsing = true;
+  const btn = document.getElementById('parseBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 解析中…';
+  document.getElementById('inputText').value = '';
+  try {
+    await doParse(text);
+  } finally {
+    isParsing = false;
+    btn.disabled = false;
+    btn.textContent = '✨ 解析成提醒';
+  }
+});
+
+/* ---------- 文档解析（docx/pdf）：依赖 vendor 本地优先，CDN 回退 ---------- */
+const VENDOR_MAMMOTH = 'vendor/mammoth.browser.min.js';
+const VENDOR_PDF = 'vendor/pdf.min.js';
+const VENDOR_PDF_WORKER = 'vendor/pdf.worker.min.js';
+const CDN_MAMMOTH = 'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js';
+const CDN_PDF = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const CDN_PDF_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+let docLibsPromise = null;
+function loadScript(src, fallback) {
+  return new Promise((resolve, reject) => {
+    const tryLoad = (url, isFallback) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = () => resolve();
+      s.onerror = () => {
+        s.remove();
+        if (fallback && !isFallback) tryLoad(fallback, true);
+        else reject(new Error('脚本加载失败: ' + url));
+      };
+      document.head.appendChild(s);
+    };
+    tryLoad(src, false);
+  });
+}
+function ensureDocLibs() {
+  if (!docLibsPromise) {
+    docLibsPromise = (async () => {
+      if (!window.mammoth) await loadScript(VENDOR_MAMMOTH, CDN_MAMMOTH);
+      if (!window.pdfjsLib) await loadScript(VENDOR_PDF, CDN_PDF);
+      if (window.pdfjsLib && !window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR_PDF_WORKER;
+      }
+    })();
+  }
+  return docLibsPromise;
+}
+
+async function extractDocText(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const buf = await file.arrayBuffer();
+  if (ext === 'docx') {
+    await ensureDocLibs();
+    if (!window.mammoth) throw new Error('mammoth 未加载');
+    const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return (result && result.value) || '';
+  } else if (ext === 'pdf') {
+    await ensureDocLibs();
+    if (!window.pdfjsLib) throw new Error('pdfjs 未加载');
+    const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return text;
+  } else {
+    throw new Error('不支持的格式');
+  }
+}
+
+document.getElementById('docBtn').addEventListener('click', () => {
+  document.getElementById('docInput').click();
+});
+document.getElementById('docInput').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (isParsing) return;
+  if (!getAiEnabled() || !getAPIKey()) {
+    toast('AI 解析未开启，文档解析不可用');
+    e.target.value = '';
+    return;
+  }
+  isParsing = true;
+  const btn = document.getElementById('parseBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 解析中…';
+  try {
+    toast('正在解析文档，请稍等…');
+    const text = await extractDocText(file);
+    if (!text || text.trim().length < 20) {
+      toast('该 PDF 可能是扫描件，请改用截图识别或手动输入');
+      return;
+    }
+    await doParse(text);
+  } catch (err) {
+    toast('文档解析失败，请换一种格式');
+  } finally {
+    isParsing = false;
+    btn.disabled = false;
+    btn.textContent = '✨ 解析成提醒';
+    e.target.value = '';
+  }
 });
 
 /* ---------- 手动添加 ---------- */
