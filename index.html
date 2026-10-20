@@ -453,10 +453,13 @@ function getAiEnabled() {
   return !!getAPIKey();
 }
 
-// 任务调色板（12 色，创建任务时循环分配）
-const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#6366f1', '#14b8a6', '#a855f7'];
+// 任务调色板（12 色，按色相 30° 均匀分布，视觉区分度高）
+const PALETTE = ['#dc2626', '#ea580c', '#ca8a04', '#65a30d', '#16a34a', '#0d9488', '#0891b2', '#2563eb', '#4f46e5', '#7c3aed', '#9333ea', '#db2777'];
+const COLOR_VERSION = 'v2';
 function nextColor() {
-  return PALETTE[reminders.length % PALETTE.length];
+  const used = new Set(reminders.map(r => r.color));
+  const free = PALETTE.find(c => !used.has(c));
+  return free || PALETTE[reminders.length % PALETTE.length];
 }
 
 // 预设服务商（baseUrl/model/识图模型 以各平台官方文档为准，可微调）
@@ -490,12 +493,16 @@ function load() {
   } catch (e) {
     reminders = [];
   }
-  // 老数据兼容：补 starred / color 字段
-  let ci = 0;
-  reminders.forEach(r => {
-    if (r.starred === undefined) r.starred = false;
-    if (!r.color) { r.color = PALETTE[ci % PALETTE.length]; ci++; }
-  });
+  reminders.forEach(r => { if (r.starred === undefined) r.starred = false; });
+  // 颜色方案升级：按创建顺序用新调色板重分配，修复旧调色板里"琥珀/橙"等近似色（只做一次）
+  if (localStorage.getItem('ddl_color_ver') !== COLOR_VERSION) {
+    reminders.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+      .forEach((r, i) => { r.color = PALETTE[i % PALETTE.length]; });
+    try { localStorage.setItem('ddl_color_ver', COLOR_VERSION); } catch (e) {}
+    save();
+  } else {
+    reminders.forEach(r => { if (!r.color) r.color = nextColor(); });
+  }
 }
 function save() {
   try {
