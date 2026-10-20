@@ -1245,13 +1245,6 @@ function dayTasks(date) {
     .filter(r => reminderCoversDate(r, date))
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 }
-// 全局槽位：任务按创建时间排序，每个任务一个固定槽位（保证跨天线段对齐）
-function buildSlotMap() {
-  const map = {};
-  reminders.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
-    .forEach((r, i) => { map[r.id] = i; });
-  return map;
-}
 // 事项的紧急状态色：red/orange/blue；已完成返回 null（仅列表文字标签用）
 function statusColor(r) {
   if (r.done) return null;
@@ -1280,8 +1273,7 @@ function renderCalendar() {
   const startWeekday = new Date(calendarYear, calendarMonth, 1).getDay();
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
   let cells = '';
-  const slotMap = buildSlotMap();
-  const MAX_LINES = 6;   // 最多显示前 6 个槽位，超出靠角标数字 + 点击当天详情
+  const MAX_LINES = 6;   // 每天最多显示 6 条线
   const LINE_STEP = 6;   // 每条线段占 6px（4px 线 + 2px 间距）
   for (let i = 0; i < startWeekday; i++) cells += '<div class="cal-cell empty"></div>';
   for (let d = 1; d <= daysInMonth; d++) {
@@ -1296,15 +1288,14 @@ function renderCalendar() {
     if (info && info.hasStar) extras += '<span class="cal-star">⭐</span>';
     let badge = '';
     if (info && info.count > 0) badge = `<span class="cal-count">${info.count}</span>`;
-    // 只画前 MAX_LINES 个全局槽位的任务，槽位固定 → 相邻日期同任务同一条线
-    const tasks = dayTasks(date).filter(t => (slotMap[t.id] ?? 999) < MAX_LINES);
+    // 每天各自分配槽位：按创建时间取前 MAX_LINES 个（修复「第7个以后创建的任务永不画线」）
+    const tasks = dayTasks(date).slice(0, MAX_LINES);
     let linesHtml = '';
     if (tasks.length) {
-      linesHtml = '<div class="cal-lines">' + tasks.map(t => {
-        const slot = slotMap[t.id];
+      linesHtml = '<div class="cal-lines">' + tasks.map((t, idx) => {
         const isDl = isSameDay(parseDate(t.deadline), date);
         const lineCls = 'cal-line' + (isDl ? ' deadline' : '') + (t.done ? ' done' : '');
-        return `<div class="${lineCls}" style="--c:${t.color || '#94a3b8'};bottom:${slot * LINE_STEP}px"></div>`;
+        return `<div class="${lineCls}" style="--c:${t.color || '#94a3b8'};bottom:${idx * LINE_STEP}px"></div>`;
       }).join('') + '</div>';
     }
     cells += `<div class="${cls}" data-date="${calendarYear}-${calendarMonth + 1}-${d}"><span class="cal-day-num">${d}</span>${linesHtml}${extras}${badge}</div>`;
