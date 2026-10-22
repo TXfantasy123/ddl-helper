@@ -255,9 +255,16 @@
   .cal-legend-note { flex: 1 1 100%; margin-top: 4px; font-size: 12px; color: var(--muted); }
   .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
   .cal-day-title { margin-top: 12px; font-weight: 700; font-size: 14px; }
+  .cal-day-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .cal-day-head .cal-day-title { margin-top: 0; }
+  .cal-day-head .batch-actions { margin-left: auto; }
   .cal-day-list { margin-top: 6px; }
   .cal-day-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 10px 0; }
   .cal-day-item { display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; }
+  .cal-day-main { display: flex; align-items: flex-start; gap: 8px; }
+  .cal-day-main .cal-day-info { flex: 1; min-width: 0; }
+  #calDayList.batch-mode .cal-day-actions { display: none; }
+  .cal-day-item.batch-selected { border-color: var(--primary); box-shadow: 0 0 0 2px #dbeafe; }
   .cal-day-actions { display: flex; gap: 8px; }
   .cal-day-item.done { opacity: .55; }
   .cal-day-item.done .cal-day-item-title { text-decoration: line-through; color: var(--done); }
@@ -387,6 +394,8 @@
     .stat { font-size: 11px; padding: 4px 8px; }
     .stat b { font-size: 15px; }
     .remind-pill { font-size: 11px; padding: 4px 8px; }
+    .cal-day-head { align-items: flex-start; }
+    .cal-day-head .batch-actions { width: 100%; margin-left: 0; }
   }
   .hidden { display: none; }
 </style>
@@ -414,7 +423,7 @@
         </label>
         <span class="ai-switch-state" id="aiToggleState">ON</span>
       </div>
-      <textarea id="inputText" placeholder="把班群 / 教务处的通知文字粘贴到这里，例如：&#10;2026年上半年全国大学英语四六级考试报名通知：报名时间为3月20日9:00至3月28日17:00，请同学们登录教务系统报名，缴费截止3月30日。"></textarea>
+      <textarea id="inputText"></textarea>
       <div class="input-actions">
         <button type="button" class="primary" id="parseBtn">✨ 解析成提醒</button>
         <button type="button" class="ghost" id="exampleBtn">填入示例</button>
@@ -516,7 +525,16 @@
           <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
         </div>
         <div class="cal-grid" id="calGrid"></div>
-        <div class="cal-day-title" id="calDayTitle"></div>
+        <div class="cal-day-head">
+          <div class="cal-day-title" id="calDayTitle"></div>
+          <button type="button" class="batch-edit-btn" id="calBatchEditBtn">状态编辑</button>
+          <div class="batch-actions hidden" id="calBatchActions">
+            <button type="button" class="batch-btn" id="calBatchSelectAllBtn">全选</button>
+            <button type="button" class="batch-btn" id="calBatchDoneBtn">完成</button>
+            <button type="button" class="batch-btn danger" id="calBatchDeleteBtn">删除</button>
+            <button type="button" class="batch-btn" id="calBatchCancelBtn">取消</button>
+          </div>
+        </div>
         <div class="cal-day-list" id="calDayList"></div>
         <div class="cal-legend">
           <button type="button" class="cal-legend-toggle" id="calLegendToggle">🎨 图例 <span>▾</span></button>
@@ -963,7 +981,10 @@ function formatClockTokens(src, tokens, inheritedPeriod) {
 
 function formatDateToken(tok) {
   const start = tok.m + '月' + tok.d + '日';
-  if (tok.rangeEnd) return start + '-' + tok.rangeEnd.m + '月' + tok.rangeEnd.d + '日';
+  if (tok.rangeEnd) {
+    if (tok.rangeEnd.m === tok.m && tok.rangeEnd.d === tok.d) return start;
+    return start + '-' + tok.rangeEnd.m + '月' + tok.rangeEnd.d + '日';
+  }
   return start;
 }
 
@@ -1118,8 +1139,9 @@ function buildTimeText(src, dateTokens, clockTokens) {
   if (!dates.length && !clocks.length) return '';
   if (!dates.length) return formatClockTokens(src, clocks, '');
   if (!clocks.length) {
-    if (dates.length === 1) return formatDateToken(dates[0]);
-    return formatDateToken(dates[0]) + '-' + formatDateToken(dates[dates.length - 1]);
+    const ds = sortDateTokensChrono(dedupeDateTokensByDay(dates));
+    if (ds.length === 1) return formatDateToken(ds[0]);
+    return formatDateToken(ds[0]) + '-' + formatDateToken(ds[ds.length - 1]);
   }
   if (dates.length === 1) {
     const ct = formatClockTokens(src, clocks, dates[0].period || '');
@@ -1127,16 +1149,49 @@ function buildTimeText(src, dateTokens, clockTokens) {
   }
   const lastEnd = dates[dates.length - 1].end;
   if (clocks[0].index >= lastEnd) {
-    return dates.map(t => formatDateToken(t)).join('-') + ' ' + formatClockTokens(src, clocks, '');
+    const ds = sortDateTokensChrono(dedupeDateTokensByDay(dates));
+    return ds.map(t => formatDateToken(t)).join('-') + ' ' + formatClockTokens(src, clocks, '');
   }
-  const parts = [];
+  const entries = [];
   dates.forEach((dt, i) => {
     const nextIdx = i + 1 < dates.length ? dates[i + 1].index : Infinity;
     const cs = clocks.filter(c => c.index >= dt.end && c.index < nextIdx);
     const ct = formatClockTokens(src, cs, dt.period || '');
-    parts.push(formatDateToken(dt) + (ct ? ' ' + ct : ''));
+    entries.push({ dt: dt, text: formatDateToken(dt) + (ct ? ' ' + ct : '') });
   });
-  return parts.join(' - ');
+  // 按日期升序输出 + 同一天去重，避免出现倒序/重复端点
+  entries.sort((a, b) => dateTokenSortMs(a.dt) - dateTokenSortMs(b.dt) || a.dt.index - b.dt.index);
+  const seen = new Set();
+  const out = [];
+  for (const e of entries) {
+    const k = dateTokenKey(e.dt);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(e.text);
+  }
+  return out.join(' - ');
+}
+
+// 日期 token 的“日”比较键（缺年份按最近年份推断）
+function dateTokenKey(tok) {
+  const y = tok.y !== undefined ? tok.y : inferYearForMd(tok.m, tok.d);
+  return y + '-' + tok.m + '-' + tok.d;
+}
+function dateTokenSortMs(tok) {
+  const y = tok.y !== undefined ? tok.y : inferYearForMd(tok.m, tok.d);
+  return new Date(y, tok.m - 1, tok.d).getTime();
+}
+function sortDateTokensChrono(tokens) {
+  return tokens.slice().sort((a, b) => dateTokenSortMs(a) - dateTokenSortMs(b) || a.index - b.index);
+}
+function dedupeDateTokensByDay(tokens) {
+  const map = new Map();
+  tokens.forEach(t => {
+    const k = dateTokenKey(t);
+    if (!map.has(k)) map.set(k, t);
+    else if (!map.get(k).rangeEnd && t.rangeEnd) map.set(k, t); // 同日优先保留范围 token
+  });
+  return [...map.values()];
 }
 
 // 拆分多条通知：空行 / 编号 / 多个「关于…通知」/「XX安排：」分号列表
@@ -1512,34 +1567,73 @@ function pruneDateTokens(dates) {
   return out;
 }
 
+// 文末落款日期：最后 1-2 个非空行里的孤立日期，或带委员会/学生会/协会/学院/团委等落款行
+function findSignatureDateTokens(src, dates) {
+  const lines = [];
+  let offset = 0;
+  src.split('\n').forEach(line => {
+    lines.push({ text: line, start: offset, end: offset + line.length });
+    offset += line.length + 1;
+  });
+  const nonEmpty = lines.filter(l => l.text.trim());
+  if (!nonEmpty.length) return new Set();
+  const tailStart = nonEmpty.slice(-2)[0].start;
+  const sigWords = /(?:委员会|学生会|协会|学院|团委|团总支|共青团|主办|承办|学会|组委会)/;
+  const bodyCue = /(?:定于|将于|时间为|举行|举办|截止|报名|初赛|决赛|考试|活动)/;
+  const skip = new Set();
+  dates.forEach(d => {
+    if (d.index < tailStart) return;
+    const line = lines.find(l => d.index >= l.start && d.index < l.end);
+    if (!line) return;
+    const isOrgLine = /^\s*(?:主办|承办|协办|落款|成文)/.test(line.text);
+    const tailAfter = line.text.slice(d.end - line.start).replace(/[（）()、,，.。:：;；!！?？\s]/g, '');
+    if (!bodyCue.test(line.text) && (isOrgLine || (sigWords.test(line.text) && !tailAfter))) {
+      skip.add(d.index);
+      return;
+    }
+    const tokText = src.slice(d.index, d.end);
+    const rest = line.text.replace(tokText, '').replace(/[（）()、,，.。:：;；\s]/g, '');
+    if (!rest) skip.add(d.index); // 末行孤立的日期（如单独一行 2026年10月21日）
+  });
+  return skip;
+}
+
 function extractTime(text) {
   const src = normalizeForParse(text);
   let dates = pruneDateTokens(collectDateTokens(src));
   let clocks = collectClockTokens(src);
-  // 截止日单独展示：从 time 中剔除截止词对应的日期；若它是最后一个日期，也剔除其后的截止时刻
+  // 截止日单独展示：把与 deadline 同一天的所有日期 token 都从 time 剔除
   const cutoffTok = findCutoffDateToken(src, dates);
   if (cutoffTok) {
-    const hasLaterDate = dates.some(d => d.index > cutoffTok.index);
-    dates = dates.filter(d => d !== cutoffTok);
-    if (!hasLaterDate) clocks = clocks.filter(c => c.index < cutoffTok.end);
+    const cutoffKey = dateTokenKey(cutoffTok);
+    const laterDate = dates.find(d => d.index > cutoffTok.index && dateTokenKey(d) !== cutoffKey);
+    dates = dates.filter(d => dateTokenKey(d) !== cutoffKey);
+    // 截止日之后的第一个时刻（如 20:00）属于截止时间；若后面还有别的日期则保留其后时钟
+    clocks = clocks.filter(c => c.index < cutoffTok.end || (laterDate && c.index >= laterDate.index));
   }
+  // 文末落款/成文日期不参与 time
+  const sig = findSignatureDateTokens(src, dates);
+  if (sig.size) dates = dates.filter(d => !sig.has(d.index));
   return buildTimeText(src, dates, clocks);
 }
 
 function extractPlace(text) {
   const src = normalizeForParse(text);
   const badPlace = /(?:电话|手机|QQ|群号|学号|邮箱|@)/;
+  // 泛词不是地点（赛场/现场/台上/群里/网上/线上等）
+  const genericPlace = /^(?:赛场|现场|台上|群里|网上|线上|群内|会场|场地)$/;
   const cleanVenue = s => String(s || '')
     .replace(/^[在到至于\s:：]+/, '')
     .replace(/(?:举办|举行|召开|进行|办理|集合|上课|开会|领取|提交|缴费|缴纳).*$/, '')
     .replace(/[，,.;；:：]+$/, '')
     .trim();
+  const validVenue = v => !!v && !badPlace.test(v) && !genericPlace.test(v);
 
   // 1) 显式地点字段
   let m = src.match(/(?:活动|报名|上课|会议|比赛|考试)?地点\s*[:：]?\s*([^\n,，.;；]{2,30})/);
   if (m) {
     const v = cleanVenue(m[1]);
-    if (v && !badPlace.test(v)) return v.slice(0, 30);
+    if (validVenue(v)) return v.slice(0, 30);
   }
 
   // 2) 线上会议
@@ -1549,14 +1643,16 @@ function extractPlace(text) {
   // 3) 常见校园场所 / 教室号（长词优先）
   const knownRe = /(?:大学生活动中心|一卡通服务中心|校园统一支付平台|教务管理系统|教务系统|图书馆(?:[一二三四五六七八九十\d]+楼)?(?:大厅|报告厅)?|田径场|体育馆|校门口|辅导员办公室|学院办公室|学院\d{3}会议室|教学楼[A-Z]?\d{2,4}|[A-Z]{1,2}\d{2,4}[A-Z]?\d{0,3}|[A-Z]?\d{1,2}-\d{3,4})/;
   m = src.match(knownRe);
-  if (m && !badPlace.test(m[0])) return m[0].trim();
+  if (m && validVenue(m[0].trim())) return m[0].trim();
 
-  // 4) 在/到/至/于 + 场所（兜底）
+  // 4) 在/到/至/于 + 具体场所（兜底）；「在赛场上/现场中」这类方位泛词不算
   const suffix = '(?:会议室|报告厅|办公室|实验室|图书馆|体育馆|田径场|运动场|活动中心|服务中心|教学楼|实验楼|综合楼|行政楼|宿舍楼|食堂|礼堂|大厅|广场|教室|机房|校门口|门口|中心|平台|系统|校区|园区|馆|厅|楼|室|场)';
-  m = src.match(new RegExp('(?:在|到|至|于)\\s*([\\u4e00-\\u9fa5A-Za-z0-9\\-]{1,18}?' + suffix + ')'));
-  if (m) {
+  const placeRe = new RegExp('(?:在|到|至|于)\\s*([\\u4e00-\\u9fa5A-Za-z0-9\\-]{1,18}?' + suffix + ')', 'g');
+  while ((m = placeRe.exec(src))) {
+    const after = src.slice(m.index + m[0].length);
+    if (/^[上中内里]/.test(after)) continue; // 「在赛场上」「现场中」带方位词，不是地点
     const v = cleanVenue(m[1]);
-    if (v && !badPlace.test(v)) return v.slice(0, 30);
+    if (validVenue(v)) return v.slice(0, 30);
   }
   return '';
 }
@@ -1690,8 +1786,9 @@ function sortReminders() {
   });
 }
 
-/* ---------- 批量状态编辑（仅前端内存，不持久化） ---------- */
+/* ---------- 批量状态编辑（仅前端内存，不持久化；列表/日历共用） ---------- */
 let batchMode = false;
+let batchView = null; // 'list' | 'calendar'
 const batchSelected = new Set();
 let batchDeleteArmed = false;
 let batchDeleteTimer = null;
@@ -1723,8 +1820,8 @@ function render() {
     if (r.place) fields.push(`<div class="f"><span class="k">📍 地点</span>${escapeHtml(r.place)}</div>`);
     if (r.deadline) fields.push(`<div class="f"><span class="k">📅 截止</span>${escapeHtml(r.deadline)}</div>`);
     if (r.note) fields.push(`<div class="f-note" data-id="${r.id}" title="${escapeHtml(r.note)}">📝 ${escapeHtml(r.note)}</div>`);
-    const selected = batchMode && batchSelected.has(r.id);
-    const batchCheck = batchMode
+    const selected = batchMode && batchView === 'list' && batchSelected.has(r.id);
+    const batchCheck = batchMode && batchView === 'list'
       ? `<button type="button" class="batch-check ${selected ? 'on' : ''}" data-act="batch-toggle" title="${selected ? '取消选择' : '选择'}">${selected ? '●' : '○'}</button>`
       : '';
 
@@ -1752,40 +1849,71 @@ function render() {
   updateReminderBadge();
 }
 
+function batchScopePool() {
+  if (batchView === 'calendar') {
+    return selectedDay ? reminders.filter(r => reminderCoversDate(r, selectedDay)) : [];
+  }
+  return reminders.slice();
+}
+
 function resetBatchDeleteConfirm() {
   batchDeleteArmed = false;
   if (batchDeleteTimer) { clearTimeout(batchDeleteTimer); batchDeleteTimer = null; }
-  const btn = document.getElementById('batchDeleteBtn');
-  if (btn) { btn.classList.remove('confirm'); btn.textContent = '删除'; }
+  ['batchDeleteBtn', 'calBatchDeleteBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.classList.remove('confirm'); btn.textContent = '删除'; }
+  });
 }
 
 function updateBatchUI() {
-  const editBtn = document.getElementById('batchEditBtn');
-  const actions = document.getElementById('batchActions');
+  const listMode = batchMode && batchView === 'list';
+  const calMode = batchMode && batchView === 'calendar';
+  const listEditBtn = document.getElementById('batchEditBtn');
+  const listActions = document.getElementById('batchActions');
+  const calEditBtn = document.getElementById('calBatchEditBtn');
+  const calActions = document.getElementById('calBatchActions');
   const listEl = document.getElementById('list');
-  if (editBtn) editBtn.classList.toggle('hidden', batchMode);
-  if (actions) actions.classList.toggle('hidden', !batchMode);
-  if (listEl) listEl.classList.toggle('batch-mode', batchMode);
+  const calDayList = document.getElementById('calDayList');
+
+  if (listEditBtn) listEditBtn.classList.toggle('hidden', listMode);
+  if (listActions) listActions.classList.toggle('hidden', !listMode);
+  if (calEditBtn) calEditBtn.classList.toggle('hidden', calMode);
+  if (calActions) calActions.classList.toggle('hidden', !calMode);
+  if (listEl) listEl.classList.toggle('batch-mode', listMode);
+  if (calDayList) calDayList.classList.toggle('batch-mode', calMode);
+
   if (batchMode) {
-    const ids = new Set(reminders.map(r => r.id));
+    const ids = new Set(batchScopePool().map(r => r.id));
     batchSelected.forEach(id => { if (!ids.has(id)) batchSelected.delete(id); });
   }
-  const allBtn = document.getElementById('batchSelectAllBtn');
-  if (allBtn) {
-    allBtn.textContent = (reminders.length > 0 && batchSelected.size === reminders.length) ? '取消全选' : '全选';
+  const listAll = document.getElementById('batchSelectAllBtn');
+  if (listAll) {
+    listAll.textContent = (reminders.length > 0 && batchSelected.size === reminders.length) ? '取消全选' : '全选';
+  }
+  const calAll = document.getElementById('calBatchSelectAllBtn');
+  if (calAll) {
+    const pool = selectedDay ? reminders.filter(r => reminderCoversDate(r, selectedDay)) : [];
+    calAll.textContent = (pool.length > 0 && batchSelected.size === pool.length) ? '取消全选' : '全选';
   }
 }
 
-function enterBatchMode() {
+function enterBatchMode(source) {
   batchMode = true;
+  batchView = source === 'calendar' ? 'calendar' : 'list';
   batchSelected.clear();
   resetBatchDeleteConfirm();
   render();
   updateBatchUI();
 }
 
+function enterCalendarBatch() {
+  if (!selectedDay) { toast('请先选择日期'); return; }
+  enterBatchMode('calendar');
+}
+
 function exitBatchMode() {
   batchMode = false;
+  batchView = null;
   batchSelected.clear();
   resetBatchDeleteConfirm();
   render();
@@ -1800,8 +1928,9 @@ function toggleBatchSelect(id) {
 }
 
 function batchSelectAll() {
-  if (reminders.length && batchSelected.size === reminders.length) batchSelected.clear();
-  else reminders.forEach(r => batchSelected.add(r.id));
+  const pool = batchScopePool();
+  if (pool.length && batchSelected.size === pool.length) batchSelected.clear();
+  else pool.forEach(r => batchSelected.add(r.id));
   resetBatchDeleteConfirm();
   render();
 }
@@ -1822,7 +1951,7 @@ function batchDelete() {
   if (!n) { toast('请先选择事项'); return; }
   if (!batchDeleteArmed) {
     batchDeleteArmed = true;
-    const btn = document.getElementById('batchDeleteBtn');
+    const btn = document.getElementById(batchView === 'calendar' ? 'calBatchDeleteBtn' : 'batchDeleteBtn');
     if (btn) { btn.classList.add('confirm'); btn.textContent = '再点确认'; }
     toast('再点一次「删除」确认');
     if (batchDeleteTimer) clearTimeout(batchDeleteTimer);
@@ -1881,12 +2010,17 @@ document.getElementById('list').addEventListener('click', (e) => {
   }
 });
 
-/* ---------- 批量状态编辑按钮 ---------- */
-document.getElementById('batchEditBtn').addEventListener('click', enterBatchMode);
+/* ---------- 批量状态编辑按钮（列表 / 日历） ---------- */
+document.getElementById('batchEditBtn').addEventListener('click', () => enterBatchMode('list'));
 document.getElementById('batchSelectAllBtn').addEventListener('click', batchSelectAll);
 document.getElementById('batchDoneBtn').addEventListener('click', batchComplete);
 document.getElementById('batchDeleteBtn').addEventListener('click', batchDelete);
 document.getElementById('batchCancelBtn').addEventListener('click', exitBatchMode);
+document.getElementById('calBatchEditBtn').addEventListener('click', enterCalendarBatch);
+document.getElementById('calBatchSelectAllBtn').addEventListener('click', batchSelectAll);
+document.getElementById('calBatchDoneBtn').addEventListener('click', batchComplete);
+document.getElementById('calBatchDeleteBtn').addEventListener('click', batchDelete);
+document.getElementById('calBatchCancelBtn').addEventListener('click', exitBatchMode);
 
 /* ---------- 解析按钮 ---------- */
 let isParsing = false;
@@ -2150,17 +2284,26 @@ document.getElementById('manualForm').addEventListener('keydown', (e) => {
 });
 
 /* ---------- 示例：生成一条截止日落在本周的通知，方便演示统计 +1 ---------- */
-document.getElementById('exampleBtn').addEventListener('click', () => {
+function buildExampleNotice() {
   const { monday } = getWeekRange();
   const start = new Date(monday); start.setDate(monday.getDate() + 1); // 周二开始报名
   const end = new Date(monday); end.setDate(monday.getDate() + 4);     // 周五截止报名
   const pay = new Date(monday); pay.setDate(monday.getDate() + 5);     // 周六缴费截止（落在本周）
-  const example =
-    '2026年上半年全国大学英语四六级考试报名通知：' +
+  return '2026年上半年全国大学英语四六级考试报名通知：' +
     `报名时间为${fmtDate(start)}9:00至${fmtDate(end)}17:00，` +
     `请同学们登录教务系统报名，缴费截止${fmtDate(pay)}。`;
-  document.getElementById('inputText').value = example;
+}
+
+document.getElementById('exampleBtn').addEventListener('click', () => {
+  document.getElementById('inputText').value = buildExampleNotice();
 });
+
+// 占位提示与「填入示例」保持逐字一致，且都跟随本周动态生成
+function syncExamplePlaceholder() {
+  const box = document.getElementById('inputText');
+  if (box) box.placeholder = '把班群 / 教务处的通知文字粘贴到这里，例如：\n' + buildExampleNotice();
+}
+syncExamplePlaceholder();
 
 /* ---------- 轻量 toast 提示（不依赖 alert/confirm，避免被禁用时无反应） ---------- */
 let toastTimer = null;
@@ -2306,6 +2449,7 @@ function renderCalendar() {
   grid.innerHTML = cells;
   renderDayList();
   renderLegend();
+  if (batchMode) updateBatchUI();
 }
 
 function renderDayList() {
@@ -2319,13 +2463,20 @@ function renderDayList() {
   dayList.innerHTML = items.map(r => {
     const doneBtnText = r.done ? '↩ 恢复' : '✓ 完成';
     const doneBtnCls = r.done ? 'btn-done undo' : 'btn-done';
+    const selected = batchMode && batchView === 'calendar' && batchSelected.has(r.id);
+    const batchCheck = batchMode && batchView === 'calendar'
+      ? `<button type="button" class="batch-check ${selected ? 'on' : ''}" data-cal-act="batch-toggle" title="${selected ? '取消选择' : '选择'}">${selected ? '●' : '○'}</button>`
+      : '';
     return `
-    <div class="cal-day-item ${r.done ? 'done' : ''}" data-id="${r.id}" style="border-left:3px solid ${r.color || '#94a3b8'}">
-      <div class="cal-day-info">
-        <div class="cal-day-item-title"><span class="r-dot" style="background:${r.color || '#94a3b8'}"></span>${r.starred ? '⭐ ' : ''}${escapeHtml(r.title || '未命名事项')}</div>
-        ${r.time ? `<div class="cal-day-item-time">⏰ ${escapeHtml(r.time)}</div>` : ''}
-        ${r.place ? `<div class="cal-day-item-time">📍 ${escapeHtml(r.place)}</div>` : ''}
-        ${r.deadline ? `<div class="cal-day-item-time">📅 截止 ${escapeHtml(r.deadline)}</div>` : ''}
+    <div class="cal-day-item ${r.done ? 'done' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left:3px solid ${r.color || '#94a3b8'}">
+      <div class="cal-day-main">
+        <div class="cal-day-info">
+          <div class="cal-day-item-title"><span class="r-dot" style="background:${r.color || '#94a3b8'}"></span>${r.starred ? '⭐ ' : ''}${escapeHtml(r.title || '未命名事项')}</div>
+          ${r.time ? `<div class="cal-day-item-time">⏰ ${escapeHtml(r.time)}</div>` : ''}
+          ${r.place ? `<div class="cal-day-item-time">📍 ${escapeHtml(r.place)}</div>` : ''}
+          ${r.deadline ? `<div class="cal-day-item-time">📅 截止 ${escapeHtml(r.deadline)}</div>` : ''}
+        </div>
+        ${batchCheck}
       </div>
       <div class="cal-day-actions">
         <button class="star-btn ${r.starred ? 'on' : ''}" data-cal-act="star" title="收藏置顶">${r.starred ? '⭐' : '☆'}</button>
@@ -2366,6 +2517,7 @@ function renderLegend() {
 function switchView(view) {
   if (batchMode) {
     batchMode = false;
+    batchView = null;
     batchSelected.clear();
     resetBatchDeleteConfirm();
     updateBatchUI();
@@ -3038,6 +3190,7 @@ document.getElementById('calGrid').addEventListener('click', (e) => {
   if (!cell) return;
   const [y, m, d] = cell.dataset.date.split('-').map(Number);
   selectedDay = new Date(y, m - 1, d);
+  if (batchMode && batchView === 'calendar') { batchSelected.clear(); resetBatchDeleteConfirm(); }
   renderCalendar();
 });
 document.getElementById('calDayList').addEventListener('click', (e) => {
@@ -3046,6 +3199,11 @@ document.getElementById('calDayList').addEventListener('click', (e) => {
   const item = btn.closest('.cal-day-item');
   const id = item.dataset.id;
   const act = btn.dataset.calAct;
+  if (act === 'batch-toggle') {
+    toggleBatchSelect(id);
+    return;
+  }
+  if (batchMode) return; // 批量模式下只响应选择圆圈，避免单条操作误触
   if (act === 'star') {
     const r = reminders.find(x => x.id === id);
     if (r) { r.starred = !r.starred; save(); render(); }
