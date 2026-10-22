@@ -120,6 +120,24 @@
   .ghost { background: #eef2ff; color: var(--primary); font-weight: 600; }
   .ghost:hover { background: #e0e7ff; }
 
+  /* 内联 SVG 图标（随字号） */
+  .ic {
+    width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em;
+    flex-shrink: 0; fill: none; stroke: currentColor;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .ic.is-filled, .star-btn.on .ic, .cal-star .ic { fill: currentColor; }
+  .ic.spin { animation: ic-spin 1s linear infinite; }
+  @keyframes ic-spin { to { transform: rotate(360deg); } }
+  .brand-ic { width: 22px; height: 22px; vertical-align: -4px; margin-right: 6px; }
+  .btn-ic { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; }
+  .cal-star .ic { width: 10px; height: 10px; }
+  .empty .ic { width: 18px; height: 18px; vertical-align: -3px; margin-right: 5px; }
+  .hidden-tag .ic { width: 0.9em; height: 0.9em; vertical-align: -0.1em; }
+  .search-wrap { position: relative; display: flex; align-items: center; }
+  .search-wrap .search-ic { position: absolute; left: 8px; width: 14px; height: 14px; color: var(--muted); pointer-events: none; }
+  .search-wrap .list-search { padding-left: 28px; }
+
   /* 手动添加表单 */
   .manual-form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
   .manual-form.hidden { display: none; }
@@ -433,28 +451,56 @@
     .cal-day-head { align-items: flex-start; }
     .cal-day-head .batch-actions { width: 100%; margin-left: 0; }
     .list-head-tools { width: 100%; }
+    .list-head-tools .search-wrap { flex: 1 1 140px; }
     .list-search { flex: 1 1 140px; width: auto; }
   }
   .hidden { display: none; }
 </style>
 </head>
 <body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+    <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1"></rect></symbol>
+    <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></symbol>
+    <symbol id="ic-alert-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></symbol>
+    <symbol id="ic-bot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></symbol>
+    <symbol id="ic-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"></path><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z"></path><path d="M5 15l.7 1.6L7.3 17l-1.6.7L5 19.3l-.7-1.6L2.7 17l1.6-.7L5 15z"></path></symbol>
+    <symbol id="ic-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></symbol>
+    <symbol id="ic-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></symbol>
+    <symbol id="ic-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></symbol>
+    <symbol id="ic-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></symbol>
+    <symbol id="ic-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1"></circle><circle cx="17.5" cy="10.5" r="1"></circle><circle cx="8.5" cy="7.5" r="1"></circle><circle cx="6.5" cy="12.5" r="1"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.7 0 3-1.3 3-3 0-.8-.3-1.5-.8-2-.3-.3-.5-.7-.5-1.2 0-1.1.9-2 2-2h2.3C20.8 13.8 22 12.2 22 10.3 22 5.9 17.5 2 12 2z"></path></symbol>
+    <symbol id="ic-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></symbol>
+    <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></symbol>
+    <symbol id="ic-map-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+    <symbol id="ic-rotate-ccw" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></symbol>
+    <symbol id="ic-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></symbol>
+    <symbol id="ic-pencil" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
+    <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+    <symbol id="ic-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></symbol>
+    <symbol id="ic-loader" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></symbol>
+  </defs></svg>
   <div id="errorBar" class="error-bar hidden"></div>
   <div id="toast" class="toast hidden"></div>
   <header>
-    <h1>📚 DDL 小管家</h1>
+    <h1><svg class="ic brand-ic" aria-hidden="true"><use href="#ic-clipboard"></use></svg>DDL 小管家</h1>
     <div class="header-right">
       <div class="stat">本周 <b id="weekCount">0</b> 个 DDL</div>
-      <button type="button" class="remind-pill" id="remindEntryBtn" title="提醒事项">提醒事项<span class="remind-badge hidden" id="remindBadge">0</span></button>
-      <button type="button" class="settings-btn" id="settingsBtn">⚙️</button>
+      <button type="button" class="remind-pill" id="remindEntryBtn" title="提醒事项"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bell"></use></svg>提醒事项<span class="remind-badge hidden" id="remindBadge">0</span></button>
+      <button type="button" class="settings-btn" id="settingsBtn" title="设置"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-settings"></use></svg></button>
     </div>
   </header>
-  <div id="storageHint" class="storage-hint hidden">⚠️ 浏览器禁用了本地存储，提醒数据刷新后会丢失</div>
+  <div id="storageHint" class="storage-hint hidden"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-alert-triangle"></use></svg>浏览器禁用了本地存储，提醒数据刷新后会丢失</div>
 
   <main>
     <section class="panel">
       <div class="ai-switch-row">
-        <span class="ai-switch-name">🤖 AI 解析</span>
+        <span class="ai-switch-name"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bot"></use></svg>AI 解析</span>
         <label class="switch">
           <input type="checkbox" id="aiToggle">
           <span class="slider"></span>
@@ -463,11 +509,11 @@
       </div>
       <textarea id="inputText"></textarea>
       <div class="input-actions">
-        <button type="button" class="primary" id="parseBtn">✨ 解析成提醒</button>
+        <button type="button" class="primary" id="parseBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-sparkles"></use></svg>解析成提醒</button>
         <button type="button" class="ghost" id="exampleBtn">填入示例</button>
-        <button type="button" class="ghost" id="toggleManualBtn">＋ 手动添加</button>
-        <button type="button" class="ghost" id="uploadBtn">📷 上传截图</button>
-        <button type="button" class="ghost" id="docBtn">📄 上传文档</button>
+        <button type="button" class="ghost" id="toggleManualBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-plus"></use></svg>手动添加</button>
+        <button type="button" class="ghost" id="uploadBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-camera"></use></svg>上传截图</button>
+        <button type="button" class="ghost" id="docBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-file-text"></use></svg>上传文档</button>
         <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
         <input type="file" id="docInput" accept=".docx,.pdf" class="hidden">
       </div>
@@ -545,7 +591,10 @@
             <span class="search-info hidden" id="searchInfo"></span>
           </div>
           <div class="list-head-tools">
-            <input type="search" class="list-search" id="listSearchInput" placeholder="搜索标题 / 备注 / 地点…">
+            <div class="search-wrap">
+              <svg class="ic search-ic" aria-hidden="true"><use href="#ic-search"></use></svg>
+              <input type="search" class="list-search" id="listSearchInput" placeholder="搜索标题 / 备注 / 地点…">
+            </div>
             <button type="button" class="list-filter-btn hidden" id="hiddenEntryBtn">显示隐藏（0）</button>
             <button type="button" class="list-filter-btn" id="hideDoneBtn" aria-pressed="false">只看未完成</button>
             <button type="button" class="batch-edit-btn" id="batchEditBtn">状态编辑</button>
@@ -559,7 +608,7 @@
           </div>
         </div>
         <ul id="list" style="list-style:none"></ul>
-        <div class="empty" id="empty">还没有提醒，粘贴一条通知试试吧 👆</div>
+        <div class="empty" id="empty"><svg class="ic" aria-hidden="true"><use href="#ic-clipboard"></use></svg>还没有提醒，粘贴一条通知试试吧</div>
       </div>
 
       <div id="calendarView" class="hidden">
@@ -584,7 +633,7 @@
         </div>
         <div class="cal-day-list" id="calDayList"></div>
         <div class="cal-legend">
-          <button type="button" class="cal-legend-toggle" id="calLegendToggle">🎨 图例 <span>▾</span></button>
+          <button type="button" class="cal-legend-toggle" id="calLegendToggle"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-palette"></use></svg>图例 <svg class="ic" aria-hidden="true"><use href="#ic-chevron-down"></use></svg></button>
           <div class="cal-legend-body hidden" id="calLegendBody"></div>
         </div>
       </div>
@@ -596,7 +645,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>编辑提醒</h3>
-        <button type="button" class="modal-close" id="editClose">✕</button>
+        <button type="button" class="modal-close" id="editClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="form-row"><label>标题</label><input id="eTitle" placeholder="必填"></div>
       <div class="form-row"><label>时间</label><input id="eTime" placeholder="如 9:00 / 10月15日 15:00-16:30"></div>
@@ -629,7 +678,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>添加模板</h3>
-        <button type="button" class="modal-close" id="tplClose">✕</button>
+        <button type="button" class="modal-close" id="tplClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="form-row"><label>名称</label><input id="tpName" placeholder="必填，按钮上显示的文字" maxlength="20"></div>
       <div class="form-row"><label>默认标题</label><input id="tpTitle" placeholder="留空则用名称" maxlength="40"></div>
@@ -644,8 +693,8 @@
     <div class="modal-mask"></div>
     <div class="modal-box remind-modal-box">
       <div class="modal-head">
-        <h3>🔔 提醒事项</h3>
-        <button type="button" class="modal-close" id="remindClose">✕</button>
+        <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bell"></use></svg>提醒事项</h3>
+        <button type="button" class="modal-close" id="remindClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="remind-section">
         <h4>当前提醒事项<span class="remind-section-count" id="remindCurrentCount"></span></h4>
@@ -656,7 +705,7 @@
         <div class="remind-list" id="remindHistoryList"></div>
       </div>
       <div class="remind-footer">
-        <button type="button" class="ghost" id="remindStarAllBtn">⭐ 一键收藏当前提醒</button>
+        <button type="button" class="ghost" id="remindStarAllBtn"><svg class="ic btn-ic is-filled" aria-hidden="true"><use href="#ic-star"></use></svg>一键收藏当前提醒</button>
         <button type="button" class="primary" id="remindAckBtn">我知道了</button>
       </div>
     </div>
@@ -666,8 +715,8 @@
     <div class="modal-mask"></div>
     <div class="modal-box">
       <div class="modal-head">
-        <h3>⚙️ 设置</h3>
-        <button type="button" class="modal-close" id="settingsClose">✕</button>
+        <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-settings"></use></svg>设置</h3>
+        <button type="button" class="modal-close" id="settingsClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="settings-providers" id="settingsProviders"></div>
       <div class="form-row"><label>API 地址</label><input id="baseUrlInput" placeholder="如 https://api.deepseek.com"></div>
@@ -695,8 +744,8 @@
         <button type="button" class="primary" id="settingsSaveBtn">保存</button>
       </div>
       <div class="input-actions">
-        <button type="button" class="ghost" id="exportBtn">⬇️ 导出数据</button>
-        <button type="button" class="ghost" id="importBtn">⬆️ 导入数据</button>
+        <button type="button" class="ghost" id="exportBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-download"></use></svg>导出数据</button>
+        <button type="button" class="ghost" id="importBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-upload"></use></svg>导入数据</button>
         <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
       </div>
     </div>
@@ -711,8 +760,13 @@
  * 数据模型：id / title / time / place / deadline / note / source / done / createdAt
  * ===================================================================== */
 
+// 内联 SVG 图标（sprite 在 body 顶部）
+function icon(name, extraClass) {
+  return '<svg class="ic ' + (extraClass || '') + '" aria-hidden="true"><use href="#ic-' + name + '"></use></svg>';
+}
+
 /* ===== DeepSeek API 配置 =====
- * ⚠️ 安全提示：API_KEY 写在源码里，比赛本地演示可接受；
+ * 注意：API Key 写在源码里，比赛本地演示可接受；
  * 正式上线务必把 key 移到后端（见同目录 server.js），不要暴露在前端。
  */
 const API_KEY_STORAGE = 'ddl_api_key';
@@ -1913,22 +1967,24 @@ function render() {
   }
 
   empty.classList.toggle('hidden', visible.length > 0);
-  empty.textContent = reminders.length === 0 ? '还没有提醒，粘贴一条通知试试吧 👆' : '没有匹配的事项';
+  empty.innerHTML = reminders.length === 0
+    ? icon('clipboard') + '还没有提醒，粘贴一条通知试试吧'
+    : '没有匹配的事项';
   updateHiddenEntryUI();
 
   list.innerHTML = visible.map(r => {
     const sourceLabel = r.source === 'manual' ? '手动' : 'AI';
-    const doneBtnText = r.done ? '↩ 恢复' : '✓ 完成';
+    const doneBtnHtml = (r.done ? icon('rotate-ccw') : icon('check')) + (r.done ? ' 恢复' : ' 完成');
     const doneBtnCls = r.done ? 'btn-done undo' : 'btn-done';
     const st = statusColor(r);
     const color = r.color || '#94a3b8';
     const statusTag = (st === 'red') ? '<span class="status-tag red">已逾期</span>' : (st === 'orange' ? '<span class="status-tag orange">即将到期</span>' : '');
-    const hiddenTag = r.hidden ? '<span class="hidden-tag">已隐藏</span>' : '';
+    const hiddenTag = r.hidden ? '<span class="hidden-tag">' + icon('eye-off') + ' 已隐藏</span>' : '';
     const fields = [];
-    if (r.time) fields.push(`<div class="f"><span class="k">⏰ 时间</span>${escapeHtml(r.time)}</div>`);
-    if (r.place) fields.push(`<div class="f"><span class="k">📍 地点</span>${escapeHtml(r.place)}</div>`);
-    if (r.deadline) fields.push(`<div class="f"><span class="k">📅 截止</span>${escapeHtml(r.deadline)}</div>`);
-    if (r.note) fields.push(`<div class="f-note" data-id="${r.id}" title="${escapeHtml(r.note)}">📝 ${escapeHtml(r.note)}</div>`);
+    if (r.time) fields.push(`<div class="f"><span class="k">${icon('clock')} 时间</span>${escapeHtml(r.time)}</div>`);
+    if (r.place) fields.push(`<div class="f"><span class="k">${icon('map-pin')} 地点</span>${escapeHtml(r.place)}</div>`);
+    if (r.deadline) fields.push(`<div class="f"><span class="k">${icon('calendar')} 截止</span>${escapeHtml(r.deadline)}</div>`);
+    if (r.note) fields.push(`<div class="f-note" data-id="${r.id}" title="${escapeHtml(r.note)}">${icon('file-text')} ${escapeHtml(r.note)}</div>`);
     const selected = batchMode && batchView === 'list' && batchSelected.has(r.id);
     const batchCheck = batchMode && batchView === 'list'
       ? `<button type="button" class="batch-check ${selected ? 'on' : ''}" data-act="batch-toggle" title="${selected ? '取消选择' : '选择'}">${selected ? '●' : '○'}</button>`
@@ -1937,7 +1993,7 @@ function render() {
     return `
       <li class="card ${r.done ? 'done' : ''} ${r.hidden ? 'is-hidden' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left-color:${color}">
         <div class="card-head">
-          <button class="star-btn ${r.starred ? 'on' : ''}" data-act="star" title="收藏置顶">${r.starred ? '⭐' : '☆'}</button>
+          <button class="star-btn ${r.starred ? 'on' : ''}" data-act="star" title="收藏置顶">${icon('star')}</button>
           <span class="r-dot" style="background:${color}"></span>
           <div class="r-title">${escapeHtml(r.title || '未命名事项')}</div>
           ${statusTag}
@@ -1947,9 +2003,9 @@ function render() {
         </div>
         <div class="fields">${fields.join('')}</div>
         <div class="card-actions">
-          <button class="${doneBtnCls}" data-act="toggle">${doneBtnText}</button>
-          <button class="btn-edit" data-act="edit">编辑</button>
-          <button class="btn-del" data-act="del">删除</button>
+          <button class="${doneBtnCls}" data-act="toggle">${doneBtnHtml}</button>
+          <button class="btn-edit" data-act="edit">${icon('pencil')} 编辑</button>
+          <button class="btn-del" data-act="del">${icon('trash')} 删除</button>
         </div>
       </li>`;
   }).join('');
@@ -2146,7 +2202,7 @@ function updateHideDoneUI() {
   if (!btn) return;
   btn.classList.toggle('on', hideDone);
   btn.setAttribute('aria-pressed', hideDone ? 'true' : 'false');
-  btn.textContent = hideDone ? '✓ 只看未完成' : '只看未完成';
+  btn.innerHTML = (hideDone ? icon('check') + ' ' : '') + '只看未完成';
 }
 function updateHiddenEntryUI() {
   const btn = document.getElementById('hiddenEntryBtn');
@@ -2245,14 +2301,14 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   isParsing = true;
   const btn = document.getElementById('parseBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ 解析中…';
+  btn.innerHTML = icon('loader', 'spin') + ' 解析中…';
   document.getElementById('inputText').value = '';
   try {
     await doParse(text);
   } finally {
     isParsing = false;
     btn.disabled = false;
-    btn.textContent = '✨ 解析成提醒';
+    btn.innerHTML = icon('sparkles') + ' 解析成提醒';
   }
 });
 
@@ -2337,7 +2393,7 @@ document.getElementById('docInput').addEventListener('change', async (e) => {
   isParsing = true;
   const btn = document.getElementById('parseBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ 解析中…';
+  btn.innerHTML = icon('loader', 'spin') + ' 解析中…';
   try {
     toast('正在解析文档，请稍等…');
     const text = await extractDocText(file);
@@ -2351,7 +2407,7 @@ document.getElementById('docInput').addEventListener('change', async (e) => {
   } finally {
     isParsing = false;
     btn.disabled = false;
-    btn.textContent = '✨ 解析成提醒';
+    btn.innerHTML = icon('sparkles') + ' 解析成提醒';
     e.target.value = '';
   }
 });
@@ -2527,17 +2583,61 @@ function parseTimeDates(time) {
     new Date(d.y !== undefined ? d.y : inferYearForMd(d.m, d.d), d.m - 1, d.d)
   );
 }
-// 事项是否覆盖某天：截止日当天，或 time 里实际出现的每一天（不再把首尾日期拉通成区间）
+// 事项覆盖的日期区间（time 中所有日期 + deadline，统一按当天 0 点比较）
+function taskDateSpan(r) {
+  if (!r) return null;
+  const dates = parseTimeDates(r.time);
+  const dl = parseDate(r.deadline);
+  if (dl) dates.push(dl);
+  if (!dates.length) return null;
+  let min = null, max = null;
+  dates.forEach(d => {
+    const t = startOfDay(d).getTime();
+    if (min === null || t < min) min = t;
+    if (max === null || t > max) max = t;
+  });
+  return { min: new Date(min), max: new Date(max) };
+}
+// 事项是否覆盖某天：日期落在 [min,max] 区间内（时间段中间日期也覆盖）
 function reminderCoversDate(r, date) {
-  const dd = parseDate(r.deadline);
-  if (dd && isSameDay(dd, date)) return true;
-  return parseTimeDates(r.time).some(d => isSameDay(d, date));
+  const span = taskDateSpan(r);
+  if (!span) return false;
+  const t = startOfDay(date).getTime();
+  return t >= span.min.getTime() && t <= span.max.getTime();
 }
 // 事项在指定年月是否有日期（图例只列当前月份真正会出现的事项）
 function reminderInMonth(r, year, month) {
-  const dl = parseDate(r.deadline);
-  if (dl && dl.getFullYear() === year && dl.getMonth() === month) return true;
-  return parseTimeDates(r.time).some(d => d.getFullYear() === year && d.getMonth() === month);
+  const span = taskDateSpan(r);
+  if (!span) return false;
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0);
+  return span.max.getTime() >= monthStart.getTime() && span.min.getTime() <= monthEnd.getTime();
+}
+// 月份内全局稳定槽位：按 createdAt 贪心分配互不重叠的槽位，跨天不跳位
+function buildMonthSlots() {
+  ensureCalendarInit();
+  const monthStart = startOfDay(new Date(calendarYear, calendarMonth, 1));
+  const monthEnd = startOfDay(new Date(calendarYear, calendarMonth + 1, 0));
+  const dayKey = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  const candidates = reminders.map(r => ({ r: r, span: taskDateSpan(r) }))
+    .filter(x => x.span && x.span.max.getTime() >= monthStart.getTime() && x.span.min.getTime() <= monthEnd.getTime())
+    .sort((a, b) => (a.r.createdAt || 0) - (b.r.createdAt || 0) || String(a.r.id).localeCompare(String(b.r.id)));
+  const slots = new Map();
+  const occupied = []; // occupied[slot] = Set(dayKey)
+  candidates.forEach(({ r, span }) => {
+    const start = span.min.getTime() < monthStart.getTime() ? monthStart : span.min;
+    const end = span.max.getTime() > monthEnd.getTime() ? monthEnd : span.max;
+    const days = new Set();
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d.setDate(d.getDate() + 1)) {
+      days.add(dayKey(d));
+    }
+    let slot = 0;
+    while (occupied[slot] && [...days].some(k => occupied[slot].has(k))) slot++;
+    if (!occupied[slot]) occupied[slot] = new Set();
+    days.forEach(k => occupied[slot].add(k));
+    slots.set(r.id, slot);
+  });
+  return slots;
 }
 // 是否有日历可定位的日期；完全没有日期的事项只在事项列表显示
 function hasScheduledDate(r) {
@@ -2591,8 +2691,9 @@ function renderCalendar() {
   const startWeekday = new Date(calendarYear, calendarMonth, 1).getDay();
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
   let cells = '';
-  const MAX_LINES = 6;   // 每天最多显示 6 条线
+  const MAX_LINES = 6;   // 每天最多显示 6 条线（超出靠角标 + 当天列表兜底）
   const LINE_STEP = 6;   // 每条线段占 6px（4px 线 + 2px 间距）
+  const slotOf = buildMonthSlots();
   for (let i = 0; i < startWeekday; i++) cells += '<div class="cal-cell empty"></div>';
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(calendarYear, calendarMonth, d);
@@ -2603,17 +2704,21 @@ function renderCalendar() {
     if (isToday) cls += ' today';
     if (isSel) cls += ' selected';
     let extras = '';
-    if (info && info.hasStar) extras += '<span class="cal-star">⭐</span>';
+    if (info && info.hasStar) extras += '<span class="cal-star">' + icon('star') + '</span>';
     let badge = '';
     if (info && info.count > 0) badge = `<span class="cal-count">${info.count}</span>`;
-    // 每天各自分配槽位：按创建时间取前 MAX_LINES 个（修复「第7个以后创建的任务永不画线」）
-    const tasks = dayTasks(date).slice(0, MAX_LINES);
+    // 使用月份全局稳定槽位，跨天保持同一 bottom；当天超过 6 条时只画槽位最小的 6 条，
+    // 其余靠角标+当天列表兜底；但如果当天总共不超过 6 条，即使槽位偏大也要画（避免整条消失）。
+    const allTasks = dayTasks(date).slice().sort((a, b) => (slotOf.get(a.id) ?? 0) - (slotOf.get(b.id) ?? 0));
+    const tasks = allTasks.length <= MAX_LINES
+      ? allTasks
+      : allTasks.filter(t => (slotOf.get(t.id) ?? 0) < MAX_LINES).slice(0, MAX_LINES);
     let linesHtml = '';
     if (tasks.length) {
-      linesHtml = '<div class="cal-lines">' + tasks.map((t, idx) => {
+      linesHtml = '<div class="cal-lines">' + tasks.map(t => {
         const isDl = isSameDay(parseDate(t.deadline), date);
         const lineCls = 'cal-line' + (isDl ? ' deadline' : '') + (t.done ? ' done' : '');
-        return `<div class="${lineCls}" style="--c:${t.color || '#94a3b8'};bottom:${idx * LINE_STEP}px"></div>`;
+        return `<div class="${lineCls}" style="--c:${t.color || '#94a3b8'};bottom:${(slotOf.get(t.id) ?? 0) * LINE_STEP}px"></div>`;
       }).join('') + '</div>';
     }
     cells += `<div class="${cls}" data-date="${calendarYear}-${calendarMonth + 1}-${d}"><span class="cal-day-num">${d}</span>${linesHtml}${extras}${badge}</div>`;
@@ -2633,7 +2738,7 @@ function renderDayList() {
   const items = reminders.filter(r => reminderCoversDate(r, selectedDay));
   if (!items.length) { dayList.innerHTML = '<div class="cal-day-empty">当天没有事项</div>'; return; }
   dayList.innerHTML = items.map(r => {
-    const doneBtnText = r.done ? '↩ 恢复' : '✓ 完成';
+    const doneBtnHtml = (r.done ? icon('rotate-ccw') : icon('check')) + (r.done ? ' 恢复' : ' 完成');
     const doneBtnCls = r.done ? 'btn-done undo' : 'btn-done';
     const selected = batchMode && batchView === 'calendar' && batchSelected.has(r.id);
     const batchCheck = batchMode && batchView === 'calendar'
@@ -2643,18 +2748,18 @@ function renderDayList() {
     <div class="cal-day-item ${r.done ? 'done' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left:3px solid ${r.color || '#94a3b8'}">
       <div class="cal-day-main">
         <div class="cal-day-info">
-          <div class="cal-day-item-title"><span class="r-dot" style="background:${r.color || '#94a3b8'}"></span>${r.starred ? '⭐ ' : ''}${escapeHtml(r.title || '未命名事项')}</div>
-          ${r.time ? `<div class="cal-day-item-time">⏰ ${escapeHtml(r.time)}</div>` : ''}
-          ${r.place ? `<div class="cal-day-item-time">📍 ${escapeHtml(r.place)}</div>` : ''}
-          ${r.deadline ? `<div class="cal-day-item-time">📅 截止 ${escapeHtml(r.deadline)}</div>` : ''}
+          <div class="cal-day-item-title"><span class="r-dot" style="background:${r.color || '#94a3b8'}"></span>${r.starred ? icon('star', 'is-filled') + ' ' : ''}${escapeHtml(r.title || '未命名事项')}</div>
+          ${r.time ? `<div class="cal-day-item-time">${icon('clock')} ${escapeHtml(r.time)}</div>` : ''}
+          ${r.place ? `<div class="cal-day-item-time">${icon('map-pin')} ${escapeHtml(r.place)}</div>` : ''}
+          ${r.deadline ? `<div class="cal-day-item-time">${icon('calendar')} 截止 ${escapeHtml(r.deadline)}</div>` : ''}
         </div>
         ${batchCheck}
       </div>
       <div class="cal-day-actions">
-        <button class="star-btn ${r.starred ? 'on' : ''}" data-cal-act="star" title="收藏置顶">${r.starred ? '⭐' : '☆'}</button>
-        <button class="${doneBtnCls}" data-cal-act="toggle">${doneBtnText}</button>
-        <button class="btn-edit" data-cal-act="edit">编辑</button>
-        <button class="btn-del" data-cal-act="del">删除</button>
+        <button class="star-btn ${r.starred ? 'on' : ''}" data-cal-act="star" title="收藏置顶">${icon('star')}</button>
+        <button class="${doneBtnCls}" data-cal-act="toggle">${doneBtnHtml}</button>
+        <button class="btn-edit" data-cal-act="edit">${icon('pencil')} 编辑</button>
+        <button class="btn-del" data-cal-act="del">${icon('trash')} 删除</button>
       </div>
     </div>`;
   }).join('');
@@ -2807,7 +2912,7 @@ function renderTemplates() {
     return '<span class="tpl-chip">' + nameBtn +
       `<button type="button" class="tpl-remove" data-tpl-del="${escapeHtml(t.id)}" title="移除模板" aria-label="移除模板 ${escapeHtml(t.name)}">×</button>` +
       '</span>';
-  }).join('') + (templateEditMode ? '<button type="button" class="tpl-btn tpl-add" data-tpl-add="1">＋ 添加模板</button>' : '');
+  }).join('') + (templateEditMode ? '<button type="button" class="tpl-btn tpl-add" data-tpl-add="1">' + icon('plus') + ' 添加模板</button>' : '');
   const foot = document.getElementById('tplFoot');
   if (foot) foot.classList.toggle('hidden', !templateEditMode);
   const editBtn = document.getElementById('tplEditBtn');
@@ -3125,12 +3230,12 @@ function renderRemindBox(key) {
         '<option value=""' + (o.u ? '' : ' selected') + '>请选择</option>' +
         REMIND_UNIT_ORDER.map(u => '<option value="' + u + '"' + (o.u === u ? ' selected' : '') + '>' + REMIND_UNIT_LABEL[u] + '</option>').join('') +
       '</select>' +
-      (i > 0 ? '<button type="button" class="remind-del" data-rem-del="' + i + '" title="删除该组">✕</button>' : '') +
+      (i > 0 ? '<button type="button" class="remind-del" data-rem-del="' + i + '" title="删除该组">' + icon('trash') + '</button>' : '') +
     '</div>'
   ).join('');
   const canAdd = ed.offsets.length < REMIND_MAX_GROUPS;
   const addRow = canAdd
-    ? '<div class="remind-add-row"><button type="button" class="remind-add" data-rem-add="1" title="再加一组">＋</button></div>'
+    ? '<div class="remind-add-row"><button type="button" class="remind-add" data-rem-add="1" title="再加一组">' + icon('plus') + '</button></div>'
     : '';
   const valid = normalizeStoredOffsets(ed.offsets).length > 0;
   box.innerHTML = '<div class="remind-title">结束前：</div>' + rows + addRow +
@@ -3222,7 +3327,7 @@ function remindItemHtml(r) {
     ? '<span class="remind-status-tag due">已到点</span>'
     : '<span class="remind-status-tag">未到点</span>';
   const snoozeText = (r.snoozeUntil && !r.remindFiredAt)
-    ? '<div class="remind-item-snooze">⏰ 稍后提醒 · ' + escapeHtml(fmtDateTime(new Date(r.snoozeUntil))) + '</div>'
+    ? '<div class="remind-item-snooze">' + icon('clock') + ' 稍后提醒 · ' + escapeHtml(fmtDateTime(new Date(r.snoozeUntil))) + '</div>'
     : '';
   const menuOpen = reminderSnoozeOpenId === r.id;
   const snoozeMenu = menuOpen
@@ -3234,18 +3339,18 @@ function remindItemHtml(r) {
       '</div>'
     : '';
   const meta = [];
-  if (r.time) meta.push('⏰ ' + escapeHtml(r.time));
-  if (r.deadline) meta.push('📅 截止 ' + escapeHtml(r.deadline));
+  if (r.time) meta.push(icon('clock') + ' ' + escapeHtml(r.time));
+  if (r.deadline) meta.push(icon('calendar') + ' 截止 ' + escapeHtml(r.deadline));
   return '<div class="remind-item" data-remind-id="' + escapeHtml(r.id) + '">' +
     '<div class="remind-item-main">' +
-      '<div class="remind-item-title">' + (r.starred ? '⭐ ' : '') + escapeHtml(r.title || '未命名事项') + statusTag + '</div>' +
+      '<div class="remind-item-title">' + (r.starred ? icon('star', 'is-filled') + ' ' : '') + escapeHtml(r.title || '未命名事项') + statusTag + '</div>' +
       (meta.length ? '<div class="remind-item-meta">' + meta.join('　') + '</div>' : '') +
-      '<div class="remind-item-lead">🔔 ' + escapeHtml(lead) + (rt ? ' · ' + fmtDateTime(rt) : '') + '</div>' +
+      '<div class="remind-item-lead">' + icon('bell') + ' ' + escapeHtml(lead) + (rt ? ' · ' + fmtDateTime(rt) : '') + '</div>' +
       snoozeText +
     '</div>' +
     '<div class="remind-item-actions">' +
-      '<button type="button" class="btn-snooze" data-remind-act="snooze">稍后</button>' +
-      '<button type="button" class="btn-done" data-remind-act="toggle">✓ 完成</button>' +
+      '<button type="button" class="btn-snooze" data-remind-act="snooze">' + icon('clock') + ' 稍后</button>' +
+      '<button type="button" class="btn-done" data-remind-act="toggle">' + icon('check') + ' 完成</button>' +
     '</div>' +
     snoozeMenu +
   '</div>';
@@ -3343,7 +3448,7 @@ function notifyDueReminders(items) {
       const summary = offsets.length ? remindSummaryText(offsets).replace(/^提醒\s*/, '') : '';
       const lead = summary ? '提前' + summary : '';
       const body = '截止：' + (r.deadline || '未设置') + (lead ? ' · ' + lead : '');
-      const n = new Notification('⏰ 提醒：' + (r.title || '未命名事项'), { body: body, tag: 'ddl-' + r.id });
+      const n = new Notification('提醒：' + (r.title || '未命名事项'), { body: body, tag: 'ddl-' + r.id });
       n.onclick = () => {
         try { window.focus(); } catch (e) {}
         try { openReminderModal(); } catch (e) {}
@@ -3599,7 +3704,7 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
   isParsing = true;
   const btn = document.getElementById('parseBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ 解析中…';
+  btn.innerHTML = icon('loader', 'spin') + ' 解析中…';
 
   const total = files.length;
   let okCount = 0;
@@ -3645,7 +3750,7 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
 
   isParsing = false;
   btn.disabled = false;
-  btn.textContent = '✨ 解析成提醒';
+  btn.innerHTML = icon('sparkles') + ' 解析成提醒';
   e.target.value = '';
 });
 
