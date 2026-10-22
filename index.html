@@ -356,6 +356,8 @@
   }
   .remind-item-main { flex: 1; min-width: 0; }
   .remind-item-title { font-size: 14px; font-weight: 600; word-break: break-all; }
+  .remind-status-tag { font-size: 11px; font-weight: 500; padding: 1px 5px; border-radius: 4px; margin-left: 5px; background: #f1f5f9; color: var(--muted); vertical-align: middle; }
+  .remind-status-tag.due { background: #fee2e2; color: #dc2626; }
   .remind-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .remind-item-lead { font-size: 12px; color: #b45309; margin-top: 3px; }
   .remind-item .btn-done { flex: 0 0 auto; width: 82px; }
@@ -632,6 +634,17 @@
       <div class="form-row"><label>模型</label><input id="modelInput" placeholder="如 deepseek-flash"></div>
       <div class="form-row"><label>识图模型</label><input id="visionModelInput" placeholder="留空则同模型"></div>
       <div class="form-row"><label>支持识图</label><input type="checkbox" id="visionFlagInput"></div>
+      <div class="form-row">
+        <label>浏览器通知</label>
+        <div class="remind-switch-wrap">
+          <label class="switch">
+            <input type="checkbox" id="notifyToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="remind-state" id="notifyState">OFF</span>
+        </div>
+      </div>
+      <div class="settings-hint" id="notifyHint">页面开着时到点主动弹窗；开启后还会发系统通知（需授权）。</div>
       <div class="settings-hint">无 key 走本地基础解析；AI 解析关或模型不支持识图时截图按钮置灰</div>
       <div class="input-actions">
         <button type="button" class="primary" id="settingsSaveBtn">保存</button>
@@ -680,6 +693,7 @@ function getModel() { return getSetting(MODEL_STORAGE, DEFAULT_MODEL); }
 function getVisionFlag() { return getSetting(VISION_FLAG_STORAGE, 'true') === 'true'; }
 function getVisionModel() { return getSetting(VISION_MODEL_STORAGE, '') || getModel(); }
 const AI_ENABLED_STORAGE = 'ddl_ai_enabled';
+const NOTIFY_ENABLED_STORAGE = 'ddl_notify_enabled';
 // AI 解析开关：优先用户手动设置，其次按是否有 key 智能默认（有 key=开，无 key=关）
 function getAiEnabled() {
   try {
@@ -687,6 +701,12 @@ function getAiEnabled() {
     if (stored !== null) return stored === 'true';
   } catch (e) {}
   return !!getAPIKey();
+}
+function getNotifyEnabled() {
+  try { return localStorage.getItem(NOTIFY_ENABLED_STORAGE) === 'true'; } catch (e) { return false; }
+}
+function setNotifyEnabled(on) {
+  try { localStorage.setItem(NOTIFY_ENABLED_STORAGE, on ? 'true' : 'false'); } catch (e) {}
 }
 
 // 任务调色板（12 色，按色相 30° 均匀分布，视觉区分度高）
@@ -1846,6 +1866,9 @@ function render() {
 
   if (batchMode) updateBatchUI();
   if (currentView === 'calendar') renderCalendar();
+  // 提醒弹窗已打开时，列表刷新/编辑保存后同步刷新弹窗内容（含实时到期保险）
+  const remindModal = document.getElementById('remindModal');
+  if (remindModal && !remindModal.classList.contains('hidden')) renderReminderModal();
   updateReminderBadge();
 }
 
@@ -2832,34 +2855,55 @@ function reminderTime(r) {
   return new Date(base.getTime() - remindLeadMinutes(r.remindOffsets) * 60000);
 }
 
+// 到期判断：仅用于「自动弹窗 + 浏览器通知」触发（不受待提醒清单影响）
 function isReminderDue(r, now) {
   if (!r || r.done || !r.remindOn) return false;
   const t = reminderTime(r);
   return !!t && t.getTime() <= (now || new Date()).getTime();
 }
 
-// 当前提醒：已到期、未完成、且还没在提醒弹窗里展示过（remindFiredAt 为空）
+// 到期且尚未提醒过（自动弹窗/通知的触发源）
 function currentReminderItems() {
   const now = new Date();
   return reminders.filter(r => !r.remindFiredAt && isReminderDue(r, now));
 }
 
-// 历史提醒：展示过（remindFiredAt 非空）且未完成
+// 待提醒清单（方案 B）：开启提醒 && 未完成 && 还没提醒过，不管到没到点
+function pendingReminderItems() {
+  return reminders
+    .filter(r => r.remindOn && !r.done && !r.remindFiredAt)
+    .sort(compareReminderTime);
+}
+
+function compareReminderTime(a, b) {
+  const ta = reminderTime(a), tb = reminderTime(b);
+  if (ta && tb) return ta.getTime() - tb.getTime() || (a.createdAt || 0) - (b.createdAt || 0);
+  if (ta) return -1;
+  if (tb) return 1;
+  return (a.createdAt || 0) - (b.createdAt || 0);
+}
+
+// 历史提醒：已提醒过（remindFiredAt 非空）且未完成
 function historyReminderItems() {
   return reminders.filter(r => !!r.remindFiredAt && !r.done);
 }
 
-// 本次弹窗会话中「当前提醒」的快照：打开弹窗时锁定，关闭时清空。
-// 展示时仅把快照内事项的 remindFiredAt 记为当前时间（只记录"已展示过"），
-// 不改变完成/收藏/提醒配置；关闭后再打开时它们就出现在历史栏。
-let reminderShownIds = null;
+// 自动弹窗本次会话中刚触发的事项：已写 firedAt，但仍应在「当前」栏展示一次，
+// 关闭弹窗后清除，之后只在历史栏出现。
+let reminderSessionDueIds = null;
 
-function currentShownReminders() {
-  if (reminderShownIds !== null) {
-    const set = new Set(reminderShownIds);
-    return reminders.filter(r => set.has(r.id) && !r.done);
-  }
-  return currentReminderItems();
+function sessionDueReminders() {
+  if (!reminderSessionDueIds || !reminderSessionDueIds.length) return [];
+  const set = new Set(reminderSessionDueIds);
+  return reminders.filter(r => set.has(r.id) && !r.done);
+}
+
+// 当前栏 = 待提醒清单 + 本次自动弹窗刚触发的到期项
+function currentReminderDisplayItems() {
+  const map = new Map();
+  pendingReminderItems().forEach(r => map.set(r.id, r));
+  sessionDueReminders().forEach(r => map.set(r.id, r));
+  return [...map.values()].sort(compareReminderTime);
 }
 
 function markRemindersFired(items) {
@@ -2871,10 +2915,11 @@ function markRemindersFired(items) {
   return changed;
 }
 
+// 顶部角标 = 待提醒事项数（未完成、提醒开、未提醒过）
 function updateReminderBadge() {
   const badge = document.getElementById('remindBadge');
   if (!badge) return;
-  const n = currentReminderItems().length;
+  const n = pendingReminderItems().length;
   badge.textContent = String(n);
   badge.classList.toggle('hidden', n === 0);
 }
@@ -3012,12 +3057,15 @@ function remindItemHtml(r) {
   const hasOffset = normalizeStoredOffsets(r.remindOffsets).length > 0;
   const lead = hasOffset ? remindSummaryText(r.remindOffsets) : '到点提醒';
   const rt = reminderTime(r);
+  const statusTag = isReminderDue(r)
+    ? '<span class="remind-status-tag due">已到点</span>'
+    : '<span class="remind-status-tag">未到点</span>';
   const meta = [];
   if (r.time) meta.push('⏰ ' + escapeHtml(r.time));
   if (r.deadline) meta.push('📅 截止 ' + escapeHtml(r.deadline));
   return '<div class="remind-item" data-remind-id="' + escapeHtml(r.id) + '">' +
     '<div class="remind-item-main">' +
-      '<div class="remind-item-title">' + (r.starred ? '⭐ ' : '') + escapeHtml(r.title || '未命名事项') + '</div>' +
+      '<div class="remind-item-title">' + (r.starred ? '⭐ ' : '') + escapeHtml(r.title || '未命名事项') + statusTag + '</div>' +
       (meta.length ? '<div class="remind-item-meta">' + meta.join('　') + '</div>' : '') +
       '<div class="remind-item-lead">🔔 ' + escapeHtml(lead) + (rt ? ' · ' + fmtDateTime(rt) : '') + '</div>' +
     '</div>' +
@@ -3026,9 +3074,8 @@ function remindItemHtml(r) {
 }
 
 function renderReminderModal() {
-  const cur = currentShownReminders();
+  const cur = currentReminderDisplayItems();
   const curIds = new Set(cur.map(r => r.id));
-  // 当前栏本次要展示的事项即使已被标记 firedAt，也只在历史栏之外显示一次
   const hist = historyReminderItems().filter(r => !curIds.has(r.id));
   const curList = document.getElementById('remindCurrentList');
   const histList = document.getElementById('remindHistoryList');
@@ -3041,11 +3088,7 @@ function renderReminderModal() {
 }
 
 function openReminderModal() {
-  const cur = currentReminderItems();
-  // 锁定本次展示的「当前提醒」快照
-  reminderShownIds = cur.map(r => r.id);
-  // 展示时仅记录"已展示过"（remindFiredAt），不改变任何用户可见状态
-  if (markRemindersFired(cur)) save();
+  // 当前栏是实时待提醒清单，打开弹窗不写 firedAt（是否提醒过由到点触发决定）
   renderReminderModal();
   document.getElementById('remindModal').classList.remove('hidden');
   updateReminderBadge();
@@ -3053,7 +3096,7 @@ function openReminderModal() {
 
 // × 与「我知道了」完全一致：只关闭弹窗，不写任何事项字段（不设 acked、不改 done/starred/提醒配置）
 function closeReminderModal() {
-  reminderShownIds = null;
+  reminderSessionDueIds = null;
   document.getElementById('remindModal').classList.add('hidden');
   updateReminderBadge();
 }
@@ -3080,7 +3123,7 @@ document.getElementById('remindModal').addEventListener('click', (e) => {
 document.getElementById('remindCurrentList').addEventListener('click', onRemindListClick);
 document.getElementById('remindHistoryList').addEventListener('click', onRemindListClick);
 document.getElementById('remindStarAllBtn').addEventListener('click', () => {
-  const cur = currentShownReminders();
+  const cur = currentReminderDisplayItems();
   if (!cur.length) { toast('暂无当前提醒'); return; }
   cur.forEach(r => { r.starred = true; });
   save(); render(); renderReminderModal();
@@ -3089,10 +3132,57 @@ document.getElementById('remindStarAllBtn').addEventListener('click', () => {
 // 「我知道了」与右上角 × 完全一致：只关闭弹窗，不写任何事项字段
 document.getElementById('remindAckBtn').addEventListener('click', closeReminderModal);
 
+/* ---------- 主动提醒：页面内定时检查 + 可选浏览器通知 ---------- */
+const REMIND_CHECK_INTERVAL = 30000;
+let remindCheckTimer = null;
+
+function notifyDueReminders(items) {
+  if (!items.length) return;
+  if (!notifySupported() || !getNotifyEnabled() || Notification.permission !== 'granted') return;
+  items.forEach(r => {
+    try {
+      const offsets = normalizeStoredOffsets(r.remindOffsets);
+      const summary = offsets.length ? remindSummaryText(offsets).replace(/^提醒\s*/, '') : '';
+      const lead = summary ? '提前' + summary : '';
+      const body = '截止：' + (r.deadline || '未设置') + (lead ? ' · ' + lead : '');
+      const n = new Notification('⏰ 提醒：' + (r.title || '未命名事项'), { body: body, tag: 'ddl-' + r.id });
+      n.onclick = () => {
+        try { window.focus(); } catch (e) {}
+        try { openReminderModal(); } catch (e) {}
+        try { n.close(); } catch (e) {}
+      };
+    } catch (e) { /* 通知失败不影响页面弹窗 */ }
+  });
+}
+
+function checkDueReminders() {
+  const due = currentReminderItems();
+  if (!due.length) { updateReminderBadge(); return; }
+  const modal = document.getElementById('remindModal');
+  const modalOpen = !!modal && !modal.classList.contains('hidden');
+  // 通知与弹窗同一批事项；先发通知，再标记为已提醒
+  notifyDueReminders(due);
+  const changed = markRemindersFired(due);
+  if (changed) save();
+  reminderSessionDueIds = [...new Set([...(reminderSessionDueIds || []), ...due.map(r => r.id)])];
+  if (modalOpen) {
+    // 弹窗已开着：不重复打开，刷新当前/历史；本批到期项在本次会话中仍显示在当前栏
+    renderReminderModal();
+    updateReminderBadge();
+    return;
+  }
+  openReminderModal();
+}
+
 // 页面打开时检查一次：有「已到期且未展示过」的提醒 → 自动弹窗并记录已展示
 function checkRemindersOnStartup() {
-  if (!currentReminderItems().length) return;
-  openReminderModal();
+  checkDueReminders();
+}
+
+// 页面内定时检查（30s）：先 clear 再 set，保证只有一个实例
+function startReminderPolling() {
+  if (remindCheckTimer) { clearInterval(remindCheckTimer); remindCheckTimer = null; }
+  remindCheckTimer = setInterval(checkDueReminders, REMIND_CHECK_INTERVAL);
 }
 
 // 截图识别
@@ -3437,6 +3527,7 @@ function fillSettingsForm() {
   document.getElementById('visionModelInput').value = getSetting(VISION_MODEL_STORAGE, '');
   document.getElementById('visionFlagInput').checked = getVisionFlag();
   updateApiKeyHint();
+  updateNotifyToggleUI();
 }
 
 function updateApiKeyHint() {
@@ -3449,6 +3540,81 @@ function updateApiKeyHint() {
     hint.textContent = '未设置 key，填写后保存';
   }
 }
+
+/* ---------- 浏览器通知开关 ---------- */
+function notifySupported() {
+  return typeof Notification !== 'undefined' && !!Notification;
+}
+
+function requestNotifyPermission() {
+  return new Promise(resolve => {
+    if (!notifySupported() || typeof Notification.requestPermission !== 'function') { resolve('denied'); return; }
+    try {
+      const ret = Notification.requestPermission(resolve);
+      if (ret && typeof ret.then === 'function') ret.then(resolve);
+    } catch (e) { resolve('denied'); }
+  });
+}
+
+function updateNotifyToggleUI() {
+  const toggle = document.getElementById('notifyToggle');
+  const state = document.getElementById('notifyState');
+  const hint = document.getElementById('notifyHint');
+  if (!toggle) return;
+  if (!notifySupported()) {
+    toggle.checked = false;
+    toggle.disabled = true;
+    if (state) state.textContent = '不支持';
+    if (hint) hint.textContent = '当前浏览器不支持系统通知，仅保留页面内弹窗提醒。';
+    setNotifyEnabled(false);
+    return;
+  }
+  toggle.disabled = false;
+  if (getNotifyEnabled() && Notification.permission !== 'granted') setNotifyEnabled(false);
+  const enabled = getNotifyEnabled() && Notification.permission === 'granted';
+  toggle.checked = enabled;
+  if (state) state.textContent = enabled ? 'ON' : 'OFF';
+  if (hint) hint.textContent = enabled
+    ? '已开启：页面打开时到点会发系统通知。'
+    : '页面开着时到点主动弹窗；开启后还会发系统通知（需授权）。';
+}
+
+document.getElementById('notifyToggle').addEventListener('change', async (e) => {
+  const on = !!e.target.checked;
+  if (!on) {
+    setNotifyEnabled(false);
+    updateNotifyToggleUI();
+    return;
+  }
+  if (!notifySupported()) {
+    setNotifyEnabled(false);
+    updateNotifyToggleUI();
+    toast('当前浏览器不支持通知');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    setNotifyEnabled(true);
+    updateNotifyToggleUI();
+    toast('已开启浏览器通知');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    setNotifyEnabled(false);
+    updateNotifyToggleUI();
+    toast('浏览器已拒绝通知权限，请在浏览器设置中开启');
+    return;
+  }
+  const perm = await requestNotifyPermission();
+  if (perm === 'granted') {
+    setNotifyEnabled(true);
+    updateNotifyToggleUI();
+    toast('已开启浏览器通知');
+  } else {
+    setNotifyEnabled(false);
+    updateNotifyToggleUI();
+    toast('浏览器已拒绝通知权限，请在浏览器设置中开启');
+  }
+});
 function renderProviders() {
   const wrap = document.getElementById('settingsProviders');
   if (!wrap) return;
@@ -3613,6 +3779,8 @@ updateUploadBtn();
 updateAiToggle();
 updateStorageHint();
 checkRemindersOnStartup();
+startReminderPolling();
+updateNotifyToggleUI();
 </script>
 </body>
 </html>
