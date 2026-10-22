@@ -2319,6 +2319,10 @@ async function extractDocText(file) {
 }
 
 document.getElementById('docBtn').addEventListener('click', () => {
+  if (!getAiEnabled() || !getAPIKey()) {
+    toast('AI 解析未开启，文档解析不可用');
+    return;
+  }
   document.getElementById('docInput').click();
 });
 document.getElementById('docInput').addEventListener('change', async (e) => {
@@ -3567,8 +3571,10 @@ document.getElementById('tplButtons').addEventListener('click', (e) => {
 });
 function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
-  if (!btn) return;
-  btn.classList.toggle('disabled', !getVisionFlag() || !getAiEnabled() || !getAPIKey());
+  if (btn) btn.classList.toggle('disabled', !getVisionFlag() || !getAiEnabled() || !getAPIKey());
+  // 文档解析依赖 AI 解析（提取文字后走 AI），AI 关闭或无 key 时同样置灰
+  const docBtn = document.getElementById('docBtn');
+  if (docBtn) docBtn.classList.toggle('disabled', !getAiEnabled() || !getAPIKey());
 }
 document.getElementById('uploadBtn').addEventListener('click', () => {
   if (!getVisionFlag()) {
