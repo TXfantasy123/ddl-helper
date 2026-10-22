@@ -193,6 +193,8 @@
     transition: opacity .2s;
   }
   .card.done { opacity: .55; }
+  .card.is-hidden { opacity: .6; border-style: dashed; }
+  .hidden-tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; font-weight: 600; line-height: 1.6; margin-top: 1px; background: #f1f5f9; color: #64748b; }
   .card.done .r-title { text-decoration: line-through; color: var(--done); }
   .card { border-left: 4px solid #94a3b8; }
   .r-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
@@ -544,11 +546,13 @@
           </div>
           <div class="list-head-tools">
             <input type="search" class="list-search" id="listSearchInput" placeholder="搜索标题 / 备注 / 地点…">
-            <button type="button" class="list-filter-btn" id="hideDoneBtn" aria-pressed="false">隐藏已完成</button>
+            <button type="button" class="list-filter-btn hidden" id="hiddenEntryBtn">显示隐藏（0）</button>
+            <button type="button" class="list-filter-btn" id="hideDoneBtn" aria-pressed="false">只看未完成</button>
             <button type="button" class="batch-edit-btn" id="batchEditBtn">状态编辑</button>
             <div class="batch-actions hidden" id="batchActions">
               <button type="button" class="batch-btn" id="batchSelectAllBtn">全选</button>
               <button type="button" class="batch-btn" id="batchDoneBtn">完成</button>
+              <button type="button" class="batch-btn" id="batchHideBtn">隐藏</button>
               <button type="button" class="batch-btn danger" id="batchDeleteBtn">删除</button>
               <button type="button" class="batch-btn" id="batchCancelBtn">取消</button>
             </div>
@@ -804,6 +808,7 @@ function load() {
     if (r.remindFiredAt === undefined) r.remindFiredAt = null;
     if (r.snoozeUntil === undefined || r.snoozeUntil === null) r.snoozeUntil = null;
     else { const su = Number(r.snoozeUntil); r.snoozeUntil = (Number.isFinite(su) && su > 0) ? su : null; }
+    if (r.hidden === undefined) r.hidden = false;
   });
   // 颜色方案升级：按创建顺序用新调色板重分配，修复旧调色板里"琥珀/橙"等近似色（只做一次）
   if (localStorage.getItem('ddl_color_ver') !== COLOR_VERSION) {
@@ -1859,10 +1864,16 @@ function setHideDone(on) {
 }
 let hideDone = getHideDone();
 let listSearch = '';
+let showHidden = false;
+
+// 列表基础范围：默认排除 hidden；开启“显示隐藏”后纳入
+function listBaseReminders() {
+  return reminders.filter(r => showHidden || !r.hidden);
+}
 
 function visibleReminders() {
   const q = String(listSearch || '').trim().toLowerCase();
-  return reminders.filter(r => {
+  return listBaseReminders().filter(r => {
     if (hideDone && r.done) return false;
     if (!q) return true;
     return [r.title, r.note, r.place, r.time].some(v => String(v || '').toLowerCase().includes(q));
@@ -1885,8 +1896,9 @@ function render() {
 
   weekCount.textContent = countThisWeek();
 
-  const total = reminders.length;
-  const undone = reminders.filter(r => !r.done).length;
+  const base = listBaseReminders();
+  const total = base.length;
+  const undone = base.filter(r => !r.done).length;
   const doneCount = total - undone;
   const completion = total ? Math.round(doneCount / total * 100) : 0;
   listCount.textContent = total
@@ -1901,7 +1913,8 @@ function render() {
   }
 
   empty.classList.toggle('hidden', visible.length > 0);
-  empty.textContent = total === 0 ? '还没有提醒，粘贴一条通知试试吧 👆' : '没有匹配的事项';
+  empty.textContent = reminders.length === 0 ? '还没有提醒，粘贴一条通知试试吧 👆' : '没有匹配的事项';
+  updateHiddenEntryUI();
 
   list.innerHTML = visible.map(r => {
     const sourceLabel = r.source === 'manual' ? '手动' : 'AI';
@@ -1910,6 +1923,7 @@ function render() {
     const st = statusColor(r);
     const color = r.color || '#94a3b8';
     const statusTag = (st === 'red') ? '<span class="status-tag red">已逾期</span>' : (st === 'orange' ? '<span class="status-tag orange">即将到期</span>' : '');
+    const hiddenTag = r.hidden ? '<span class="hidden-tag">已隐藏</span>' : '';
     const fields = [];
     if (r.time) fields.push(`<div class="f"><span class="k">⏰ 时间</span>${escapeHtml(r.time)}</div>`);
     if (r.place) fields.push(`<div class="f"><span class="k">📍 地点</span>${escapeHtml(r.place)}</div>`);
@@ -1921,12 +1935,13 @@ function render() {
       : '';
 
     return `
-      <li class="card ${r.done ? 'done' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left-color:${color}">
+      <li class="card ${r.done ? 'done' : ''} ${r.hidden ? 'is-hidden' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left-color:${color}">
         <div class="card-head">
           <button class="star-btn ${r.starred ? 'on' : ''}" data-act="star" title="收藏置顶">${r.starred ? '⭐' : '☆'}</button>
           <span class="r-dot" style="background:${color}"></span>
           <div class="r-title">${escapeHtml(r.title || '未命名事项')}</div>
           ${statusTag}
+          ${hiddenTag}
           <span class="r-source ${r.source}">${sourceLabel}</span>
           ${batchCheck}
         </div>
@@ -1990,6 +2005,8 @@ function updateBatchUI() {
     const pool = visibleReminders();
     listAll.textContent = (pool.length > 0 && batchSelected.size === pool.length) ? '取消全选' : '全选';
   }
+  const hideBtn = document.getElementById('batchHideBtn');
+  if (hideBtn) hideBtn.textContent = showHidden ? '取消隐藏' : '隐藏';
   const calAll = document.getElementById('calBatchSelectAllBtn');
   if (calAll) {
     const pool = selectedDay ? reminders.filter(r => reminderCoversDate(r, selectedDay)) : [];
@@ -2044,6 +2061,19 @@ function batchComplete() {
   resetBatchDeleteConfirm();
   render();
   toast('已完成 ' + n + ' 条');
+}
+
+function batchToggleHidden() {
+  const n = batchSelected.size;
+  if (!n) { toast('请先选择事项'); return; }
+  // 显示隐藏模式下按钮语义为「取消隐藏」，否则为「隐藏」
+  const targetHidden = !showHidden;
+  reminders.forEach(r => { if (batchSelected.has(r.id)) r.hidden = targetHidden; });
+  save();
+  batchSelected.clear();
+  resetBatchDeleteConfirm();
+  render();
+  toast((targetHidden ? '已隐藏 ' : '已取消隐藏 ') + n + ' 条');
 }
 
 function batchDelete() {
@@ -2110,18 +2140,31 @@ document.getElementById('list').addEventListener('click', (e) => {
   }
 });
 
-/* ---------- 列表搜索 / 隐藏已完成 ---------- */
+/* ---------- 列表搜索 / 只显示未完成 / 显示隐藏 ---------- */
 function updateHideDoneUI() {
   const btn = document.getElementById('hideDoneBtn');
   if (!btn) return;
   btn.classList.toggle('on', hideDone);
   btn.setAttribute('aria-pressed', hideDone ? 'true' : 'false');
-  btn.textContent = hideDone ? '✓ 隐藏已完成' : '隐藏已完成';
+  btn.textContent = hideDone ? '✓ 只看未完成' : '只看未完成';
+}
+function updateHiddenEntryUI() {
+  const btn = document.getElementById('hiddenEntryBtn');
+  if (!btn) return;
+  const n = reminders.filter(r => r.hidden).length;
+  if (n === 0) showHidden = false; // 没有隐藏项时自动退出显示隐藏模式
+  btn.textContent = showHidden ? '收起隐藏（' + n + '）' : '显示隐藏（' + n + '）';
+  btn.classList.toggle('on', showHidden);
+  btn.classList.toggle('hidden', n === 0);
 }
 document.getElementById('hideDoneBtn').addEventListener('click', () => {
   hideDone = !hideDone;
   setHideDone(hideDone);
   updateHideDoneUI();
+  render();
+});
+document.getElementById('hiddenEntryBtn').addEventListener('click', () => {
+  showHidden = !showHidden;
   render();
 });
 document.getElementById('listSearchInput').addEventListener('input', (e) => {
@@ -2134,6 +2177,7 @@ updateHideDoneUI();
 document.getElementById('batchEditBtn').addEventListener('click', () => enterBatchMode('list'));
 document.getElementById('batchSelectAllBtn').addEventListener('click', batchSelectAll);
 document.getElementById('batchDoneBtn').addEventListener('click', batchComplete);
+document.getElementById('batchHideBtn').addEventListener('click', batchToggleHidden);
 document.getElementById('batchDeleteBtn').addEventListener('click', batchDelete);
 document.getElementById('batchCancelBtn').addEventListener('click', exitBatchMode);
 document.getElementById('calBatchEditBtn').addEventListener('click', enterCalendarBatch);
@@ -2184,6 +2228,7 @@ async function doParse(text) {
       remindAcked: false,
       remindFiredAt: null,
       snoozeUntil: null,
+      hidden: false,
     });
   });
   save();
@@ -2390,6 +2435,7 @@ document.getElementById('manualSaveBtn').addEventListener('click', () => {
     remindAcked: false,
     remindFiredAt: null,
     snoozeUntil: null,
+    hidden: false,
   });
   save(); render();
   resetManualForm();
@@ -3579,6 +3625,7 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
             remindAcked: false,
             remindFiredAt: null,
       snoozeUntil: null,
+      hidden: false,
           });
         });
         if (res.results.length) { save(); render(); okCount++; }
@@ -3857,6 +3904,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     remindOn: !!r.remindOn, remindOffsets: normalizeStoredOffsets(r.remindOffsets),
     remindAcked: !!r.remindAcked, remindFiredAt: r.remindFiredAt || null,
     snoozeUntil: r.snoozeUntil || null,
+    hidden: !!r.hidden,
   }));
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -3896,6 +3944,7 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
         if (item.remindFiredAt === undefined) item.remindFiredAt = null;
         if (item.snoozeUntil === undefined || item.snoozeUntil === null) item.snoozeUntil = null;
         else { const su = Number(item.snoozeUntil); item.snoozeUntil = (Number.isFinite(su) && su > 0) ? su : null; }
+        if (item.hidden === undefined) item.hidden = false;
         if (!item.color) item.color = nextColor(); // 缺色则分配
         reminders.push(item);
         existingIds.add(item.id);
