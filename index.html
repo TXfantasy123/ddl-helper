@@ -43,9 +43,11 @@
     color: #fff;
     padding: 18px 16px;
     display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
     box-shadow: 0 2px 10px rgba(37, 99, 235, .25);
   }
-  header h1 { font-size: 18px; font-weight: 700; }
+  header h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
   .stat {
     background: rgba(255,255,255,.18);
     border-radius: 999px;
@@ -54,6 +56,18 @@
     white-space: nowrap;
   }
   .stat b { font-size: 18px; margin: 0 2px; color: #fde68a; }
+  .remind-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,.18); color: #fff;
+    border-radius: 999px; padding: 5px 12px;
+    font-size: 13px; font-weight: 600; white-space: nowrap;
+  }
+  .remind-pill:hover { background: rgba(255,255,255,.32); }
+  .remind-badge {
+    min-width: 17px; height: 17px; line-height: 17px; padding: 0 4px;
+    border-radius: 999px; background: #fde68a; color: #92400e;
+    font-size: 10px; font-weight: 700; text-align: center;
+  }
 
   main { max-width: 640px; margin: 0 auto; padding: 14px; }
 
@@ -85,10 +99,11 @@
   .ai-switch-state { font-size: 12px; font-weight: 700; color: var(--muted); width: 26px; }
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
   .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: .2s; }
-  .slider::before { content: ''; position: absolute; left: 3px; bottom: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: .2s; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: background .2s; }
+  /* 圆点位置 = 轨道宽度 - 圆点直径 - 左右内边距，保证 ON 贴最右、OFF 贴最左且不越界 */
+  .slider::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: left .2s; }
   .switch input:checked + .slider { background: var(--primary); }
-  .switch input:checked + .slider::before { transform: translateX(20px); }
+  .switch input:checked + .slider::before { left: calc(100% - 18px - 3px); transform: none; }
   button {
     border: none;
     border-radius: 10px;
@@ -207,6 +222,7 @@
   .cal-legend-body { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
   .cal-legend-body.hidden { display: none; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #334155; }
+  .cal-legend-note { flex: 1 1 100%; margin-top: 4px; font-size: 12px; color: var(--muted); }
   .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
   .cal-day-title { margin-top: 12px; font-weight: 700; font-size: 14px; }
   .cal-day-list { margin-top: 6px; }
@@ -225,12 +241,90 @@
   .tpl-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
   .tpl-btn { background: #f0fdf4; color: #16a34a; font-size: 12px; padding: 6px 10px; border: 1px solid #bbf7d0; }
   .tpl-btn:hover { background: #dcfce7; }
+  /* v1.4.0：自定义模板 chip（名称按钮 + 常驻移除 ×，触屏可点） */
+  .tpl-chip { display: inline-flex; align-items: stretch; max-width: 100%; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; overflow: hidden; }
+  .tpl-chip .tpl-btn { border: none; border-radius: 0; background: transparent; padding: 6px 4px 6px 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tpl-chip .tpl-btn:hover { background: #dcfce7; }
+  .tpl-remove {
+    background: transparent; color: #16a34a; font-size: 15px; line-height: 1;
+    padding: 0 9px; border-left: 1px solid #bbf7d0; border-radius: 0;
+    display: flex; align-items: center; min-height: 28px;
+  }
+  .tpl-remove:hover { background: #fee2e2; color: var(--danger); }
+  .tpl-remove.confirm { background: #fee2e2; color: var(--danger); font-size: 12px; font-weight: 600; white-space: nowrap; padding: 0 8px; }
+  .tpl-add { background: #fff; color: var(--primary); border: 1px dashed #93c5fd; font-weight: 600; }
+  .tpl-add:hover { background: #eff6ff; }
+  .tpl-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .tpl-reset { background: transparent; color: var(--muted); font-size: 12px; padding: 2px 0; text-decoration: underline; }
+  .tpl-reset:hover { color: var(--primary); }
+  .tpl-edit-btn {
+    margin-left: auto; margin-top: 1px; flex-shrink: 0;
+    background: #f1f5f9; color: var(--muted);
+    font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px;
+  }
+  .tpl-edit-btn:hover { background: #e2e8f0; }
+  .tpl-edit-btn.on { background: #dbeafe; color: var(--primary); }
+
+  /* ===== 提醒设置区（手动添加 / 编辑事项） ===== */
+  .remind-switch-wrap { display: flex; align-items: center; gap: 8px; padding-top: 5px; }
+  .remind-state { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .remind-box {
+    margin: 0 0 10px; padding: 10px;
+    background: #f8fafc; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .remind-box.hidden { display: none; }
+  .remind-title { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .remind-group { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .remind-group .remind-num {
+    width: 76px; flex: 0 0 auto;
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 10px; font-size: 14px; font-family: inherit; outline: none;
+  }
+  .remind-group .remind-num:focus { border-color: var(--primary); }
+  .remind-group .remind-unit {
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 6px; font-size: 14px; font-family: inherit;
+    background: #fff; color: var(--text); outline: none;
+  }
+  .remind-add, .remind-del {
+    padding: 5px 10px; font-size: 14px; line-height: 1.4;
+    background: #eef2ff; color: var(--primary); border-radius: 8px; flex-shrink: 0;
+  }
+  .remind-add-row { margin-bottom: 8px; }
+  .remind-add:hover { background: #e0e7ff; }
+  .remind-del { background: #fef2f2; color: var(--danger); }
+  .remind-del:hover { background: #fee2e2; }
+  .remind-summary { font-size: 13px; color: var(--primary); font-weight: 600; }
+  .remind-summary.empty { color: var(--muted); font-weight: 400; }
+
+  /* ===== 提醒弹窗 ===== */
+  .remind-modal-box { max-height: 86vh; overflow-y: auto; }
+  .remind-section { margin-bottom: 14px; }
+  .remind-section h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .remind-section-count { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+  .remind-list { display: grid; gap: 8px; }
+  .remind-empty {
+    color: var(--muted); font-size: 13px; text-align: center;
+    padding: 12px 0; background: #f8fafc; border-radius: 8px;
+  }
+  .remind-item {
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .remind-item-main { flex: 1; min-width: 0; }
+  .remind-item-title { font-size: 14px; font-weight: 600; word-break: break-all; }
+  .remind-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .remind-item-lead { font-size: 12px; color: #b45309; margin-top: 3px; }
+  .remind-item .btn-done { flex: 0 0 auto; width: 82px; }
+  .remind-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .remind-footer button { width: 100%; flex: none; }
+  .remind-footer .primary { flex: none; }
 
   /* ===== 编辑弹窗 ===== */
   .modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
   .modal.hidden { display: none; }
   .modal-mask { position: absolute; inset: 0; background: rgba(15,23,42,.45); }
-  .modal-box { position: relative; width: calc(100% - 40px); max-width: 420px; background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.2); }
+  .modal-box { position: relative; width: calc(100% - 40px); max-width: 420px; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.2); }
   .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .modal-head h3 { font-size: 16px; font-weight: 700; }
   .modal-close { background: #f1f5f9; color: var(--muted); padding: 4px 10px; font-size: 14px; }
@@ -241,6 +335,7 @@
   .key-masked { -webkit-text-security: disc; }
   .settings-providers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .form-row input[type="checkbox"] { flex: 0 0 auto; width: auto; margin-top: 8px; }
+  .form-row .switch input[type="checkbox"] { width: 0; height: 0; margin: 0; }
   button.disabled { opacity: .45; cursor: not-allowed; }
   .btn-edit { background: #eff6ff; color: var(--primary); width: 64px; }
   .btn-edit:hover { background: #dbeafe; }
@@ -249,6 +344,14 @@
   .error-bar { background: #fee2e2; color: #b91c1c; padding: 10px 14px; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
   .manual-hint { color: #b91c1c; font-size: 13px; margin: 8px 0 0; }
   .toast { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); background: rgba(15,23,42,.92); color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; z-index: 100; max-width: 82%; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+  @media (max-width: 430px) {
+    header { padding: 13px 10px; gap: 6px; }
+    header h1 { font-size: 15px; }
+    .header-right { gap: 4px; }
+    .stat { font-size: 11px; padding: 4px 8px; }
+    .stat b { font-size: 15px; }
+    .remind-pill { font-size: 11px; padding: 4px 8px; }
+  }
   .hidden { display: none; }
 </style>
 </head>
@@ -257,8 +360,11 @@
   <div id="toast" class="toast hidden"></div>
   <header>
     <h1>📚 DDL 小管家</h1>
-    <div class="stat">本周 <b id="weekCount">0</b> 个 DDL</div>
-    <button type="button" class="settings-btn" id="settingsBtn">⚙️</button>
+    <div class="header-right">
+      <div class="stat">本周 <b id="weekCount">0</b> 个 DDL</div>
+      <button type="button" class="remind-pill" id="remindEntryBtn" title="提醒事项">提醒事项<span class="remind-badge hidden" id="remindBadge">0</span></button>
+      <button type="button" class="settings-btn" id="settingsBtn">⚙️</button>
+    </div>
   </header>
   <div id="storageHint" class="storage-hint hidden">⚠️ 浏览器禁用了本地存储，提醒数据刷新后会丢失</div>
 
@@ -286,6 +392,10 @@
       <div class="tpl-row">
         <span class="tpl-label">模板</span>
         <div class="tpl-buttons" id="tplButtons"></div>
+        <button type="button" class="tpl-edit-btn" id="tplEditBtn">编辑</button>
+      </div>
+      <div class="tpl-foot hidden" id="tplFoot">
+        <button type="button" class="tpl-reset" id="tplResetBtn">恢复默认模板</button>
       </div>
 
       <div class="manual-form hidden" id="manualForm">
@@ -316,6 +426,17 @@
           <input id="mDeadline" type="date">
         </div>
         <div class="form-row">
+          <label>提醒</label>
+          <div class="remind-switch-wrap">
+            <label class="switch">
+              <input type="checkbox" id="mRemindToggle">
+              <span class="slider"></span>
+            </label>
+            <span class="remind-state" id="mRemindState">OFF</span>
+          </div>
+        </div>
+        <div id="mRemindBox" class="remind-box hidden"></div>
+        <div class="form-row">
           <label>备注</label>
           <input id="mNote" placeholder="补充说明">
         </div>
@@ -334,7 +455,7 @@
 
       <div id="listView">
         <div class="list-head">
-          <h2>提醒列表</h2>
+          <h2>事项列表</h2>
           <span class="sub" id="listCount"></span>
         </div>
         <ul id="list" style="list-style:none"></ul>
@@ -372,9 +493,60 @@
       <div class="form-row"><label>时间</label><input id="eTime" placeholder="如 9:00 / 10月15日 15:00-16:30"></div>
       <div class="form-row"><label>地点</label><input id="ePlace"></div>
       <div class="form-row"><label>截止日</label><input id="eDeadline" type="date"></div>
+      <div class="form-row">
+        <label>提醒</label>
+        <div class="remind-switch-wrap">
+          <label class="switch">
+            <input type="checkbox" id="eRemindToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="remind-state" id="eRemindState">OFF</span>
+        </div>
+      </div>
+      <div id="eRemindBox" class="remind-box hidden"></div>
       <div class="form-row"><label>备注</label><input id="eNote"></div>
       <div class="input-actions">
         <button type="button" class="primary" id="editSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tplModal" class="modal hidden">
+    <div class="modal-mask"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>添加模板</h3>
+        <button type="button" class="modal-close" id="tplClose">✕</button>
+      </div>
+      <div class="form-row"><label>名称</label><input id="tpName" placeholder="必填，按钮上显示的文字" maxlength="20"></div>
+      <div class="form-row"><label>默认标题</label><input id="tpTitle" placeholder="留空则用名称" maxlength="40"></div>
+      <div class="form-row"><label>默认备注</label><input id="tpNote" placeholder="点模板时预填到备注栏" maxlength="100"></div>
+      <div class="form-row"><label>提前天数</label><input id="tpAdvance" type="number" min="0" step="1" placeholder="如 3（可选）"></div>
+      <div class="settings-hint">提前天数为预留字段，暂只保存、不影响预填</div>
+      <div class="input-actions">
+        <button type="button" class="primary" id="tplSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="remindModal" class="modal hidden">
+    <div class="modal-mask"></div>
+    <div class="modal-box remind-modal-box">
+      <div class="modal-head">
+        <h3>🔔 提醒事项</h3>
+        <button type="button" class="modal-close" id="remindClose">✕</button>
+      </div>
+      <div class="remind-section">
+        <h4>当前提醒事项<span class="remind-section-count" id="remindCurrentCount"></span></h4>
+        <div class="remind-list" id="remindCurrentList"></div>
+      </div>
+      <div class="remind-section">
+        <h4>历史提醒事项</h4>
+        <div class="remind-list" id="remindHistoryList"></div>
+      </div>
+      <div class="remind-footer">
+        <button type="button" class="ghost" id="remindStarAllBtn">⭐ 一键收藏当前提醒</button>
+        <button type="button" class="primary" id="remindAckBtn">我知道了</button>
       </div>
     </div>
   </div>
@@ -471,7 +643,12 @@ const PROVIDERS = [
   { name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', vision: true, visionModel: 'gpt-4o-mini' },
 ];
 
-const SYSTEM_PROMPT = `你是校园通知解析助手。用户会提供一条或多条校园通知，请把每一条通知分别解析，提取：标题(简短概括事项，如'创业项目入驻申报')、时间、地点、截止日期。只输出JSON数组，格式：[{"title":"","time":"","place":"","deadline":""}]，每条通知对应数组里的一个对象，没有的字段留空字符串。只有一条通知时也输出长度为1的数组。不要输出JSON以外的任何内容。`;
+const SYSTEM_PROMPT = `你是校园通知解析助手。用户会提供一条或多条校园通知，请把每一条通知分别解析，提取：标题、时间、地点、截止日期。只输出JSON数组，格式：[{"title":"","time":"","place":"","deadline":""}]，每条通知对应数组里的一个对象，没有的字段留空字符串。只有一条通知时也输出长度为1的数组。不要输出JSON以外的任何内容。
+要求：
+1. 时间、截止日期统一输出为 "YYYY-MM-DD HH:MM"（24小时制）；原文是时间段时输出 "YYYY-MM-DD HH:MM - YYYY-MM-DD HH:MM"。
+2. 中文数字时间必须转成阿拉伯数字，并按上午/下午/晚上/中午/凌晨换算成24小时制：晚上十一点二十一→23:21，下午三点→15:00，上午九点→09:00，中午十二点→12:00。缺年份时补当前年份。
+3. 截止日期重点读取「截止」「截止时间」「报名时间」「缴费截止」后面的日期和时间，例如「缴费截止10月21日晚上十一点二十一」→ "2026-10-21 23:21"。
+4. 标题必须简短具体，从正文提炼（如"四六级考试报名"）；确实无法提炼时用正文首句前20字，不要输出"待办事项"这类空泛标题。`;
 
 const STORAGE_KEY = 'ddl_helper_v1';
 let reminders = [];
@@ -493,7 +670,14 @@ function load() {
   } catch (e) {
     reminders = [];
   }
-  reminders.forEach(r => { if (r.starred === undefined) r.starred = false; });
+  reminders.forEach(r => {
+    if (r.starred === undefined) r.starred = false;
+    // v1.5.0 提醒字段：老数据缺省补默认
+    if (r.remindOn === undefined) r.remindOn = false;
+    r.remindOffsets = normalizeStoredOffsets(r.remindOffsets);
+    if (r.remindAcked === undefined) r.remindAcked = false;
+    if (r.remindFiredAt === undefined) r.remindFiredAt = null;
+  });
   // 颜色方案升级：按创建顺序用新调色板重分配，修复旧调色板里"琥珀/橙"等近似色（只做一次）
   if (localStorage.getItem('ddl_color_ver') !== COLOR_VERSION) {
     reminders.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
@@ -519,7 +703,18 @@ function genId() {
 }
 
 /* ---------- 日期工具 ---------- */
-// 把 "2026-03-28" / "3月28日" / "3/28" / "2026年3月28日" 解析为 Date（缺少年份默认取今年）
+// 缺年份的月/日：取距今天最近的那一年（处理跨年，如 12 月看到「1月5日」应落到明年）
+function inferYearForMd(month, day) {
+  const now = new Date();
+  const y0 = now.getFullYear();
+  let bestY = y0, bestDiff = Infinity;
+  [y0 - 1, y0, y0 + 1].forEach((y) => {
+    const diff = Math.abs(new Date(y, month - 1, day).getTime() - now.getTime());
+    if (diff < bestDiff) { bestDiff = diff; bestY = y; }
+  });
+  return bestY;
+}
+// 把 "2026-03-28" / "3月28日" / "3/28" / "2026年3月28日" 解析为 Date（缺年份取距今天最近的年份）
 function parseDate(str) {
   if (!str) return null;
   let m;
@@ -527,17 +722,76 @@ function parseDate(str) {
     return new Date(+m[1], +m[2] - 1, +m[3]);
   }
   if ((m = str.match(/(\d{1,2})月(\d{1,2})日?/))) {
-    const now = new Date();
-    return new Date(now.getFullYear(), +m[1] - 1, +m[2]);
+    return new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
   }
   if ((m = str.match(/(\d{1,2})[\/\-.](\d{1,2})/))) {
-    const now = new Date();
-    return new Date(now.getFullYear(), +m[1] - 1, +m[2]);
+    return new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
   }
   return null;
 }
 function fmtDate(d) {
   return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+/* ---------- 时间解析工具（支持中文数字 / 上下午转 24 小时制） ---------- */
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmtHm(h, m) { return pad2(h) + ':' + pad2(m); }
+
+// 中文数字转整数：一~九十九，如 十一→11、二十一→21、三十→30
+const CN_DIGITS = { '零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9 };
+function cnNumToInt(str) {
+  if (str == null) return null;
+  const s = String(str).trim();
+  if (!s) return null;
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  if (s === '十') return 10;
+  let m = s.match(/^([一二两三四五六七八九])?十([一二三四五六七八九])?$/);
+  if (m) return (m[1] ? CN_DIGITS[m[1]] : 1) * 10 + (m[2] ? CN_DIGITS[m[2]] : 0);
+  if (s.length === 1 && CN_DIGITS[s] !== undefined) return CN_DIGITS[s];
+  return null;
+}
+
+// 上下午/晚上 → 24 小时制
+function applyPeriod(h, period) {
+  if (!period) return h;
+  if (period === '凌晨') return h === 12 ? 0 : h;
+  if (period === '中午') return h < 11 ? h + 12 : h;
+  if (period === '下午' || period === '傍晚') return h < 12 ? h + 12 : h;
+  if (period === '晚上' || period === '夜里' || period === '夜间') {
+    if (h === 12) return 0;
+    return h < 12 ? h + 12 : h;
+  }
+  return h; // 上午/早上/早晨
+}
+
+function validClock(h, m, period) {
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  const hh = applyPeriod(h, period || '');
+  if (hh < 0 || hh > 23) return null;
+  return { h: hh, m: m };
+}
+
+// 从字符串开头解析一个时间点："9:00" / "晚上11:21" / "十一点二十一" / "下午三点"
+function parseLeadingClock(str) {
+  const s = String(str || '');
+  if (!s) return null;
+  let m = s.match(/^\s*(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚|夜里|夜间)?\s*(\d{1,2})[:：](\d{2})/);
+  if (m) return validClock(+m[2], +m[3], m[1]);
+  m = s.match(/^\s*(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚|夜里|夜间)?\s*(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})(?:点|时)(?:\s*(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})\s*分?)?/);
+  if (m) {
+    const h = cnNumToInt(m[2]);
+    const mi = m[3] ? cnNumToInt(m[3]) : 0;
+    if (h === null || mi === null) return null;
+    return validClock(h, mi, m[1]);
+  }
+  return null;
+}
+
+// 在某个位置之后（跳过常见标点）解析时间点
+function parseClockAfter(text, endIndex) {
+  const rest = String(text || '').slice(endIndex).replace(/^[\s，,。、；;：:（(【\[]+/, '');
+  return parseLeadingClock(rest);
 }
 // 本周（周一起算）范围
 function getWeekRange() {
@@ -567,201 +821,618 @@ function countThisWeek() {
  * 先把界面、列表、统计、存储全部跑通；
  * 之后接入真实大模型时，只需把 parseToReminders 内部替换为调用 API 即可。
  * ===================================================================== */
+/* =====================================================================
+ * 离线解析器 v1.6.0 —— 纯前端规则（无 Key / AI 关闭时使用）
+ * 统一流程：归一化文本 → 日期 token / 时间 token → 标题/时间/地点/截止日
+ * 支持：中文数字日期时间、相对日期、星期、区间、多通知拆分、干扰项过滤
+ * ===================================================================== */
+
+// 全角转半角 + 去掉表情/群聊装饰，便于统一正则
+function normalizeForParse(text) {
+  let s = String(text || '');
+  s = s.replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  s = s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, ' ');
+  s = s.replace(/[。]/g, '.');
+  s = s.replace(/\r/g, '\n');
+  s = s.replace(/[ \t]+/g, ' ');
+  return s;
+}
+
+function normalizePeriod(p) {
+  if (!p) return '';
+  if (p === '今晚' || p === '明晚') return '晚上';
+  if (p === '明早' || p === '今早' || p === '今晨') return '早上';
+  return p;
+}
+
+// 收集时间点 token（含中文数字 / 点半 / 一刻 / 上下午 / 相对时段）
+function collectClockTokens(text) {
+  const src = normalizeForParse(text);
+  const out = [];
+  const re = /(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚|夜里|夜间|今晚|明早|明晚|今早|今晨)?\s*(?:(\d{1,2})\s*[:：]\s*(\d{2})|(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})\s*(?:点|时)(?:\s*(半|一刻|三刻)|(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})\s*分?)?)/g;
+  let m;
+  while ((m = re.exec(src))) {
+    let h = null, mi = 0;
+    if (m[2] !== undefined) {
+      h = +m[2]; mi = +m[3];
+    } else {
+      h = cnNumToInt(m[4]);
+      if (m[5] === '半') mi = 30;
+      else if (m[5] === '一刻') mi = 15;
+      else if (m[5] === '三刻') mi = 45;
+      else if (m[6] !== undefined) mi = cnNumToInt(m[6]);
+      if (h === null || mi === null) continue;
+    }
+    if (!(h >= 0 && h <= 23 && mi >= 0 && mi <= 59)) continue;
+    out.push({ index: m.index, end: m.index + m[0].length, h: h, m: mi, period: normalizePeriod(m[1]) });
+  }
+  return out;
+}
+
+function clockTokenHm(tok, inheritedPeriod) {
+  if (!tok) return null;
+  const period = tok.period || inheritedPeriod || '';
+  const hh = applyPeriod(tok.h, period);
+  if (hh < 0 || hh > 23) return null;
+  return { h: hh, m: tok.m };
+}
+
+// 时间点/时间段格式化：9:00-11:00 / 下午2点到5点 → 14:00-17:00
+function formatClockTokens(src, tokens, inheritedPeriod) {
+  if (!tokens.length) return '';
+  const parts = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const c1 = tokens[i];
+    if (i + 1 < tokens.length) {
+      const between = src.slice(c1.end, tokens[i + 1].index);
+      if (/^\s*(?:[-—–~～]{1,3}|至|到)\s*$/.test(between)) {
+        const c2 = tokens[i + 1];
+        const a = clockTokenHm(c1, inheritedPeriod);
+        const b = clockTokenHm(c2, c1.period || inheritedPeriod);
+        if (a && b) {
+          parts.push(fmtHm(a.h, a.m) + '-' + fmtHm(b.h, b.m));
+          i += 2;
+          continue;
+        }
+      }
+    }
+    const a = clockTokenHm(c1, inheritedPeriod);
+    if (a) parts.push(fmtHm(a.h, a.m));
+    i++;
+  }
+  return parts.join(' ');
+}
+
+function formatDateToken(tok) {
+  const start = tok.m + '月' + tok.d + '日';
+  if (tok.rangeEnd) return start + '-' + tok.rangeEnd.m + '月' + tok.rangeEnd.d + '日';
+  return start;
+}
+
+// 相对日期：今天/明天/后天/本周X/下周X/X天后/月底/下月初
+function collectRelativeDateTokens(src, existing) {
+  const out = [];
+  const push = (index, end, date, period, raw) => {
+    out.push({
+      index: index, end: end,
+      y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate(),
+      period: period || '', raw: raw || '',
+    });
+  };
+  let m;
+  // X 天后 / X 天之后
+  const reDays = /(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})\s*天\s*(?:后|之后|以后)/g;
+  while ((m = reDays.exec(src))) {
+    const n = cnNumToInt(m[1]);
+    if (n !== null && n >= 0 && n <= 400) {
+      const d = new Date(); d.setDate(d.getDate() + n);
+      push(m.index, m.index + m[0].length, d, '', m[0]);
+    }
+  }
+  // 相对词
+  const relMap = { '今天': 0, '今日': 0, '今晚': 0, '今早': 0, '今晨': 0, '明天': 1, '明日': 1, '明早': 1, '明晚': 1, '明晨': 1, '后天': 2, '大后天': 3, '昨天': -1, '昨日': -1 };
+  const reRel = /(大后天|今天|今日|今晚|今早|今晨|明天|明日|明早|明晚|明晨|后天|昨天|昨日)/g;
+  while ((m = reRel.exec(src))) {
+    const d = new Date(); d.setDate(d.getDate() + relMap[m[1]]);
+    const period = /晚/.test(m[1]) ? '晚上' : (/早|晨/.test(m[1]) ? '早上' : '');
+    push(m.index, m.index + m[0].length, d, period, m[0]);
+  }
+  // 月底 / 下月初 / 下月底
+  const reMonth = /(下下|下|本|这)?\s*月\s*(底|末|初)/g;
+  while ((m = reMonth.exec(src))) {
+    const off = m[1] === '下' ? 1 : (m[1] === '下下' ? 2 : 0);
+    const now = new Date();
+    const y = now.getFullYear(), mo = now.getMonth() + off;
+    const d = m[2] === '初' ? new Date(y, mo, 1) : new Date(y, mo + 1, 0);
+    push(m.index, m.index + m[0].length, d, '', m[0]);
+  }
+  // 星期：本周五 / 下周一 / 周三 / 星期三 / 礼拜三（每周 X 视为重复，不转日期）
+  const reWd = /(每)?\s*(下下|下|本|这)?\s*(?:周|星期|礼拜)\s*([一二三四五六日天])/g;
+  const wdMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7 };
+  while ((m = reWd.exec(src))) {
+    if (m[1]) continue;
+    const before = src.slice(Math.max(0, m.index - 4), m.index);
+    if (before.includes('每')) continue;
+    // 紧跟在显式日期后（如 10月25日（周日））则跳过，避免重复
+    if (existing.some(t => t.index < m.index && m.index - t.end <= 6)) continue;
+    const wd = wdMap[m[3]];
+    const { monday } = getWeekRange();
+    const off = m[2] === '下' ? 1 : (m[2] === '下下' ? 2 : 0);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + off * 7 + (wd - 1));
+    if (!m[2]) {
+      const today = startOfDay(new Date());
+      if (d < today) d.setDate(d.getDate() + 7);
+    }
+    push(m.index, m.index + m[0].length, d, '', m[0]);
+  }
+  return out;
+}
+
+// 同一位置/被包含的 token 去重（保留更长的 range token）
+function dedupeDateTokens(tokens) {
+  const sorted = tokens.slice().sort((a, b) => (a.index - b.index) || ((b.end - b.index) - (a.end - a.index)));
+  const out = [];
+  sorted.forEach(t => {
+    if (out.some(o => t.index >= o.index && t.index < o.end)) return;
+    out.push(t);
+  });
+  return out;
+}
+
+// 收集日期 token：完整年月日 / 月日范围 / 斜杠点短横线 / 中文数字 / 相对日期
+function collectDateTokens(text) {
+  const src = normalizeForParse(text);
+  const tokens = [];
+  const add = (index, end, mo, d, y, rangeEnd) => tokens.push({ index: index, end: end, m: mo, d: d, y: y, rangeEnd: rangeEnd });
+  let m;
+
+  const reFull = /(\d{4})\s*[年\/.\-]\s*(\d{1,2})\s*[月\/.\-]\s*(\d{1,2})\s*[日号]?/g;
+  while ((m = reFull.exec(src))) {
+    const y = +m[1], mo = +m[2], d = +m[3];
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) add(m.index, m.index + m[0].length, mo, d, y);
+  }
+
+  const reRange = /(\d{1,2})(?![\d])\s*月\s*(\d{1,2})(?![\d])\s*[日号]?\s*[-—–~～至到]\s*(\d{1,2})(?![\d])(?:\s*[日号])?(?!\s*月)/g;
+  while ((m = reRange.exec(src))) {
+    const mo = +m[1], d1 = +m[2], d2 = +m[3];
+    if (mo >= 1 && mo <= 12 && d1 >= 1 && d1 <= 31 && d2 >= d1 && d2 <= 31) {
+      add(m.index, m.index + m[0].length, mo, d1, undefined, { m: mo, d: d2 });
+    }
+  }
+
+  const reNumRange = /(\d{1,2})\s*[\/.]\s*(\d{1,2})(?![\d.])\s*[-—–~～至到]\s*(\d{1,2})\s*[\/.]\s*(\d{1,2})(?![\d.])/g;
+  while ((m = reNumRange.exec(src))) {
+    const mo1 = +m[1], d1 = +m[2], mo2 = +m[3], d2 = +m[4];
+    if (mo1 >= 1 && mo1 <= 12 && d1 >= 1 && d1 <= 31 && mo2 >= 1 && mo2 <= 12 && d2 >= 1 && d2 <= 31) {
+      add(m.index, m.index + m[0].length, mo1, d1, undefined, { m: mo2, d: d2 });
+    }
+  }
+
+  const reMd = /(\d{1,2})(?![\d])\s*月\s*(\d{1,2})(?![\d])\s*[日号]?/g;
+  while ((m = reMd.exec(src))) {
+    const mo = +m[1], d = +m[2];
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) add(m.index, m.index + m[0].length, mo, d);
+  }
+
+  const reCnMd = /([零〇一二两三四五六七八九十]{1,3})\s*月\s*([零〇一二两三四五六七八九十]{1,3})(?![\d])\s*[日号]?/g;
+  while ((m = reCnMd.exec(src))) {
+    const mo = cnNumToInt(m[1]), d = cnNumToInt(m[2]);
+    if (mo !== null && d !== null && mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+      add(m.index, m.index + m[0].length, mo, d);
+    }
+  }
+
+  const reXun = /([零〇一二两三四五六七八九十]{1,3})\s*月\s*(上旬|中旬|下旬)/g;
+  while ((m = reXun.exec(src))) {
+    const mo = cnNumToInt(m[1]);
+    const d = m[2] === '上旬' ? 5 : (m[2] === '中旬' ? 15 : 25);
+    if (mo !== null && mo >= 1 && mo <= 12) add(m.index, m.index + m[0].length, mo, d);
+  }
+
+  const reNum = /(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![\d.])/g;
+  while ((m = reNum.exec(src))) {
+    const before = m.index > 0 ? src[m.index - 1] : '';
+    if (/[\dA-Za-z.]/.test(before)) continue; // 排除 v1.5.4 / 2026-10 内部片段
+    const mo = +m[1], d = +m[2];
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) add(m.index, m.index + m[0].length, mo, d);
+  }
+
+  collectRelativeDateTokens(src, tokens).forEach(t => tokens.push(t));
+  return dedupeDateTokens(tokens);
+}
+
+// 组合 time 字段：日期 token + 时间 token
+function buildTimeText(src, dateTokens, clockTokens) {
+  const dates = dateTokens.slice().sort((a, b) => a.index - b.index);
+  const clocks = clockTokens.slice().sort((a, b) => a.index - b.index);
+  if (!dates.length && !clocks.length) return '';
+  if (!dates.length) return formatClockTokens(src, clocks, '');
+  if (!clocks.length) {
+    if (dates.length === 1) return formatDateToken(dates[0]);
+    return formatDateToken(dates[0]) + '-' + formatDateToken(dates[dates.length - 1]);
+  }
+  if (dates.length === 1) {
+    const ct = formatClockTokens(src, clocks, dates[0].period || '');
+    return formatDateToken(dates[0]) + (ct ? ' ' + ct : '');
+  }
+  const lastEnd = dates[dates.length - 1].end;
+  if (clocks[0].index >= lastEnd) {
+    return dates.map(t => formatDateToken(t)).join('-') + ' ' + formatClockTokens(src, clocks, '');
+  }
+  const parts = [];
+  dates.forEach((dt, i) => {
+    const nextIdx = i + 1 < dates.length ? dates[i + 1].index : Infinity;
+    const cs = clocks.filter(c => c.index >= dt.end && c.index < nextIdx);
+    const ct = formatClockTokens(src, cs, dt.period || '');
+    parts.push(formatDateToken(dt) + (ct ? ' ' + ct : ''));
+  });
+  return parts.join(' - ');
+}
+
+// 拆分多条通知：空行 / 编号 / 多个「关于…通知」/「XX安排：」分号列表
+function splitNotices(text) {
+  const src = normalizeForParse(text).trim();
+  if (!src) return [];
+
+  // 1) 编号列表（1. / 2. / 一、二、/（1））
+  const lines = src.split('\n');
+  const numbered = [];
+  lines.forEach(line => {
+    const m = line.match(/^\s*(?:[一二三四五六七八九十]+[、.]|\d+[.、)]|[（(]\d+[)）])\s*(.*)$/);
+    if (m) {
+      numbered.push(m[1].trim());
+    } else if (numbered.length) {
+      numbered[numbered.length - 1] += '\n' + line.trim();
+    }
+  });
+  if (numbered.length >= 2) return numbered.filter(Boolean);
+
+  // 1.5) 多个有意义的【标题】段落（排除【活动主题】【活动地点】这类字段标签）
+  const isBracketTitle = line => {
+    const mm = line.match(/^\s*【([^】]{2,30})】/);
+    if (!mm) return false;
+    const inner = mm[1];
+    if (/^(重要|紧急|转发|通知|公告|提醒|提示|注意)$/.test(inner)) return false;
+    if (/(?:主题|地点|地址|时间|对象|要求|内容|主办|承办|联系人|电话|方式|费用|名额)$/.test(inner)) return false;
+    return /(?:通知|公告|活动|比赛|报名|申请|考试|讲座|招募|评选|评审|检查|采集|维护|安排|晚会|大会|典礼|沙龙)/.test(inner);
+  };
+  if (lines.filter(isBracketTitle).length >= 2) {
+    const parts = [];
+    let cur = '';
+    lines.forEach(line => {
+      if (isBracketTitle(line) && cur.trim()) {
+        parts.push(cur.trim());
+        cur = line;
+      } else {
+        cur += (cur ? '\n' : '') + line;
+      }
+    });
+    if (cur.trim()) parts.push(cur.trim());
+    if (parts.length >= 2) return parts;
+  }
+
+  // 2) 空行分隔，且至少两块含日期/时间（避免把「标题+正文」拆开）
+  const blocks = src.split(/\n\s*\n+/).map(b => b.trim()).filter(Boolean);
+  if (blocks.length >= 2) {
+    const rich = blocks.filter(b => collectDateTokens(b).length > 0 || collectClockTokens(b).length > 0);
+    if (rich.length >= 2) return blocks;
+  }
+
+  // 3) 多个「关于…的通知」并列
+  const aboutMatches = src.match(/关于[^。\n]{2,50}?的通知/g) || [];
+  if (aboutMatches.length >= 2) {
+    const parts = src.split(/(?=关于[^。\n]{2,50}?的通知)/).map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) return parts;
+  }
+
+  // 4) 「XX安排：条目；条目」式列表（期末考试/补考安排等）
+  const hm = src.match(/^\s*([^\n。]{0,20}?安排)\s*[:：]\s*([\s\S]+)$/);
+  if (hm) {
+    const clauses = hm[2].split(/[；;]/).map(s => s.trim()).filter(Boolean);
+    const dated = clauses.filter(c => collectDateTokens(c).length > 0 || collectClockTokens(c).length > 0);
+    if (dated.length >= 2) return dated;
+  }
+  return [src];
+}
+
 function refineTitle(s) {
   s = (s || '').trim();
-  s = s.replace(/^(关于|主题|关于开展|关于举办)\s*[:：]?\s*/, '');
+  s = s.replace(/^(关于|主题|关于开展|关于举办|关于做好)\s*[:：]?\s*/, '');
   s = s.replace(/^[“"'『「]+|[”"'』」]+$/g, '');
+  s = s.replace(/^(开展|举办|组织|做好)\s*/, '');
   const dash = s.split(/——|—|–/);
   if (dash.length > 1 && dash[1].trim()) s = dash[1].trim();
   return s.slice(0, 24) || '待办事项';
 }
 
+// 主题核心词清理：去年份/学期/届次前缀与「工作有关事项」等尾巴
+function cleanThemeTitle(s) {
+  let t = String(s || '').trim();
+  t = t.replace(/^(?:关于|关于开展|关于举办|关于做好)\s*[:：]?\s*/, '');
+  t = t.replace(/^(?:开展|举办|组织|做好)\s*/, '');
+  t = t.replace(/^\d{4}\s*(?:年|届)?\s*/, '');
+  t = t.replace(/^(?:春季|秋季|夏季|冬季)\s*学期?\s*/, '');
+  t = t.replace(/^(?:上|下)半年\s*/, '');
+  t = t.replace(/^第[一二三四五六七八九十\d]+届\s*/, '');
+  t = t.replace(/(?:工作有关事项|有关事项|相关事项|工作事宜|有关事宜|工作)\s*$/, '');
+  t = t.replace(/[的\s]+$/, '');
+  return t;
+}
+
 function extractTitle(text) {
-  const TABLE = [
-    // 考务/考试
-    ['四六级', '四六级考试报名'],
-    ['四、六级', '四六级考试报名'],
-    ['英语四级', '英语四级考试报名'],
-    ['英语六级', '英语六级考试报名'],
-    // 选课排课
-    ['正选', '选课（正选）'],
-    ['预选', '选课（预选）'],
-    ['补选', '选课（补选）'],
-    ['选课', '选课'],
-    ['退课', '退课'],
-    ['任选课', '任选课申请'],
-    ['公选课', '公选课申请'],
-    ['辅修', '辅修报名'],
-    ['微专业', '微专业招生'],
-    // 课程事务
-    ['免听', '课程免听'],
-    ['免修', '课程免修'],
-    ['补修', '补修'],
-    ['重修', '重修'],
-    ['补考', '补考'],
-    // 学籍学业
-    ['降转', '转专业（降转）'],
-    ['转专业', '转专业'],
-    ['注册', '学籍注册'],
-    ['学籍', '学籍事务'],
-    ['报到', '报到'],
-    // 毕业论文/实践
-    ['毕业论文', '毕业论文'],
-    ['论文答辩', '论文答辩'],
-    ['答辩', '论文答辩'],
-    // 体育健康
-    ['体测', '体质健康测试'],
-    ['体质健康', '体质健康测试'],
-    ['体质测试', '体质健康测试'],
-    ['课外锻炼', '课外锻炼'],
-    ['体育保健班', '体育保健班'],
-    ['疫苗', '疫苗接种'],
-    ['接种', '疫苗接种'],
-    ['体检', '体检'],
-    // 奖助评优
-    ['奖学金', '奖学金申请'],
-    ['助学金', '助学金申请'],
-    ['教学成果奖', '教学成果奖申报'],
-    ['校长奖', '校长奖评选'],
-    // 竞赛
-    ['创新大赛', '创新大赛'],
-    ['学科竞赛', '学科竞赛'],
-    ['竞赛', '学科竞赛报名'],
-    ['比赛', '比赛报名'],
-    // 校园活动（讲座/分享）
-    ['学长归来', '学长归来经验分享会'],
-    ['分享会', '经验分享会'],
-    ['经验分享', '经验分享会'],
-    ['讲座', '讲座'],
-    ['宣讲', '宣讲会'],
-    ['报告会', '报告会'],
-    ['座谈会', '座谈会'],
-    ['沙龙', '沙龙'],
-    ['升学规划', '升学规划分享'],
-    ['学业成长', '学业成长分享'],
-    // 费用/证书
-    ['证书', '证书办理'],
-    ['缴费', '缴费'],
-    ['学费', '学费缴纳'],
-    // 兜底泛词
-    ['考试', '考试'],
-    ['报名', '报名'],
-  ];
-  const t = (text || '').trim();
+  let src = normalizeForParse(text).trim();
+  if (!src) return '待办事项';
+  src = src.replace(/^@(?:全体成员|所有人|all)\s*/i, '').trim();
   let m;
 
-  // 1) 显式主题字段：【活动主题】/【主题】/ 主题：
-  m = t.match(/【(?:活动)?主题】\s*[:：]?\s*([^\n。；;【]+)/);
+  // 0) 显式主题字段
+  m = src.match(/【(?:活动)?主题】\s*[:：]?\s*([^\n.；;【]{2,50})/);
   if (m) return refineTitle(m[1]);
-  m = t.match(/(?:活动)?主题\s*[:：]\s*([^\n。；;【]+)/);
+  m = src.match(/(?:活动)?主题\s*[:：]\s*([^\n.；;【]{2,50})/);
   if (m) return refineTitle(m[1]);
 
-  // 2) 关键词表
-  for (const [kw, label] of TABLE) {
-    if (t.includes(kw)) return label;
+  // 1) 「关于……的通知/公告/通报/决定」→ 取关于与的通知之间的核心短语
+  m = src.match(/关于\s*([^.\n]{2,80}?)(?:的)?\s*(?:通知|公告|通报|决定|安排|说明|提示)/);
+  if (m) {
+    const core = refineTitle(cleanThemeTitle(m[1]));
+    if (core && core !== '待办事项') return core;
   }
 
-  // 3) 开头方括号标题：【关于……】
-  m = t.match(/^\s*【([^】]{2,40})】/);
-  if (m) return refineTitle(m[1]);
+  // 1.5) 「现将……通知如下 / 决定如下」——事务主题常在长前缀之后
+  m = src.match(/现将\s*([^。\n]{2,80}?)\s*(?:通知如下|公告如下|安排如下|决定如下|通知|公告)/);
+  if (m) {
+    const core = refineTitle(cleanThemeTitle(m[1]));
+    if (core && core !== '待办事项') return core;
+  }
 
-  // 4) fallback：剥群发/标签前缀后取首句
-  const cleaned = t
-    .replace(/^\s*@(?:全体成员|所有人)\s*/, '')
-    .replace(/^\s*@all\b\s*/i, '')
-    .replace(/^\s*【[^】]*】\s*/, '')
-    .replace(/^\s*\[[^\]]*\]\s*/, '');
-  const first = cleaned.split(/[\n。；;]/)[0].trim();
+  // 2) 方括号标题（跳过「重要/紧急/转发/通知」等标签）
+  const bracketLabels = /^(重要|紧急|通知|公告|转发|提醒|提示|注意|必看)$/;
+  const brackets = src.match(/【([^】]{2,30})】/g) || [];
+  for (const b of brackets) {
+    let inner = b.replace(/^【|】$/g, '').trim();
+    if (bracketLabels.test(inner)) continue;
+    inner = inner.replace(/(?:通知|公告|提醒|提示)$/, '').trim();
+    if (bracketLabels.test(inner)) continue;
+    if (inner.length >= 2) return refineTitle(inner);
+  }
+
+  // 3) 事件短语：召开/举办/举行 + 事件名
+  m = src.match(/(?:召开|举办|举行|组织)\s*([^,，.;；\n]{2,24})/);
+  if (m) {
+    const t = refineTitle(m[1]);
+    if (t && t !== '待办事项') return t;
+  }
+
+  // 4) 校园通知关键词表
+  const TABLE = [
+    ['四六级', '四六级考试报名'], ['英语四级', '英语四级考试报名'], ['英语六级', '英语六级考试报名'],
+    ['选课', '选课'], ['补选', '选课（补选）'], ['正选', '选课（正选）'], ['预选', '选课（预选）'],
+    ['补考', '补考'], ['期末考试', '期末考试'],
+    ['体测补测', '体测补测'], ['体测', '体测'], ['体质健康', '体测'],
+    ['数学竞赛', '数学竞赛'], ['学科竞赛', '学科竞赛'], ['竞赛', '学科竞赛报名'],
+    ['奖学金', '奖学金申请'], ['助学金', '助学金申请'],
+    ['缴费', '缴费'], ['学费', '学费缴纳'],
+    ['讲座', '讲座'], ['图书馆', '图书馆'], ['开学典礼', '开学典礼'], ['迎新晚会', '迎新晚会'],
+    ['年级大会', '年级大会'], ['评教', '学生评教'],
+    ['图像信息采集', '毕业图像信息采集'], ['图像采集', '毕业图像采集'],
+    ['校园网', '校园网维护'], ['维护', '网络维护'],
+    ['志愿者招募', '志愿者招募'], ['志愿者', '志愿者招募'], ['招募', '志愿者招募'],
+    ['社会实践', '社会实践'], ['校园卡', '校园卡办理'],
+    ['宿舍安全检查', '宿舍安全检查'], ['宿舍', '宿舍安全检查'], ['安全检查', '宿舍安全检查'],
+    ['论文', '课程论文'], ['实验报告', '实验报告'],
+    ['考试', '考试'], ['报名', '报名'],
+  ];
+  for (const [kw, label] of TABLE) {
+    if (src.includes(kw)) return label;
+  }
+
+  // 5) 开头「XX通知：」「XX提醒：」标签
+  m = src.match(/^\s*([^:：\n]{2,14}?)(?:通知|提醒|安排|公告)\s*[:：]/);
+  if (m) {
+    const t = refineTitle(m[1]);
+    if (t && !/^(教务处|学院|学校|学生处|后勤|保卫处|团委|各位同学|同学们)$/.test(t)) return t;
+  }
+
+  // 6) 「条目名 + 日期/时间」结构（多通知拆分后的课程/考试条目）
+  const dt = collectDateTokens(src);
+  const ct = collectClockTokens(src);
+  const firstIdx = Math.min(...dt.map(t => t.index), ...ct.map(t => t.index), 9999);
+  if (firstIdx > 0 && firstIdx <= 26) {
+    let prefix = src.slice(0, firstIdx).replace(/[：:，,、\s]+$/, '').trim();
+    prefix = prefix.replace(/^(?:各位同学|各位老师|同学们|老师们|全体同学|全体师生)\s*[:：,，]\s*/, '');
+    prefix = prefix.replace(/^.*[：:]/, '').trim();
+    prefix = prefix.replace(/^(?:关于|通知|公告|提醒|注意)[:：]?\s*/, '').trim();
+    if (prefix.length >= 2 && prefix.length <= 14 &&
+        !/[，,。；;]/.test(prefix) &&
+        !/(根据|统一安排|经研究|研究决定|现将|通知如下)/.test(prefix) &&
+        !/^(通知|公告|提醒|注意|时间|地点)$/.test(prefix)) {
+      return prefix.slice(0, 20);
+    }
+  }
+
+  // 7) 兜底：去掉称呼/群发前缀后取首句前 20 字
+  const cleaned = src
+    .replace(/^@(?:全体成员|所有人|all)\s*/i, '')
+    .replace(/^【[^】]*】\s*/, '')
+    .replace(/^\[[^\]]*\]\s*/, '')
+    .replace(/^(?:各位同学|各位老师|同学们|老师们|各位同事|全体同学|全体师生|大家好|亲们)\s*[:：,，]\s*/, '')
+    .replace(/^(?:根据|依据)[^，,。]{2,30}[，,]\s*/, '')
+    .replace(/^(?:经)[^，,。]{0,20}[，,]\s*/, '')
+    .replace(/^(?:现将)[^:：，,。]{0,30}[:：]\s*/, '');
+  const first = cleaned.split(/[\n.；;:：]/)[0].trim();
   return first.slice(0, 20) || '待办事项';
 }
 
 function findAllDates(text) {
+  const src = normalizeForParse(text);
+  const tokens = collectDateTokens(src);
   const out = [];
-  const re = /(\d{4})[年\/\-.](\d{1,2})[月\/\-.](\d{1,2})日?|(\d{1,2})月(\d{1,2})日/g;
-  let m;
-  while ((m = re.exec(text))) {
-    if (m[1]) out.push({ y: +m[1], m: +m[2], d: +m[3] });
-    else if (m[4]) out.push({ m: +m[4], d: +m[5] });
+  const dateOf = (mo, d, y) => new Date(y !== undefined ? y : inferYearForMd(mo, d), mo - 1, d);
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    let rangeEnd = tok.rangeEnd || null;
+    let endY;
+    // 相邻两个日期之间只有区间连接符（如 10月20日-10月25日）
+    if (!rangeEnd && i + 1 < tokens.length) {
+      const between = src.slice(tok.end, tokens[i + 1].index);
+      if (/^\s*(?:[-—–~～]{1,3}|至|到)\s*$/.test(between)) {
+        rangeEnd = { m: tokens[i + 1].m, d: tokens[i + 1].d };
+        endY = tokens[i + 1].y;
+        i++;
+      }
+    }
+    if (rangeEnd) {
+      const start = dateOf(tok.m, tok.d, tok.y);
+      const end = dateOf(rangeEnd.m, rangeEnd.d, endY !== undefined ? endY : tok.y);
+      if (end < start) end.setFullYear(end.getFullYear() + 1);
+      const cur = new Date(start);
+      let guard = 0;
+      while (cur <= end && guard++ < 400) {
+        out.push({ y: cur.getFullYear(), m: cur.getMonth() + 1, d: cur.getDate() });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      out.push(tok.y !== undefined ? { y: tok.y, m: tok.m, d: tok.d } : { m: tok.m, d: tok.d });
+    }
   }
   return out;
 }
 
+// 截止日格式化：日期 + 可选时间（优先该日期之后的第一个时钟）
+function deadlineDateText(tok, clockTok) {
+  const end = tok.rangeEnd || { m: tok.m, d: tok.d };
+  let text = end.m + '月' + end.d + '日';
+  if (clockTok) {
+    const hm = clockTokenHm(clockTok, tok.period || '');
+    if (hm) text += ' ' + fmtHm(hm.h, hm.m);
+  }
+  return text;
+}
+// 取某日期之后的第一个时钟；若中间夹着别的日期，则该时钟不属于它（如「报名截止10月30日，比赛时间11月15日9:00」）
+function findClockAfter(clocks, tok, maxDist, dates) {
+  const c = clocks.find(x => x.index >= tok.end && (maxDist === undefined || x.index - tok.end <= maxDist));
+  if (!c) return null;
+  if (dates && dates.some(d => d.index > tok.index && d.index < c.index)) return null;
+  return c;
+}
+function findLastClockAfter(clocks, tok) {
+  const arr = clocks.filter(c => c.index >= tok.end);
+  return arr.length ? arr[arr.length - 1] : null;
+}
+// 截止类关键词后最近的日期（用于截止日与 time 去重）
+function findCutoffDateToken(src, dates) {
+  const cutoffRe = /(?:截止时间|截止日期|截止至|截至|报名截止|缴费截止|选课截止|申请截止|提交截止|最晚|务必|请于|DDL|deadline|截止)/gi;
+  let m;
+  while ((m = cutoffRe.exec(src))) {
+    const kwEnd = m.index + m[0].length;
+    const dt = dates.find(d => d.index >= kwEnd && d.index - kwEnd <= 40);
+    if (dt) return dt;
+  }
+  return null;
+}
+
 function extractDeadline(text) {
-  // 1) 截止关键词附近
-  const cut = text.match(/(?:截止时间|截止日期|截止至|截至|DDL|deadline|截止)\s*[:：]?\s*(\d{4}年)?(\d{1,2})月(\d{1,2})日?/i);
-  if (cut) return cut[2] + '月' + cut[3] + '日';
+  const src = normalizeForParse(text);
+  const dates = collectDateTokens(src);
+  const clocks = collectClockTokens(src);
+  if (!dates.length) return '';
 
-  // 2) 时间段 "A日 至/到 B日" → 取结束 B
-  const range = text.match(/(\d{1,2})月(\d{1,2})日[^\d]{0,8}(?:至|到|～|~|-|—)[^\d]{0,8}(\d{1,2})月(\d{1,2})日/);
-  if (range) return range[3] + '月' + range[4] + '日';
+  // 1) 截止类关键词后最近的日期（+ 紧随其后的时间）
+  const cutoffTok = findCutoffDateToken(src, dates);
+  if (cutoffTok) return deadlineDateText(cutoffTok, findClockAfter(clocks, cutoffTok, 16, dates));
 
-  // 3) 最后一个出现的日期
-  const dates = findAllDates(text);
-  if (dates.length) {
-    const last = dates[dates.length - 1];
-    return last.m + '月' + last.d + '日';
+  // 2) 日期 + 前/之前/以前/逾期
+  for (const dt of dates) {
+    const after = src.slice(dt.end, dt.end + 12);
+    if (/^\s*(?:前|之前|以前)/.test(after)) {
+      return deadlineDateText(dt, findClockAfter(clocks, dt, 10, dates));
+    }
+    if (/逾期/.test(src.slice(dt.end, dt.end + 24))) {
+      return deadlineDateText(dt, findClockAfter(clocks, dt, 10, dates));
+    }
+  }
+
+  // 3) 无截止词：取「报名/活动…时间」的最后一天兜底
+  const timeKwRe = /(?:报名时间|报名日期|选课时间|活动时间|比赛时间|考试时间|采集时间|开放时间|办理时间|培训时间|演出时间|讲座时间|会议时间|上课时间|报到时间|注册时间|缴费时间|申请时间|领取时间|返校时间)/;
+  const tkm = src.match(timeKwRe);
+  if (tkm) {
+    const after = dates.filter(d => d.index >= tkm.index + tkm[0].length);
+    if (after.length) {
+      const last = after[after.length - 1];
+      return deadlineDateText(last, findLastClockAfter(clocks, last));
+    }
   }
   return '';
+}
+
+// 去掉连续重复的同一日期（如文本里先有 10月24日范围、后面又提到 10月24日）
+function pruneDateTokens(dates) {
+  const out = [];
+  dates.forEach(t => {
+    if (out.length) {
+      const prev = out[out.length - 1];
+      const prevEnd = prev.rangeEnd || { m: prev.m, d: prev.d };
+      if (prevEnd.m === t.m && prevEnd.d === t.d) return;
+    }
+    out.push(t);
+  });
+  return out;
 }
 
 function extractTime(text) {
-  let m;
-
-  // 1) 跨日时间段（数字时间）：10月15日 15:00 至 10月16日 16:30
-  m = text.match(/(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[:：](\d{2})\s*(?:至|到|[-—～~])\s*(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[:：](\d{2})/);
-  if (m) {
-    return m[1] + '月' + m[2] + '日 ' + m[3] + ':' + m[4] + ' - ' + m[5] + '月' + m[6] + '日 ' + m[7] + ':' + m[8];
+  const src = normalizeForParse(text);
+  let dates = pruneDateTokens(collectDateTokens(src));
+  let clocks = collectClockTokens(src);
+  // 截止日单独展示：从 time 中剔除截止词对应的日期；若它是最后一个日期，也剔除其后的截止时刻
+  const cutoffTok = findCutoffDateToken(src, dates);
+  if (cutoffTok) {
+    const hasLaterDate = dates.some(d => d.index > cutoffTok.index);
+    dates = dates.filter(d => d !== cutoffTok);
+    if (!hasLaterDate) clocks = clocks.filter(c => c.index < cutoffTok.end);
   }
-
-  // 2) 跨日时间段（中文时间）：10月15日晚上8点 至 10月16日上午9点
-  m = text.match(/(\d{1,2})月(\d{1,2})日\s*(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚)?\s*(\d{1,2})(?:点|时)(?:\s*(\d{1,2})分)?\s*(?:至|到|[-—～~])\s*(\d{1,2})月(\d{1,2})日\s*(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚)?\s*(\d{1,2})(?:点|时)(?:\s*(\d{1,2})分)?/);
-  if (m) {
-    const s = m[1] + '月' + m[2] + '日' + (m[3] || '') + m[4] + '点' + (m[5] ? m[5] + '分' : '');
-    const e = m[6] + '月' + m[7] + '日' + (m[8] || '') + m[9] + '点' + (m[10] ? m[10] + '分' : '');
-    return s + ' - ' + e;
-  }
-
-  // 3) 当日时间段：15:00-16:30 / 15:00至16:30
-  m = text.match(/(\d{1,2})[:：](\d{2})\s*(?:[-—–~～至到])\s*(\d{1,2})[:：](\d{2})/);
-  if (m) return m[1] + ':' + m[2] + '-' + m[3] + ':' + m[4];
-
-  // 4) 当日时间段（中文）：早上9点-下午4点
-  m = text.match(/(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚)?\s*(\d{1,2})(?:点|时)(?:\s*(\d{1,2})分)?\s*(?:[-—–~～至到])\s*(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚)?\s*(\d{1,2})(?:点|时)(?:\s*(\d{1,2})分)?/);
-  if (m) {
-    const s = (m[1] || '') + m[2] + '点' + (m[3] ? m[3] + '分' : '');
-    const e = (m[4] || '') + m[5] + '点' + (m[6] ? m[6] + '分' : '');
-    return s + '-' + e;
-  }
-
-  // 5) 时间点：15:00
-  m = text.match(/(\d{1,2})[:：](\d{2})/);
-  if (m) return m[1] + ':' + m[2];
-
-  // 6) 时间点（中文）：下午3点
-  m = text.match(/(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚)?\s*(\d{1,2})(?:点|时)(?:\s*(\d{1,2})分)?/);
-  if (m) {
-    const period = m[1] || '';
-    return period + m[2] + '点' + (m[3] ? m[3] + '分' : '');
-  }
-  return '';
+  return buildTimeText(src, dates, clocks);
 }
 
 function extractPlace(text) {
-  let m = text.match(/【(?:活动)?地点】\s*[:：]?\s*([^\s，。,；;、\n]+)/);
+  const src = normalizeForParse(text);
+  const badPlace = /(?:电话|手机|QQ|群号|学号|邮箱|@)/;
+  const cleanVenue = s => String(s || '')
+    .replace(/^[在到至于\s:：]+/, '')
+    .replace(/(?:举办|举行|召开|进行|办理|集合|上课|开会|领取|提交|缴费|缴纳).*$/, '')
+    .replace(/[，,.;；:：]+$/, '')
+    .trim();
+
+  // 1) 显式地点字段
+  let m = src.match(/(?:活动|报名|上课|会议|比赛|考试)?地点\s*[:：]?\s*([^\n,，.;；]{2,30})/);
+  if (m) {
+    const v = cleanVenue(m[1]);
+    if (v && !badPlace.test(v)) return v.slice(0, 30);
+  }
+
+  // 2) 线上会议
+  m = src.match(/(腾讯会议|钉钉|Zoom|zoom|腾讯课堂|雨课堂|超星学习通)/);
   if (m) return m[1];
-  m = text.match(/(?:活动)?地点\s*[:：]\s*([^\s，。,；;、\n]+)/);
-  if (m) return m[1];
-  m = text.match(/在([\u4e00-\u9fa5A-Za-z0-9]{1,12}?(?:楼|室|馆|厅|教室|中心|系统|平台|官网|网站|广场|体育场|图书馆|办公室|会议室|报告厅|机房|实验室|医院|银行))/);
-  if (m) return m[1];
-  m = text.match(/(?:登录|登入|访问|前往|到|于)\s*([\u4e00-\u9fa5A-Za-z0-9]{1,12}?(?:系统|平台|官网|网站|大厅|中心|办公室|教学楼|行政楼))/);
-  if (m) return m[1];
-  if (/线上|网上|网络/.test(text)) return '线上';
+
+  // 3) 常见校园场所 / 教室号（长词优先）
+  const knownRe = /(?:大学生活动中心|一卡通服务中心|校园统一支付平台|教务管理系统|教务系统|图书馆(?:[一二三四五六七八九十\d]+楼)?(?:大厅|报告厅)?|田径场|体育馆|校门口|辅导员办公室|学院办公室|学院\d{3}会议室|教学楼[A-Z]?\d{2,4}|[A-Z]{1,2}\d{2,4}[A-Z]?\d{0,3}|[A-Z]?\d{1,2}-\d{3,4})/;
+  m = src.match(knownRe);
+  if (m && !badPlace.test(m[0])) return m[0].trim();
+
+  // 4) 在/到/至/于 + 场所（兜底）
+  const suffix = '(?:会议室|报告厅|办公室|实验室|图书馆|体育馆|田径场|运动场|活动中心|服务中心|教学楼|实验楼|综合楼|行政楼|宿舍楼|食堂|礼堂|大厅|广场|教室|机房|校门口|门口|中心|平台|系统|校区|园区|馆|厅|楼|室|场)';
+  m = src.match(new RegExp('(?:在|到|至|于)\\s*([\\u4e00-\\u9fa5A-Za-z0-9\\-]{1,18}?' + suffix + ')'));
+  if (m) {
+    const v = cleanVenue(m[1]);
+    if (v && !badPlace.test(v)) return v.slice(0, 30);
+  }
   return '';
 }
 
-// 解析入口：返回一个提醒对象（mock 版，AI 失败时降级用）
+// 解析入口：单条文本 → 提醒对象
 function mockParse(text) {
-  const t = (text || '').trim();
+  const t = String(text || '').trim();
   return {
     title: extractTitle(t),
     time: extractTime(t),
@@ -771,14 +1442,46 @@ function mockParse(text) {
   };
 }
 
+// 离线多通知解析：先拆分，再逐条解析
+function mockParseAll(text) {
+  const t = String(text || '').trim();
+  if (!t) return [];
+  const blocks = splitNotices(t);
+  const results = blocks.map(b => mockParse(b));
+  return results.length ? results : [mockParse(t)];
+}
+
 /* ---------- DeepSeek AI 解析 ---------- */
+// 随请求附加的解析要求（后端 system prompt 之外再强调一次，确保时间格式统一）
+const AI_PARSE_TIP = '\n\n【解析要求】\n1. 时间、截止日期统一输出 "YYYY-MM-DD HH:MM"（24小时制）；原文是时间段时输出 "YYYY-MM-DD HH:MM - YYYY-MM-DD HH:MM"。\n2. 中文数字时间必须转成阿拉伯数字，并按上午/下午/晚上/中午/凌晨换算成24小时制：晚上十一点二十一→23:21，下午三点→15:00，上午九点→09:00，中午十二点→12:00；缺年份时补当前年份。\n3. 截止日期重点读取「截止」「截止时间」「报名时间」「缴费截止」后面的日期和时间。\n4. title 必须简短具体，从正文提炼（如"四六级考试报名"）；确实无法提炼时用正文首句前20字，不要输出"待办事项"。';
+
+// AI 返回的时间字段兜底规范化：ISO 统一格式；中文数字/上下午转 24 小时制
+function normalizeAITimeField(value, kind) {
+  const s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+  const fmtIso = (y, mo, d, h, mi) => {
+    const date = y + '-' + pad2(+mo) + '-' + pad2(+d);
+    return h !== undefined ? date + ' ' + fmtHm(+h, +mi) : date;
+  };
+  // ISO 时间段：2026-10-20 09:00 - 2026-10-20 10:00
+  const isoRange = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?\s*(?:-|—|–|~|～|至|到)\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?/);
+  if (isoRange) {
+    return fmtIso(isoRange[1], isoRange[2], isoRange[3], isoRange[4], isoRange[5]) + ' - ' +
+      fmtIso(isoRange[6], isoRange[7], isoRange[8], isoRange[9], isoRange[10]);
+  }
+  const iso = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?/);
+  if (iso) return fmtIso(iso[1], iso[2], iso[3], iso[4], iso[5]);
+  const local = kind === 'deadline' ? extractDeadline(s) : extractTime(s);
+  return local || s;
+}
+
 function normalizeAIResult(obj) {
   const o = obj || {};
   return {
     title: String(o.title || '').trim(),
-    time: String(o.time || '').trim(),
+    time: normalizeAITimeField(o.time, 'time'),
     place: String(o.place || '').trim(),
-    deadline: String(o.deadline || '').trim(),
+    deadline: normalizeAITimeField(o.deadline, 'deadline'),
     note: '',
   };
 }
@@ -788,7 +1491,7 @@ async function parseWithAI(text) {
   const resp = await fetch('/api/parse', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, baseUrl: getBaseUrl(), model: getModel(), apiKey: getAPIKey() }),
+    body: JSON.stringify({ text: text + AI_PARSE_TIP, baseUrl: getBaseUrl(), model: getModel(), apiKey: getAPIKey() }),
   });
   if (!resp.ok) throw new Error('parse ' + resp.status);
   const j = await resp.json();
@@ -812,7 +1515,8 @@ function reminderSortTime(r) {
     const dates = findAllDates(r.time);
     if (dates.length) {
       const last = dates[dates.length - 1];
-      return new Date(last.y || new Date().getFullYear(), last.m - 1, last.d);
+      const y = last.y !== undefined ? last.y : inferYearForMd(last.m, last.d);
+      return new Date(y, last.m - 1, last.d);
     }
   }
   return null;
@@ -877,6 +1581,7 @@ function render() {
   }).join('');
 
   if (currentView === 'calendar') renderCalendar();
+  updateReminderBadge();
 }
 
 /* ---------- 事件委托：完成 / 删除 / 展开备注 ---------- */
@@ -928,14 +1633,14 @@ async function doParse(text) {
     try {
       results = await parseWithAI(text);
     } catch (e) {
-      results = [mockParse(text)];
+      results = mockParseAll(text);
       toast('AI解析失败，已用本地规则');
     }
   } else if (!getAPIKey()) {
-    results = [mockParse(text)];
+    results = mockParseAll(text);
     toast('未设置 API key，已用本地基础解析');
   } else {
-    results = [mockParse(text)];
+    results = mockParseAll(text);
     toast('AI 已关闭，使用本地基础解析');
   }
 
@@ -944,16 +1649,20 @@ async function doParse(text) {
     if (total > 1) toast(`解析中 ${i + 1}/${total}…`);
     reminders.push({
       id: genId(),
-      title: p.title || '待办事项',
+      title: p.title || extractTitle(text),
       time: p.time || '',
       place: p.place || '',
       deadline: p.deadline || '',
-      note: text,
+      note: p.note || text,
       source: 'ai',
       done: false,
       starred: false,
       color: nextColor(),
       createdAt: Date.now(),
+      remindOn: false,
+      remindOffsets: [],
+      remindAcked: false,
+      remindFiredAt: null,
     });
   });
   save();
@@ -1121,6 +1830,7 @@ function resetManualForm() {
   document.getElementById('mPlace').value = '';
   document.getElementById('mDeadline').value = '';
   document.getElementById('mNote').value = '';
+  setRemindEditor('manual', false, []);
 }
 
 document.getElementById('mTimeType').addEventListener('change', (e) => {
@@ -1150,6 +1860,10 @@ document.getElementById('manualSaveBtn').addEventListener('click', () => {
     starred: false,
     color: nextColor(),
     createdAt: Date.now(),
+    remindOn: document.getElementById('mRemindToggle').checked,
+    remindOffsets: collectRemindOffsets('manual'),
+    remindAcked: false,
+    remindFiredAt: null,
   });
   save(); render();
   resetManualForm();
@@ -1222,28 +1936,28 @@ function ensureCalendarInit() {
     calendarMonth = n.getMonth();
   }
 }
-// time 字段里的所有日期（Date 数组）
+// time 字段里的所有日期（Date 数组；缺年份按距今天最近的一年）
 function parseTimeDates(time) {
-  const ds = findAllDates(time || '');
-  return ds.map(d => new Date(d.y || new Date().getFullYear(), d.m - 1, d.d));
+  return findAllDates(time || '').map(d =>
+    new Date(d.y !== undefined ? d.y : inferYearForMd(d.m, d.d), d.m - 1, d.d)
+  );
 }
-// time 字段的时间段区间（>=2 个日期视为起止区间）
-function parseTimeRange(time) {
-  const ds = parseTimeDates(time);
-  if (ds.length >= 2) return { start: ds[0], end: ds[ds.length - 1] };
-  return null;
-}
-// 事项是否覆盖某天：截止日 / 时间段区间 / 单日事件时间
+// 事项是否覆盖某天：截止日当天，或 time 里实际出现的每一天（不再把首尾日期拉通成区间）
 function reminderCoversDate(r, date) {
   const dd = parseDate(r.deadline);
   if (dd && isSameDay(dd, date)) return true;
-  const range = parseTimeRange(r.time);
-  if (range) {
-    const cur = startOfDay(date);
-    return cur >= startOfDay(range.start) && cur <= startOfDay(range.end);
-  }
-  const td = parseTimeDates(r.time);
-  return td.length === 1 && isSameDay(td[0], date);
+  return parseTimeDates(r.time).some(d => isSameDay(d, date));
+}
+// 事项在指定年月是否有日期（图例只列当前月份真正会出现的事项）
+function reminderInMonth(r, year, month) {
+  const dl = parseDate(r.deadline);
+  if (dl && dl.getFullYear() === year && dl.getMonth() === month) return true;
+  return parseTimeDates(r.time).some(d => d.getFullYear() === year && d.getMonth() === month);
+}
+// 是否有日历可定位的日期；完全没有日期的事项只在事项列表显示
+function hasScheduledDate(r) {
+  if (parseDate(r.deadline)) return true;
+  return parseTimeDates(r.time).length > 0;
 }
 // 某天的日历装饰：截止日 / 时间段起止+区间 / 时间点
 // 某天覆盖的任务（按创建时间稳定排序，保证相邻日期格线段对齐）
@@ -1324,7 +2038,7 @@ function renderDayList() {
     const doneBtnText = r.done ? '↩ 恢复' : '✓ 完成';
     const doneBtnCls = r.done ? 'btn-done undo' : 'btn-done';
     return `
-    <div class="cal-day-item ${r.done ? 'done' : ''}" data-id="${r.id}">
+    <div class="cal-day-item ${r.done ? 'done' : ''}" data-id="${r.id}" style="border-left:3px solid ${r.color || '#94a3b8'}">
       <div class="cal-day-info">
         <div class="cal-day-item-title"><span class="r-dot" style="background:${r.color || '#94a3b8'}"></span>${r.starred ? '⭐ ' : ''}${escapeHtml(r.title || '未命名事项')}</div>
         ${r.time ? `<div class="cal-day-item-time">⏰ ${escapeHtml(r.time)}</div>` : ''}
@@ -1341,13 +2055,30 @@ function renderDayList() {
   }).join('');
 }
 
-// 日历图例：颜色块 = 任务名
+// 日历图例：颜色块 = 任务名。只列当前显示月份里日历上真正会出现的事项；
+// 完全没有日期的事项无法在日历定位，单独提示数量。
 function renderLegend() {
   const body = document.getElementById('calLegendBody');
   if (!body) return;
-  const items = reminders.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-  if (!items.length) { body.innerHTML = '<div class="cal-day-empty">暂无任务</div>'; return; }
-  body.innerHTML = items.map(r => `<div class="legend-item"><span class="legend-dot" style="background:${r.color || '#94a3b8'}"></span>${escapeHtml(r.title || '未命名事项')}</div>`).join('');
+  ensureCalendarInit();
+  const year = calendarYear, month = calendarMonth;
+  const monthItems = reminders
+    .filter(r => reminderInMonth(r, year, month))
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  const unscheduledCount = reminders.filter(r => !hasScheduledDate(r)).length;
+
+  let html = '';
+  if (monthItems.length) {
+    html += monthItems.map(r =>
+      `<div class="legend-item"><span class="legend-dot" style="background:${r.color || '#94a3b8'}"></span>${escapeHtml(r.title || '未命名事项')}</div>`
+    ).join('');
+  } else {
+    html += '<div class="cal-day-empty">本月日历暂无事项</div>';
+  }
+  if (unscheduledCount > 0) {
+    html += `<div class="cal-legend-note">另有 ${unscheduledCount} 条未排期事项，仅在事项列表显示</div>`;
+  }
+  body.innerHTML = html;
 }
 
 function switchView(view) {
@@ -1359,24 +2090,563 @@ function switchView(view) {
   if (view === 'calendar') renderCalendar();
 }
 
-// 模板库（advanceDays 先存着，后续提醒功能用）
-const TEMPLATES = [
-  { name: '选课·正选', title: '选课（正选）', advanceDays: 1, defaultNote: '登录教务系统正选课程' },
-  { name: '选课·补选', title: '选课（补选）', advanceDays: 1, defaultNote: '登录教务系统补选课程' },
-  { name: '四六级报名', title: '四六级考试报名', advanceDays: 3, defaultNote: '登录教务系统报名缴费' },
-  { name: '体测', title: '体质健康测试', advanceDays: 3, defaultNote: '按学院安排参加体测' },
-  { name: '奖学金申请', title: '奖学金申请', advanceDays: 5, defaultNote: '按要求提交申请材料' },
-  { name: '缴费', title: '缴费', advanceDays: 1, defaultNote: '登录缴费平台完成缴费' },
-  { name: '毕业论文', title: '毕业论文', advanceDays: 7, defaultNote: '按学院进度提交论文材料' },
-  { name: '学科竞赛', title: '学科竞赛报名', advanceDays: 5, defaultNote: '组队报名学科竞赛' },
-  { name: '证书办理', title: '证书办理', advanceDays: 3, defaultNote: '携带材料到指定地点办理' },
-  { name: '校历节点', title: '校历节点', advanceDays: 3, defaultNote: '关注校历重要时间节点' },
+/* =====================================================================
+ * 模板库（v1.4.0：支持自定义添加 / 移除 / 恢复默认）
+ * 存储 key：ddl_templates_v1
+ * 数据结构：[{ id, name, title, defaultNote, advanceDays, builtin }]
+ *   - id          模板唯一标识（genTplId 生成；内置模板用稳定 id）
+ *   - name        模板 chip 上显示的名称
+ *   - title       点模板时预填到「事项」栏的标题
+ *   - defaultNote 点模板时预填到「备注」栏的文字
+ *   - advanceDays 提前提醒天数（预留字段，暂只保存）
+ *   - builtin     是否内置模板（true / false）
+ * 首次使用（无该 key）用内置模板初始化并写入；之后以存储列表为准。
+ * ===================================================================== */
+const TEMPLATE_STORAGE = 'ddl_templates_v1';
+const BUILTIN_TEMPLATES = [
+  { id: 'tpl_b1', name: '选课·正选', title: '选课（正选）', advanceDays: 1, defaultNote: '登录教务系统正选课程', builtin: true },
+  { id: 'tpl_b2', name: '选课·补选', title: '选课（补选）', advanceDays: 1, defaultNote: '登录教务系统补选课程', builtin: true },
+  { id: 'tpl_b3', name: '四六级报名', title: '四六级考试报名', advanceDays: 3, defaultNote: '登录教务系统报名缴费', builtin: true },
+  { id: 'tpl_b4', name: '体测', title: '体质健康测试', advanceDays: 3, defaultNote: '按学院安排参加体测', builtin: true },
+  { id: 'tpl_b5', name: '奖学金申请', title: '奖学金申请', advanceDays: 5, defaultNote: '按要求提交申请材料', builtin: true },
+  { id: 'tpl_b6', name: '缴费', title: '缴费', advanceDays: 1, defaultNote: '登录缴费平台完成缴费', builtin: true },
+  { id: 'tpl_b7', name: '毕业论文', title: '毕业论文', advanceDays: 7, defaultNote: '按学院进度提交论文材料', builtin: true },
+  { id: 'tpl_b8', name: '学科竞赛', title: '学科竞赛报名', advanceDays: 5, defaultNote: '组队报名学科竞赛', builtin: true },
+  { id: 'tpl_b9', name: '证书办理', title: '证书办理', advanceDays: 3, defaultNote: '携带材料到指定地点办理', builtin: true },
+  { id: 'tpl_b10', name: '校历节点', title: '校历节点', advanceDays: 3, defaultNote: '关注校历重要时间节点', builtin: true },
 ];
+let templates = [];
+let templateEditMode = false; // v1.5.0：模板编辑模式，不持久化，刷新恢复非编辑
+
+function genTplId() {
+  return 'tpl_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+}
+
+function cloneTemplate(t) {
+  return {
+    id: t.id,
+    name: t.name,
+    title: t.title,
+    defaultNote: t.defaultNote,
+    advanceDays: t.advanceDays,
+    builtin: !!t.builtin,
+  };
+}
+
+// 把存储里的一条数据规整成合法模板；名称缺失视为无效（返回 null 丢弃）
+function normalizeTemplate(t) {
+  if (!t || typeof t !== 'object') return null;
+  const name = String(t.name == null ? '' : t.name).trim();
+  if (!name) return null;
+  const adv = parseInt(t.advanceDays, 10);
+  return {
+    id: (typeof t.id === 'string' && t.id) ? t.id : genTplId(),
+    name: name,
+    title: String(t.title == null ? '' : t.title).trim() || name,
+    defaultNote: String(t.defaultNote == null ? '' : t.defaultNote).trim(),
+    advanceDays: Number.isFinite(adv) && adv > 0 ? Math.floor(adv) : 0,
+    builtin: !!t.builtin,
+  };
+}
+
+function saveTemplates() {
+  try {
+    localStorage.setItem(TEMPLATE_STORAGE, JSON.stringify(templates));
+    return true;
+  } catch (e) {
+    storageAvailable = false;
+    updateStorageHint();
+    return false;
+  }
+}
+
+// 启动时加载：无 key / 数据损坏 → 用内置模板初始化并写入；否则以存储列表为准
+function initTemplates() {
+  let raw = null;
+  try { raw = localStorage.getItem(TEMPLATE_STORAGE); } catch (e) { raw = null; }
+  if (raw === null) {
+    templates = BUILTIN_TEMPLATES.map(cloneTemplate);
+    saveTemplates();
+    return;
+  }
+  let arr = null;
+  try { arr = JSON.parse(raw); } catch (e) { arr = null; }
+  if (!Array.isArray(arr)) {
+    templates = BUILTIN_TEMPLATES.map(cloneTemplate);
+    saveTemplates();
+    return;
+  }
+  const seen = new Set();
+  templates = arr.map(normalizeTemplate).filter(t => {
+    if (!t) return false;
+    if (seen.has(t.id)) t.id = genTplId(); // 修复重复 id，避免点击串号
+    seen.add(t.id);
+    return true;
+  });
+}
 
 function renderTemplates() {
   const wrap = document.getElementById('tplButtons');
   if (!wrap) return;
-  wrap.innerHTML = TEMPLATES.map(t => `<button type="button" class="tpl-btn" data-tpl="${t.name}">${t.name}</button>`).join('');
+  wrap.innerHTML = templates.map(t => {
+    const nameBtn = `<button type="button" class="tpl-btn" data-tpl="${escapeHtml(t.id)}">${escapeHtml(t.name)}</button>`;
+    if (!templateEditMode) return nameBtn;
+    return '<span class="tpl-chip">' + nameBtn +
+      `<button type="button" class="tpl-remove" data-tpl-del="${escapeHtml(t.id)}" title="移除模板" aria-label="移除模板 ${escapeHtml(t.name)}">×</button>` +
+      '</span>';
+  }).join('') + (templateEditMode ? '<button type="button" class="tpl-btn tpl-add" data-tpl-add="1">＋ 添加模板</button>' : '');
+  const foot = document.getElementById('tplFoot');
+  if (foot) foot.classList.toggle('hidden', !templateEditMode);
+  const editBtn = document.getElementById('tplEditBtn');
+  if (editBtn) {
+    editBtn.textContent = templateEditMode ? '完成' : '编辑';
+    editBtn.classList.toggle('on', templateEditMode);
+  }
+}
+
+// 恢复内置模板：按 id + 名称去重合并，已存在的跳过
+function restoreDefaultTemplates() {
+  const ids = new Set(templates.map(t => t.id));
+  const names = new Set(templates.map(t => t.name));
+  let added = 0;
+  BUILTIN_TEMPLATES.forEach(bt => {
+    if (ids.has(bt.id) || names.has(bt.name)) return;
+    templates.push(cloneTemplate(bt));
+    ids.add(bt.id);
+    names.add(bt.name);
+    added++;
+  });
+  if (added) {
+    saveTemplates();
+    renderTemplates();
+    toast('已恢复 ' + added + ' 个默认模板');
+  } else {
+    toast('默认模板已齐全');
+  }
+}
+
+function removeTemplate(id) {
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+  templates = templates.filter(x => x.id !== id);
+  saveTemplates();
+  renderTemplates();
+  toast('已移除模板「' + t.name + '」');
+}
+
+function openTplModal() {
+  document.getElementById('tpName').value = '';
+  document.getElementById('tpTitle').value = '';
+  document.getElementById('tpNote').value = '';
+  document.getElementById('tpAdvance').value = '';
+  document.getElementById('tplModal').classList.remove('hidden');
+  const nameEl = document.getElementById('tpName');
+  if (nameEl && typeof nameEl.focus === 'function') setTimeout(() => nameEl.focus(), 30);
+}
+
+function closeTplModal() {
+  document.getElementById('tplModal').classList.add('hidden');
+}
+
+document.getElementById('tplClose').addEventListener('click', closeTplModal);
+document.getElementById('tplModal').addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-mask')) closeTplModal();
+});
+document.getElementById('tplModal').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('tplSaveBtn').click(); }
+});
+document.getElementById('tplSaveBtn').addEventListener('click', () => {
+  const nameEl = document.getElementById('tpName');
+  const name = nameEl.value.trim();
+  if (!name) {
+    toast('请填写模板名称');
+    if (typeof nameEl.focus === 'function') nameEl.focus();
+    return;
+  }
+  const adv = parseInt(document.getElementById('tpAdvance').value, 10);
+  templates.push({
+    id: genTplId(),
+    name: name.slice(0, 20),
+    title: document.getElementById('tpTitle').value.trim() || name,
+    defaultNote: document.getElementById('tpNote').value.trim(),
+    advanceDays: Number.isFinite(adv) && adv > 0 ? Math.floor(adv) : 0,
+    builtin: false,
+  });
+  saveTemplates();
+  renderTemplates();
+  closeTplModal();
+  toast('已添加模板');
+});
+document.getElementById('tplResetBtn').addEventListener('click', restoreDefaultTemplates);
+document.getElementById('tplEditBtn').addEventListener('click', () => {
+  templateEditMode = !templateEditMode;
+  renderTemplates();
+});
+
+/* =====================================================================
+ * 提醒功能（v1.5.0，v1.5.1 语义修正）
+ * 每个事项新增字段：
+ *   remindOn       boolean        是否开启提醒，默认 false
+ *   remindOffsets  [{v,u}]        0~6 项；u ∈ minute/hour/day/week/month/year
+ *   remindAcked    boolean        已废弃，仅为兼容旧数据保留（不再读写业务逻辑）
+ *   remindFiredAt  number|null    首次展示时间戳：当前/历史提醒的分界线
+ *   当前提醒 = 已到期 && 未完成 && remindFiredAt 为空
+ *   历史提醒 = remindFiredAt 非空 && 未完成
+ * 提醒时间 = 基准时间 - Σ(v × 单位分钟数)
+ * 基准时间：有截止日 → 截止日当天 23:59:59；否则用时间字段：
+ *   时间段 → 结束时间；时间点 → 该时间（无日期按今天）
+ * 月按 30 天、年按 365 天折算（与「各 offset 相加」的规格一致）
+ * ===================================================================== */
+const REMIND_UNIT_MINUTES = { minute: 1, hour: 60, day: 1440, week: 10080, month: 43200, year: 525600 };
+const REMIND_UNIT_LABEL = { minute: '分钟', hour: '小时', day: '天', week: '周', month: '月', year: '年' };
+const REMIND_UNIT_ORDER = ['year', 'month', 'week', 'day', 'hour', 'minute']; // 时间跨度降序
+const REMIND_MAX_GROUPS = 6; // v1.5.2：提醒设置最多 6 组
+
+// 单位跨度排名：年→月→周→天→小时→分钟；未选单位排最后
+function remindUnitRank(u) {
+  const i = REMIND_UNIT_ORDER.indexOf(u);
+  return i === -1 ? REMIND_UNIT_ORDER.length : i;
+}
+// 按时间跨度降序稳定排序，保留 {v,u} 对应关系
+function sortRemindOffsetsByUnit(list) {
+  return (Array.isArray(list) ? list.slice() : []).sort((a, b) => remindUnitRank(a.u) - remindUnitRank(b.u));
+}
+
+// 读取/保存用：只保留合法正整数项，最多 6 项
+function normalizeStoredOffsets(arr) {
+  const out = [];
+  (Array.isArray(arr) ? arr : []).slice(0, REMIND_MAX_GROUPS).forEach(o => {
+    const v = parseInt(o && o.v, 10);
+    const u = (o && REMIND_UNIT_MINUTES[o.u]) ? o.u : '';
+    if (Number.isFinite(v) && v > 0 && u) out.push({ v: v, u: u });
+  });
+  return out;
+}
+
+function remindLeadMinutes(offsets) {
+  return normalizeStoredOffsets(offsets)
+    .reduce((sum, o) => sum + o.v * REMIND_UNIT_MINUTES[o.u], 0);
+}
+
+// 汇总文案：按单位跨度降序；例 5小时 + 3天 → “提醒 3天5小时”
+function remindSummaryText(offsets) {
+  const list = normalizeStoredOffsets(offsets);
+  if (!list.length) return '提醒 未设置';
+  const totals = {};
+  list.forEach(o => { totals[o.u] = (totals[o.u] || 0) + o.v; });
+  const parts = REMIND_UNIT_ORDER.filter(u => totals[u]).map(u => totals[u] + REMIND_UNIT_LABEL[u]);
+  return parts.length ? '提醒 ' + parts.join('') : '提醒 未设置';
+}
+
+// 取字符串里最后一个时间（支持 “16:30 / 下午4点 / 晚上8点30分”）
+function lastClock(str) {
+  const s = String(str || '');
+  let best = null, bestIdx = -1, m;
+  const reNum = /(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚|夜里|夜间)?\s*(\d{1,2})[:：](\d{2})/g;
+  while ((m = reNum.exec(s))) {
+    if (m.index < bestIdx) continue;
+    const c = validClock(+m[2], +m[3], m[1]);
+    if (c) { best = c; bestIdx = m.index; }
+  }
+  const reCn = /(上午|下午|晚上|中午|早上|早晨|凌晨|傍晚|夜里|夜间)?\s*(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})(?:点|时)(?:\s*(\d{1,2}|[零〇一二两三四五六七八九十]{1,3})\s*分?)?/g;
+  while ((m = reCn.exec(s))) {
+    if (m.index < bestIdx) continue;
+    const h = cnNumToInt(m[2]);
+    const mi = m[3] ? cnNumToInt(m[3]) : 0;
+    const c = (h === null || mi === null) ? null : validClock(h, mi, m[1]);
+    if (c) { best = c; bestIdx = m.index; }
+  }
+  return best;
+}
+
+function remindBaseTime(r) {
+  if (!r) return null;
+  const dl = parseDate(r.deadline);
+  if (dl) return new Date(dl.getFullYear(), dl.getMonth(), dl.getDate(), 23, 59, 59, 0);
+  const timeStr = String(r.time || '').trim();
+  if (!timeStr) return null;
+  const clock = lastClock(timeStr);
+  const dates = parseTimeDates(timeStr);
+  if (dates.length) {
+    const d = dates[dates.length - 1];
+    return new Date(
+      d.getFullYear(), d.getMonth(), d.getDate(),
+      clock ? clock.h : 23, clock ? clock.m : 59, clock ? 0 : 59, 0
+    );
+  }
+  if (!clock) return null;
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), clock.h, clock.m, 0, 0);
+}
+
+function reminderTime(r) {
+  if (!r || !r.remindOn) return null;
+  const base = remindBaseTime(r);
+  if (!base) return null;
+  return new Date(base.getTime() - remindLeadMinutes(r.remindOffsets) * 60000);
+}
+
+function isReminderDue(r, now) {
+  if (!r || r.done || !r.remindOn) return false;
+  const t = reminderTime(r);
+  return !!t && t.getTime() <= (now || new Date()).getTime();
+}
+
+// 当前提醒：已到期、未完成、且还没在提醒弹窗里展示过（remindFiredAt 为空）
+function currentReminderItems() {
+  const now = new Date();
+  return reminders.filter(r => !r.remindFiredAt && isReminderDue(r, now));
+}
+
+// 历史提醒：展示过（remindFiredAt 非空）且未完成
+function historyReminderItems() {
+  return reminders.filter(r => !!r.remindFiredAt && !r.done);
+}
+
+// 本次弹窗会话中「当前提醒」的快照：打开弹窗时锁定，关闭时清空。
+// 展示时仅把快照内事项的 remindFiredAt 记为当前时间（只记录"已展示过"），
+// 不改变完成/收藏/提醒配置；关闭后再打开时它们就出现在历史栏。
+let reminderShownIds = null;
+
+function currentShownReminders() {
+  if (reminderShownIds !== null) {
+    const set = new Set(reminderShownIds);
+    return reminders.filter(r => set.has(r.id) && !r.done);
+  }
+  return currentReminderItems();
+}
+
+function markRemindersFired(items) {
+  const now = Date.now();
+  let changed = false;
+  (items || []).forEach(r => {
+    if (!r.remindFiredAt) { r.remindFiredAt = now; changed = true; }
+  });
+  return changed;
+}
+
+function updateReminderBadge() {
+  const badge = document.getElementById('remindBadge');
+  if (!badge) return;
+  const n = currentReminderItems().length;
+  badge.textContent = String(n);
+  badge.classList.toggle('hidden', n === 0);
+}
+
+function fmtDateTime(d) {
+  if (!d) return '';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return fmtDate(d) + ' ' + hh + ':' + mm;
+}
+
+/* ---------- 提醒设置区（手动添加 / 编辑事项 共用） ---------- */
+const remindEditors = {
+  manual: { on: false, offsets: [], toggleId: 'mRemindToggle', stateId: 'mRemindState', boxId: 'mRemindBox' },
+  edit: { on: false, offsets: [], toggleId: 'eRemindToggle', stateId: 'eRemindState', boxId: 'eRemindBox' },
+};
+
+function setRemindEditor(key, on, offsets) {
+  const ed = remindEditors[key];
+  if (!ed) return;
+  ed.on = !!on;
+  ed.offsets = sortRemindOffsetsByUnit(normalizeStoredOffsets(offsets).map(o => ({ v: String(o.v), u: o.u })));
+  if (ed.on && !ed.offsets.length) ed.offsets = [{ v: '', u: '' }];
+  const toggle = document.getElementById(ed.toggleId);
+  if (toggle) toggle.checked = ed.on;
+  renderRemindBox(key);
+}
+
+function renderRemindBox(key) {
+  const ed = remindEditors[key];
+  if (!ed) return;
+  const box = document.getElementById(ed.boxId);
+  const stateEl = document.getElementById(ed.stateId);
+  if (stateEl) stateEl.textContent = ed.on ? 'ON' : 'OFF';
+  if (!box) return;
+  box.classList.toggle('hidden', !ed.on);
+  if (!ed.on) return;
+  // v1.5.3：第一组不显示 ×，第二组起显示 ×；单位下拉第一项「请选择」，最多 6 组
+  const rows = ed.offsets.map((o, i) =>
+    '<div class="remind-group" data-rem-idx="' + i + '">' +
+      '<input type="text" inputmode="numeric" pattern="[0-9]*" class="remind-num" data-rem-idx="' + i + '" value="' +
+        escapeHtml(o.v === '' ? '' : String(o.v)) + '" placeholder="数值" maxlength="5">' +
+      '<select class="remind-unit" data-rem-idx="' + i + '">' +
+        '<option value=""' + (o.u ? '' : ' selected') + '>请选择</option>' +
+        REMIND_UNIT_ORDER.map(u => '<option value="' + u + '"' + (o.u === u ? ' selected' : '') + '>' + REMIND_UNIT_LABEL[u] + '</option>').join('') +
+      '</select>' +
+      (i > 0 ? '<button type="button" class="remind-del" data-rem-del="' + i + '" title="删除该组">✕</button>' : '') +
+    '</div>'
+  ).join('');
+  const canAdd = ed.offsets.length < REMIND_MAX_GROUPS;
+  const addRow = canAdd
+    ? '<div class="remind-add-row"><button type="button" class="remind-add" data-rem-add="1" title="再加一组">＋</button></div>'
+    : '';
+  const valid = normalizeStoredOffsets(ed.offsets).length > 0;
+  box.innerHTML = '<div class="remind-title">结束前：</div>' + rows + addRow +
+    '<div class="remind-summary' + (valid ? '' : ' empty') + '">' + remindSummaryText(ed.offsets) + '</div>';
+}
+
+function updateRemindSummary(key) {
+  const ed = remindEditors[key];
+  if (!ed) return;
+  const box = document.getElementById(ed.boxId);
+  if (!box || typeof box.querySelector !== 'function') return;
+  const sum = box.querySelector('.remind-summary');
+  if (sum) {
+    sum.textContent = remindSummaryText(ed.offsets);
+    sum.classList.toggle('empty', normalizeStoredOffsets(ed.offsets).length === 0);
+  }
+}
+
+function collectRemindOffsets(key) {
+  const ed = remindEditors[key];
+  if (!ed) return [];
+  return normalizeStoredOffsets(ed.offsets.map(o => ({ v: o.v, u: o.u })));
+}
+
+function bindRemindEditor(key) {
+  const ed = remindEditors[key];
+  if (!ed) return;
+  const toggle = document.getElementById(ed.toggleId);
+  if (toggle) {
+    toggle.addEventListener('change', (e) => {
+      ed.on = !!e.target.checked;
+      if (ed.on && !ed.offsets.length) ed.offsets = [{ v: '', u: '' }];
+      renderRemindBox(key);
+    });
+  }
+  const box = document.getElementById(ed.boxId);
+  if (!box) return;
+  box.addEventListener('click', (e) => {
+    if (e.target.closest('[data-rem-add]')) {
+      if (ed.offsets.length < REMIND_MAX_GROUPS) { ed.offsets.push({ v: '', u: '' }); renderRemindBox(key); }
+      return;
+    }
+    const del = e.target.closest('[data-rem-del]');
+    if (del) {
+      const idx = parseInt(del.dataset.remDel, 10);
+      if (idx >= 0 && idx < ed.offsets.length) { ed.offsets.splice(idx, 1); renderRemindBox(key); }
+    }
+  });
+  box.addEventListener('input', (e) => {
+    const input = e.target.closest('.remind-num');
+    if (!input) return;
+    const idx = parseInt(input.dataset.remIdx, 10);
+    if (!(idx >= 0 && idx < ed.offsets.length)) return;
+    const val = input.value;
+    if (val === '') { ed.offsets[idx].v = ''; updateRemindSummary(key); return; }
+    if (!/^\d+$/.test(val) || parseInt(val, 10) <= 0) {
+      input.value = '';
+      ed.offsets[idx].v = '';
+      toast('请填写阿拉伯整数');
+      updateRemindSummary(key);
+      return;
+    }
+    ed.offsets[idx].v = val;
+    updateRemindSummary(key);
+  });
+  box.addEventListener('change', (e) => {
+    const sel = e.target.closest('.remind-unit');
+    if (!sel) return;
+    const idx = parseInt(sel.dataset.remIdx, 10);
+    if (idx >= 0 && idx < ed.offsets.length) {
+      ed.offsets[idx].u = sel.value;
+      // v1.5.2：选好单位后按时间跨度降序自动重排（年→月→周→天→小时→分钟）
+      ed.offsets = sortRemindOffsetsByUnit(ed.offsets);
+      renderRemindBox(key);
+    }
+  });
+}
+bindRemindEditor('manual');
+bindRemindEditor('edit');
+
+/* ---------- 提醒弹窗 ---------- */
+function remindItemHtml(r) {
+  const hasOffset = normalizeStoredOffsets(r.remindOffsets).length > 0;
+  const lead = hasOffset ? remindSummaryText(r.remindOffsets) : '到点提醒';
+  const rt = reminderTime(r);
+  const meta = [];
+  if (r.time) meta.push('⏰ ' + escapeHtml(r.time));
+  if (r.deadline) meta.push('📅 截止 ' + escapeHtml(r.deadline));
+  return '<div class="remind-item" data-remind-id="' + escapeHtml(r.id) + '">' +
+    '<div class="remind-item-main">' +
+      '<div class="remind-item-title">' + (r.starred ? '⭐ ' : '') + escapeHtml(r.title || '未命名事项') + '</div>' +
+      (meta.length ? '<div class="remind-item-meta">' + meta.join('　') + '</div>' : '') +
+      '<div class="remind-item-lead">🔔 ' + escapeHtml(lead) + (rt ? ' · ' + fmtDateTime(rt) : '') + '</div>' +
+    '</div>' +
+    '<button type="button" class="btn-done" data-remind-act="toggle">✓ 完成</button>' +
+  '</div>';
+}
+
+function renderReminderModal() {
+  const cur = currentShownReminders();
+  const curIds = new Set(cur.map(r => r.id));
+  // 当前栏本次要展示的事项即使已被标记 firedAt，也只在历史栏之外显示一次
+  const hist = historyReminderItems().filter(r => !curIds.has(r.id));
+  const curList = document.getElementById('remindCurrentList');
+  const histList = document.getElementById('remindHistoryList');
+  const countEl = document.getElementById('remindCurrentCount');
+  if (countEl) countEl.textContent = cur.length ? '（' + cur.length + ' 条）' : '';
+  if (curList) curList.innerHTML = cur.length ? cur.map(remindItemHtml).join('') : '<div class="remind-empty">暂无</div>';
+  if (histList) histList.innerHTML = hist.length ? hist.map(remindItemHtml).join('') : '<div class="remind-empty">暂无</div>';
+  const starBtn = document.getElementById('remindStarAllBtn');
+  if (starBtn) starBtn.disabled = cur.length === 0;
+}
+
+function openReminderModal() {
+  const cur = currentReminderItems();
+  // 锁定本次展示的「当前提醒」快照
+  reminderShownIds = cur.map(r => r.id);
+  // 展示时仅记录"已展示过"（remindFiredAt），不改变任何用户可见状态
+  if (markRemindersFired(cur)) save();
+  renderReminderModal();
+  document.getElementById('remindModal').classList.remove('hidden');
+  updateReminderBadge();
+}
+
+// × 与「我知道了」完全一致：只关闭弹窗，不写任何事项字段（不设 acked、不改 done/starred/提醒配置）
+function closeReminderModal() {
+  reminderShownIds = null;
+  document.getElementById('remindModal').classList.add('hidden');
+  updateReminderBadge();
+}
+
+function onRemindListClick(e) {
+  const btn = e.target.closest('button[data-remind-act]');
+  if (!btn) return;
+  const itemEl = btn.closest('.remind-item');
+  if (!itemEl) return;
+  const r = reminders.find(x => x.id === itemEl.dataset.remindId);
+  if (!r) return;
+  if (btn.dataset.remindAct === 'toggle') {
+    r.done = !r.done;
+    save(); render(); renderReminderModal();
+    toast(r.done ? '已完成' : '已恢复');
+  }
+}
+
+document.getElementById('remindEntryBtn').addEventListener('click', openReminderModal);
+document.getElementById('remindClose').addEventListener('click', closeReminderModal);
+document.getElementById('remindModal').addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-mask')) closeReminderModal();
+});
+document.getElementById('remindCurrentList').addEventListener('click', onRemindListClick);
+document.getElementById('remindHistoryList').addEventListener('click', onRemindListClick);
+document.getElementById('remindStarAllBtn').addEventListener('click', () => {
+  const cur = currentShownReminders();
+  if (!cur.length) { toast('暂无当前提醒'); return; }
+  cur.forEach(r => { r.starred = true; });
+  save(); render(); renderReminderModal();
+  toast('已收藏 ' + cur.length + ' 条当前提醒');
+});
+// 「我知道了」与右上角 × 完全一致：只关闭弹窗，不写任何事项字段
+document.getElementById('remindAckBtn').addEventListener('click', closeReminderModal);
+
+// 页面打开时检查一次：有「已到期且未展示过」的提醒 → 自动弹窗并记录已展示
+function checkRemindersOnStartup() {
+  if (!currentReminderItems().length) return;
+  openReminderModal();
 }
 
 // 截图识别
@@ -1390,8 +2660,28 @@ function fileToDataUrl(file) {
   });
 }
 
-async function parseImageWithAI(dataUrl) {
-  // 统一走同源代理（Vercel serverless 或本地 server.js 的 /api/parse-image）
+/* ---------- 截图识别（v1.5.3 两步法：① OCR 逐字转写 → ② 复用 doParse 文字解析） ---------- */
+// 第一步：视觉模型逐字转写（纯文本，不由后端强制 JSON）
+async function ocrImageWithAI(dataUrl) {
+  const resp = await fetch('/api/parse-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: dataUrl,
+      baseUrl: getBaseUrl(),
+      visionModel: getVisionModel(),
+      apiKey: getAPIKey(),
+      mode: 'ocr',
+    }),
+  });
+  if (!resp.ok) throw new Error('parse-image ocr ' + resp.status);
+  const j = await resp.json();
+  if (j.error) throw new Error(j.error);
+  return String(j.text || '').trim();
+}
+
+// 回退路径：旧版一次性 JSON 提取（后端 prompt 已升级，兼容单条/多条）
+async function parseImageDirectWithAI(dataUrl) {
   const resp = await fetch('/api/parse-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1400,7 +2690,35 @@ async function parseImageWithAI(dataUrl) {
   if (!resp.ok) throw new Error('parse-image ' + resp.status);
   const j = await resp.json();
   if (j.error) throw new Error(j.error);
-  return normalizeAIResult(j);
+  // 兼容后端返回数组、单个对象、或 {"items":[...]} 包裹
+  const arr = Array.isArray(j) ? j : (Array.isArray(j && j.items) ? j.items : [j]);
+  return arr.map(normalizeAIResult);
+}
+
+// 对外入口：优先 OCR → doParse（复用文字解析，支持多条）；OCR 失败/为空 → 回退旧版直读
+// 返回：{ mode:'ocr', added } | { mode:'json', results } | { mode:'error', results:[] }
+async function parseImageWithAI(dataUrl) {
+  try {
+    const text = await ocrImageWithAI(dataUrl);
+    if (text) {
+      toast('已识别 ' + text.length + ' 字，正在解析…');
+      const before = reminders.length;
+      await doParse(text); // 内部走 AI 文字解析或 mock，并已 save/render
+      const added = Math.max(0, reminders.length - before);
+      if (added > 0) return { mode: 'ocr', added: added, text: text };
+      toast('识别文字未解析出事项，改为直接提取');
+    } else {
+      toast('未识别到文字，改为直接提取');
+    }
+  } catch (err) {
+    toast('逐字识别失败，改为直接提取');
+  }
+  try {
+    const results = await parseImageDirectWithAI(dataUrl);
+    return { mode: 'json', results: results };
+  } catch (err) {
+    return { mode: 'error', results: [] };
+  }
 }
 
 /* ---------- P1 事件绑定 ---------- */
@@ -1459,13 +2777,43 @@ document.getElementById('calDayList').addEventListener('click', (e) => {
   }
 });
 document.getElementById('tplButtons').addEventListener('click', (e) => {
+  // ① 移除模板：第一次点进入确认态，2 秒内再点确认才真正移除（内置模板同样可移除）
+  const delBtn = e.target.closest('button[data-tpl-del]');
+  if (delBtn) {
+    if (delBtn.dataset.confirm === '1') {
+      removeTemplate(delBtn.dataset.tplDel);
+    } else {
+      document.querySelectorAll('#tplButtons .tpl-remove[data-confirm="1"]').forEach(b => {
+        delete b.dataset.confirm;
+        b.classList.remove('confirm');
+        b.textContent = '×';
+      });
+      delBtn.dataset.confirm = '1';
+      delBtn.classList.add('confirm');
+      delBtn.textContent = '再点确认';
+      toast('再点一次 × 确认移除');
+      setTimeout(() => {
+        if (!delBtn.isConnected) return;
+        delete delBtn.dataset.confirm;
+        delBtn.classList.remove('confirm');
+        delBtn.textContent = '×';
+      }, 2000);
+    }
+    return;
+  }
+  // ② 添加模板
+  if (e.target.closest('button[data-tpl-add]')) {
+    openTplModal();
+    return;
+  }
+  // ③ 点模板预填手动添加表单（行为与旧版一致）
   const btn = e.target.closest('button[data-tpl]');
   if (!btn) return;
-  const t = TEMPLATES.find(x => x.name === btn.dataset.tpl);
+  const t = templates.find(x => x.id === btn.dataset.tpl);
   if (!t) return;
   const form = document.getElementById('manualForm');
   form.classList.remove('hidden');
-  document.getElementById('mTitle').value = t.title;
+  document.getElementById('mTitle').value = t.title || t.name;
   document.getElementById('mNote').value = t.defaultNote;
   document.getElementById('mTimeType').value = 'point';
   document.getElementById('mTimeStartDate').value = '';
@@ -1477,7 +2825,7 @@ document.getElementById('tplButtons').addEventListener('click', (e) => {
   document.getElementById('mDeadline').value = '';
   const hint = document.getElementById('manualHint');
   if (hint) hint.classList.add('hidden');
-  toast('已预填「' + t.title + '」，请填日期');
+  toast('已预填「' + (t.title || t.name) + '」，请填日期');
 });
 function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
@@ -1515,21 +2863,33 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
     try {
       toast(`识别中 ${i + 1}/${total}…`);
       const dataUrl = await fileToDataUrl(files[i]);
-      const p = await parseImageWithAI(dataUrl);
-      reminders.push({
-        id: genId(),
-        title: p.title || '截图事项',
-        time: p.time || '',
-        place: p.place || '',
-        deadline: p.deadline || '',
-        note: p.note || '',
-        source: 'ai',
-        done: false,
-        starred: false,
-        color: nextColor(),
-        createdAt: Date.now(),
-      });
-      okCount++;
+      const res = await parseImageWithAI(dataUrl);
+      if (res.mode === 'ocr') {
+        // OCR 成功：事项已由 doParse 写入（支持多条）
+        if (res.added > 0) okCount++;
+      } else if (res.mode === 'json') {
+        // 回退：旧版直接 JSON 提取
+        res.results.forEach(p => {
+          reminders.push({
+            id: genId(),
+            title: p.title || '截图事项',
+            time: p.time || '',
+            place: p.place || '',
+            deadline: p.deadline || '',
+            note: p.note || '',
+            source: 'ai',
+            done: false,
+            starred: false,
+            color: nextColor(),
+            createdAt: Date.now(),
+            remindOn: false,
+            remindOffsets: [],
+            remindAcked: false,
+            remindFiredAt: null,
+          });
+        });
+        if (res.results.length) { save(); render(); okCount++; }
+      }
     } catch (err) {
       // 单张失败跳过，继续下一张
     }
@@ -1548,11 +2908,13 @@ let editingId = null;
 
 function toDateInputValue(str) {
   if (!str) return '';
-  if (/\d{4}-\d{1,2}-\d{1,2}/.test(str)) return str;
+  // AI 现按 "YYYY-MM-DD HH:MM" 输出，date input 只接受日期部分
+  const ym = String(str).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (ym) return ym[1] + '-' + pad2(+ym[2]) + '-' + pad2(+ym[3]);
   const m = String(str).match(/(\d{1,2})月(\d{1,2})日/);
   if (m) {
     const now = new Date();
-    return now.getFullYear() + '-' + String(m[1]).padStart(2, '0') + '-' + String(m[2]).padStart(2, '0');
+    return now.getFullYear() + '-' + pad2(+m[1]) + '-' + pad2(+m[2]);
   }
   return str;
 }
@@ -1566,6 +2928,7 @@ function openEditModal(id) {
   document.getElementById('ePlace').value = r.place || '';
   document.getElementById('eDeadline').value = toDateInputValue(r.deadline);
   document.getElementById('eNote').value = r.note || '';
+  setRemindEditor('edit', r.remindOn, r.remindOffsets);
   document.getElementById('editModal').classList.remove('hidden');
 }
 
@@ -1588,6 +2951,14 @@ document.getElementById('editSaveBtn').addEventListener('click', () => {
   r.place = document.getElementById('ePlace').value.trim();
   r.deadline = document.getElementById('eDeadline').value;
   r.note = document.getElementById('eNote').value.trim();
+  // 提醒条件变化时重置触发记录，让新提醒能再次展示
+  const newRemindOn = document.getElementById('eRemindToggle').checked;
+  const newRemindOffsets = collectRemindOffsets('edit');
+  const remindChanged = (newRemindOn !== !!r.remindOn) ||
+    JSON.stringify(newRemindOffsets) !== JSON.stringify(normalizeStoredOffsets(r.remindOffsets));
+  r.remindOn = newRemindOn;
+  r.remindOffsets = newRemindOffsets;
+  if (remindChanged) { r.remindFiredAt = null; }
   save(); render();
   closeEditModal();
   toast('已保存');
@@ -1703,6 +3074,8 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     id: r.id, title: r.title, time: r.time, place: r.place,
     deadline: r.deadline, note: r.note, source: r.source,
     done: r.done, starred: r.starred, createdAt: r.createdAt,
+    remindOn: !!r.remindOn, remindOffsets: normalizeStoredOffsets(r.remindOffsets),
+    remindAcked: !!r.remindAcked, remindFiredAt: r.remindFiredAt || null,
   }));
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1736,6 +3109,10 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
         if (existingIds.has(item.id)) return; // 已存在跳过
         if (item.starred === undefined) item.starred = false; // 老数据兼容
         if (item.done === undefined) item.done = false;
+        if (item.remindOn === undefined) item.remindOn = false; // v1.5.0 提醒字段兼容
+        item.remindOffsets = normalizeStoredOffsets(item.remindOffsets);
+        if (item.remindAcked === undefined) item.remindAcked = false;
+        if (item.remindFiredAt === undefined) item.remindFiredAt = null;
         if (!item.color) item.color = nextColor(); // 缺色则分配
         reminders.push(item);
         existingIds.add(item.id);
@@ -1764,11 +3141,13 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
 checkStorage();
 load();
 render();
+initTemplates();
 renderTemplates();
 renderProviders();
 updateUploadBtn();
 updateAiToggle();
 updateStorageHint();
+checkRemindersOnStartup();
 </script>
 </body>
 </html>
