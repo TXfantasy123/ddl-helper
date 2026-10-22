@@ -569,8 +569,6 @@
       <div class="form-row"><label>名称</label><input id="tpName" placeholder="必填，按钮上显示的文字" maxlength="20"></div>
       <div class="form-row"><label>默认标题</label><input id="tpTitle" placeholder="留空则用名称" maxlength="40"></div>
       <div class="form-row"><label>默认备注</label><input id="tpNote" placeholder="点模板时预填到备注栏" maxlength="100"></div>
-      <div class="form-row"><label>提前天数</label><input id="tpAdvance" type="number" min="0" step="1" placeholder="如 3（可选）"></div>
-      <div class="settings-hint">提前天数为预留字段，暂只保存、不影响预填</div>
       <div class="input-actions">
         <button type="button" class="primary" id="tplSaveBtn">保存</button>
       </div>
@@ -2529,7 +2527,6 @@ function openTplModal() {
   document.getElementById('tpName').value = '';
   document.getElementById('tpTitle').value = '';
   document.getElementById('tpNote').value = '';
-  document.getElementById('tpAdvance').value = '';
   document.getElementById('tplModal').classList.remove('hidden');
   const nameEl = document.getElementById('tpName');
   if (nameEl && typeof nameEl.focus === 'function') setTimeout(() => nameEl.focus(), 30);
@@ -2554,13 +2551,12 @@ document.getElementById('tplSaveBtn').addEventListener('click', () => {
     if (typeof nameEl.focus === 'function') nameEl.focus();
     return;
   }
-  const adv = parseInt(document.getElementById('tpAdvance').value, 10);
   templates.push({
     id: genTplId(),
     name: name.slice(0, 20),
     title: document.getElementById('tpTitle').value.trim() || name,
     defaultNote: document.getElementById('tpNote').value.trim(),
-    advanceDays: Number.isFinite(adv) && adv > 0 ? Math.floor(adv) : 0,
+    advanceDays: 0,
     builtin: false,
   });
   saveTemplates();
