@@ -1586,9 +1586,22 @@ function mockParseAll(text) {
 
 /* ---------- DeepSeek AI 解析 ---------- */
 // 随请求附加的解析要求（后端 system prompt 之外再强调一次，确保时间格式统一）
-const AI_PARSE_TIP = '\n\n【解析要求】\n1. 时间、截止日期统一输出 "YYYY-MM-DD HH:MM"（24小时制）；原文是时间段时输出 "YYYY-MM-DD HH:MM - YYYY-MM-DD HH:MM"。\n2. 中文数字时间必须转成阿拉伯数字，并按上午/下午/晚上/中午/凌晨换算成24小时制：晚上十一点二十一→23:21，下午三点→15:00，上午九点→09:00，中午十二点→12:00；缺年份时补当前年份。\n3. 截止日期重点读取「截止」「截止时间」「报名时间」「缴费截止」后面的日期和时间。\n4. title 必须简短具体，从正文提炼（如"四六级考试报名"）；确实无法提炼时用正文首句前20字，不要输出"待办事项"。';
+// 注意：本条要求优先级最高；原文没写的时刻绝不能编造。
+const AI_PARSE_TIP = `
+
+【解析要求（优先级最高，若与系统提示冲突以本要求为准）】
+1. time 字段：
+   - 原文只有日期 → 输出 "YYYY-MM-DD"（不要补 00:00 / 23:59，不要虚构时刻）。
+   - 原文只有时刻 → 输出 "HH:MM"。
+   - 日期 + 时刻 → 输出 "YYYY-MM-DD HH:MM"。
+   - 时间段 → 输出 "YYYY-MM-DD - YYYY-MM-DD"；只有某一端原文确实有时刻，才在该端加 " HH:MM"。
+2. 时间段必须覆盖通知里所有关键日期：取最早开始日期到最晚结束日期。例：初赛「10月22日-10月27日」+ 院赛「10月29日」→ "2026-10-22 - 2026-10-29"。
+3. deadline 取「报名截止 / 提交截止 / 缴费截止 / 请于…前」对应的日期和时刻；原文有具体时刻才带时刻，例如「请于10月27日中午12点前」→ "2026-10-27 12:00"。
+4. 中文数字时间必须转成阿拉伯数字，并按上午/下午/晚上/中午/凌晨换算成24小时制：晚上十一点二十一→23:21，下午三点→15:00，上午九点→09:00，中午十二点→12:00；缺年份时补当前年份。
+5. title 尽量带机构/主体名（如"江汉大学第四届大学生职业规划大赛"），不要省略学校/学院名；确实无法提炼时用正文首句前20字，不要输出"待办事项"。`;
 
 // AI 返回的时间字段兜底规范化：ISO 统一格式；中文数字/上下午转 24 小时制
+// 纯日期不补时刻；AI 虚构的 00:00 / 末端 23:59 按纯日期处理
 function normalizeAITimeField(value, kind) {
   const s = String(value == null ? '' : value).trim();
   if (!s) return '';
@@ -1597,13 +1610,25 @@ function normalizeAITimeField(value, kind) {
     return h !== undefined ? date + ' ' + fmtHm(+h, +mi) : date;
   };
   // ISO 时间段：2026-10-20 09:00 - 2026-10-20 10:00
-  const isoRange = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?\s*(?:-|—|–|~|～|至|到)\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?/);
+  const isoRange = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ Tt](\d{1,2})[:：](\d{2})(?::\d{2})?)?\s*(?:-|—|–|~|～|至|到)\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[ Tt](\d{1,2})[:：](\d{2})(?::\d{2})?)?/);
   if (isoRange) {
-    return fmtIso(isoRange[1], isoRange[2], isoRange[3], isoRange[4], isoRange[5]) + ' - ' +
-      fmtIso(isoRange[6], isoRange[7], isoRange[8], isoRange[9], isoRange[10]);
+    const sh = isoRange[4] !== undefined ? +isoRange[4] : null;
+    const sm = isoRange[5] !== undefined ? +isoRange[5] : null;
+    const eh = isoRange[9] !== undefined ? +isoRange[9] : null;
+    const em = isoRange[10] !== undefined ? +isoRange[10] : null;
+    // 00:00 视为纯日期；末端 23:59 也视为 AI 补的“当天结束”并去掉
+    const dropStart = sh !== null && sh === 0 && sm === 0;
+    const dropEnd = eh !== null && ((eh === 0 && em === 0) || (eh === 23 && em === 59));
+    return fmtIso(isoRange[1], isoRange[2], isoRange[3], dropStart ? undefined : (sh !== null ? sh : undefined), dropStart ? undefined : (sm !== null ? sm : undefined)) + ' - ' +
+      fmtIso(isoRange[6], isoRange[7], isoRange[8], dropEnd ? undefined : (eh !== null ? eh : undefined), dropEnd ? undefined : (em !== null ? em : undefined));
   }
-  const iso = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2})[:：](\d{2}))?/);
-  if (iso) return fmtIso(iso[1], iso[2], iso[3], iso[4], iso[5]);
+  const iso = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ Tt](\d{1,2})[:：](\d{2})(?::\d{2})?)?/);
+  if (iso) {
+    const h = iso[4] !== undefined ? +iso[4] : null;
+    const mi = iso[5] !== undefined ? +iso[5] : null;
+    const drop = h !== null && h === 0 && mi === 0;
+    return fmtIso(iso[1], iso[2], iso[3], drop ? undefined : (h !== null ? h : undefined), drop ? undefined : (mi !== null ? mi : undefined));
+  }
   const local = kind === 'deadline' ? extractDeadline(s) : extractTime(s);
   return local || s;
 }
