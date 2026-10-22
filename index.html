@@ -137,14 +137,33 @@
     background: #fff; color: var(--text); flex-shrink: 0;
   }
   .time-sep { color: var(--muted); padding: 9px 2px; flex-shrink: 0; }
+  /* 截止时间：日期 + 可选时刻，小屏可换行 */
+  .form-row.deadline-row { flex-wrap: wrap; }
+  .form-row input.deadline-date { flex: 1 1 140px; }
+  .form-row input.deadline-time { flex: 0 0 96px; width: 96px; }
   .form-row.full { flex-wrap: wrap; }
   .form-row.full label { width: 100%; padding-top: 0; }
   .form-row.full input { flex: 1 1 100%; }
 
   /* ===== 列表 ===== */
-  .list-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .list-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .list-head h2 { font-size: 16px; font-weight: 700; }
-  .list-head .sub { font-size: 12px; color: var(--muted); }
+  .list-head .sub { font-size: 12px; color: var(--muted); margin-right: auto; }
+  .batch-edit-btn {
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px;
+    background: #eef2ff; color: var(--primary);
+  }
+  .batch-edit-btn:hover { background: #e0e7ff; }
+  .batch-actions { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .batch-actions.hidden { display: none; }
+  .batch-btn {
+    font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px;
+    background: #eef2ff; color: var(--primary);
+  }
+  .batch-btn:hover { background: #e0e7ff; }
+  .batch-btn.danger { background: #fef2f2; color: var(--danger); }
+  .batch-btn.danger:hover { background: #fee2e2; }
+  .batch-btn.confirm { background: #dc2626; color: #fff; }
 
   .empty { text-align: center; color: var(--muted); padding: 30px 0; font-size: 14px; }
   .empty.hidden { display: none; }
@@ -193,6 +212,17 @@
   .btn-done.undo { background: #fef3c7; color: #b45309; }
   .btn-del { background: #fef2f2; color: var(--danger); width: 72px; }
   .btn-del:hover { background: #fee2e2; }
+
+  /* 批量状态编辑 */
+  #list.batch-mode .card-actions { display: none; }
+  .batch-check {
+    flex-shrink: 0; width: 28px; height: 28px; margin-top: -2px;
+    border: 1px solid var(--line); border-radius: 50%; background: #fff;
+    color: var(--muted); font-size: 15px; line-height: 1; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .batch-check.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .card.batch-selected { border-color: var(--primary); box-shadow: 0 0 0 2px #dbeafe; }
 
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 20px; }
 
@@ -269,33 +299,39 @@
   .remind-switch-wrap { display: flex; align-items: center; gap: 8px; padding-top: 5px; }
   .remind-state { font-size: 12px; font-weight: 700; color: var(--muted); }
   .remind-box {
-    margin: 0 0 10px; padding: 10px;
+    width: fit-content; max-width: 340px;
+    margin: 0 0 10px; padding: 8px 10px;
     background: #f8fafc; border: 1px solid var(--line); border-radius: 10px;
   }
   .remind-box.hidden { display: none; }
-  .remind-title { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .remind-group { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .remind-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .remind-group { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 13px; }
   .remind-group .remind-num {
-    width: 76px; flex: 0 0 auto;
+    width: 56px; flex: 0 0 56px;
     border: 1px solid var(--line); border-radius: 8px;
-    padding: 8px 10px; font-size: 14px; font-family: inherit; outline: none;
+    padding: 6px 8px; font-size: 13px; font-family: inherit; outline: none;
   }
   .remind-group .remind-num:focus { border-color: var(--primary); }
   .remind-group .remind-unit {
+    width: 68px; flex: 0 0 68px;
     border: 1px solid var(--line); border-radius: 8px;
-    padding: 8px 6px; font-size: 14px; font-family: inherit;
+    padding: 6px 4px; font-size: 13px; font-family: inherit;
     background: #fff; color: var(--text); outline: none;
   }
   .remind-add, .remind-del {
-    padding: 5px 10px; font-size: 14px; line-height: 1.4;
+    padding: 4px 8px; font-size: 13px; line-height: 1.4;
     background: #eef2ff; color: var(--primary); border-radius: 8px; flex-shrink: 0;
   }
-  .remind-add-row { margin-bottom: 8px; }
+  .remind-add-row { margin-bottom: 6px; }
   .remind-add:hover { background: #e0e7ff; }
-  .remind-del { background: #fef2f2; color: var(--danger); }
+  .remind-del { background: #fef2f2; color: var(--danger); padding: 4px 7px; }
   .remind-del:hover { background: #fee2e2; }
-  .remind-summary { font-size: 13px; color: var(--primary); font-weight: 600; }
+  .remind-summary { font-size: 12px; color: var(--primary); font-weight: 600; }
   .remind-summary.empty { color: var(--muted); font-weight: 400; }
+  @media (max-width: 430px) {
+    .remind-box { width: 100%; max-width: 100%; }
+    .remind-group { flex-wrap: wrap; }
+  }
 
   /* ===== 提醒弹窗 ===== */
   .remind-modal-box { max-height: 86vh; overflow-y: auto; }
@@ -421,9 +457,10 @@
           <label>地点</label>
           <input id="mPlace" placeholder="如 教务系统 / J03教学楼">
         </div>
-        <div class="form-row">
-          <label>截止日</label>
-          <input id="mDeadline" type="date">
+        <div class="form-row deadline-row">
+          <label>截止时间</label>
+          <input id="mDeadline" class="deadline-date" type="date" title="截止日期">
+          <input id="mDeadlineTime" class="deadline-time" type="time" title="具体时刻（可选）">
         </div>
         <div class="form-row">
           <label>提醒</label>
@@ -457,6 +494,13 @@
         <div class="list-head">
           <h2>事项列表</h2>
           <span class="sub" id="listCount"></span>
+          <button type="button" class="batch-edit-btn" id="batchEditBtn">状态编辑</button>
+          <div class="batch-actions hidden" id="batchActions">
+            <button type="button" class="batch-btn" id="batchSelectAllBtn">全选</button>
+            <button type="button" class="batch-btn" id="batchDoneBtn">完成</button>
+            <button type="button" class="batch-btn danger" id="batchDeleteBtn">删除</button>
+            <button type="button" class="batch-btn" id="batchCancelBtn">取消</button>
+          </div>
         </div>
         <ul id="list" style="list-style:none"></ul>
         <div class="empty" id="empty">还没有提醒，粘贴一条通知试试吧 👆</div>
@@ -492,7 +536,11 @@
       <div class="form-row"><label>标题</label><input id="eTitle" placeholder="必填"></div>
       <div class="form-row"><label>时间</label><input id="eTime" placeholder="如 9:00 / 10月15日 15:00-16:30"></div>
       <div class="form-row"><label>地点</label><input id="ePlace"></div>
-      <div class="form-row"><label>截止日</label><input id="eDeadline" type="date"></div>
+      <div class="form-row deadline-row">
+        <label>截止时间</label>
+        <input id="eDeadline" class="deadline-date" type="date" title="截止日期">
+        <input id="eDeadlineTime" class="deadline-time" type="time" title="具体时刻（可选）">
+      </div>
       <div class="form-row">
         <label>提醒</label>
         <div class="remind-switch-wrap">
@@ -714,23 +762,34 @@ function inferYearForMd(month, day) {
   });
   return bestY;
 }
-// 把 "2026-03-28" / "3月28日" / "3/28" / "2026年3月28日" 解析为 Date（缺年份取距今天最近的年份）
+// 把 "2026-03-28" / "3月28日" / "3/28" / "2026年3月28日" / "2026-03-28 12:00" 解析为 Date
+// 纯日期为当天 00:00；带时刻时使用该时分（缺年份取距今天最近的年份）
 function parseDate(str) {
   if (!str) return null;
-  let m;
-  if ((m = str.match(/(\d{4})[年\/\-.](\d{1,2})[月\/\-.](\d{1,2})/))) {
-    return new Date(+m[1], +m[2] - 1, +m[3]);
+  const s = String(str);
+  let m, d = null;
+  if ((m = s.match(/(\d{4})[年\/\-.](\d{1,2})[月\/\-.](\d{1,2})/))) {
+    d = new Date(+m[1], +m[2] - 1, +m[3]);
+  } else if ((m = s.match(/(\d{1,2})月(\d{1,2})日?/))) {
+    d = new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
+  } else if ((m = s.match(/(\d{1,2})[\/\-.](\d{1,2})/))) {
+    d = new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
   }
-  if ((m = str.match(/(\d{1,2})月(\d{1,2})日?/))) {
-    return new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
-  }
-  if ((m = str.match(/(\d{1,2})[\/\-.](\d{1,2})/))) {
-    return new Date(inferYearForMd(+m[1], +m[2]), +m[1] - 1, +m[2]);
-  }
-  return null;
+  if (!d) return null;
+  const clock = lastClock(s);
+  if (clock) d.setHours(clock.h, clock.m, 0, 0);
+  return d;
 }
 function fmtDate(d) {
   return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+// 截止时间组合：日期 + 可选时刻 → "YYYY-MM-DD" / "YYYY-MM-DD HH:MM"
+function combineDeadlineValue(dateVal, timeVal) {
+  const d = String(dateVal || '').trim();
+  const t = String(timeVal || '').trim();
+  if (!d) return '';
+  return t ? d + ' ' + t : d;
 }
 
 /* ---------- 时间解析工具（支持中文数字 / 上下午转 24 小时制） ---------- */
@@ -981,6 +1040,15 @@ function dedupeDateTokens(tokens) {
   return out;
 }
 
+// 数字范围/小数后面紧跟量词时是「数量/规格」而非日期（1-2分钟 / 2-3天 / 1.5小时 / 1.5-2小时 / 2000字符）
+function isQuantityAfter(src, endIndex) {
+  const rest = src.slice(endIndex).replace(/^\s*/, '');
+  const unit = '(?:分钟|小时|秒钟?|秒|张|个|条|人|次|篇|页|份|项|名|位|元|块|MB|GB|KB|字符|字|天|周|分|%)';
+  if (new RegExp('^' + unit, 'i').test(rest)) return true;
+  // 「1.5-2小时」「1.5~2 分钟」这类小数/数字范围 + 量词
+  return new RegExp('^(?:[-—–~～至到]\\s*\\d+(?:\\.\\d+)?\\s*)' + unit, 'i').test(rest);
+}
+
 // 收集日期 token：完整年月日 / 月日范围 / 斜杠点短横线 / 中文数字 / 相对日期
 function collectDateTokens(text) {
   const src = normalizeForParse(text);
@@ -1004,6 +1072,7 @@ function collectDateTokens(text) {
 
   const reNumRange = /(\d{1,2})\s*[\/.]\s*(\d{1,2})(?![\d.])\s*[-—–~～至到]\s*(\d{1,2})\s*[\/.]\s*(\d{1,2})(?![\d.])/g;
   while ((m = reNumRange.exec(src))) {
+    if (isQuantityAfter(src, m.index + m[0].length)) continue;
     const mo1 = +m[1], d1 = +m[2], mo2 = +m[3], d2 = +m[4];
     if (mo1 >= 1 && mo1 <= 12 && d1 >= 1 && d1 <= 31 && mo2 >= 1 && mo2 <= 12 && d2 >= 1 && d2 <= 31) {
       add(m.index, m.index + m[0].length, mo1, d1, undefined, { m: mo2, d: d2 });
@@ -1033,6 +1102,7 @@ function collectDateTokens(text) {
 
   const reNum = /(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![\d.])/g;
   while ((m = reNum.exec(src))) {
+    if (isQuantityAfter(src, m.index + m[0].length)) continue; // 1-2分钟 / 1.5小时 / 2-3天 …
     const before = m.index > 0 ? src[m.index - 1] : '';
     if (/[\dA-Za-z.]/.test(before)) continue; // 排除 v1.5.4 / 2026-10 内部片段
     const mo = +m[1], d = +m[2];
@@ -1072,12 +1142,68 @@ function buildTimeText(src, dateTokens, clockTokens) {
 }
 
 // 拆分多条通知：空行 / 编号 / 多个「关于…通知」/「XX安排：」分号列表
+// 判定「单条完整通知」：标题行 + 正文编号小节，或出现「具体方案如下 / 通知如下」等
+function isSingleLongNotice(src) {
+  const lines = src.split('\n').map(l => l.trim()).filter(Boolean);
+  const firstLine = lines[0] || '';
+  const hasDateInFirst = collectDateTokens(firstLine).length > 0 || collectClockTokens(firstLine).length > 0;
+  const firstIsTitle =
+    /^#+[^#\n]{2,60}#+/.test(firstLine) ||
+    /^【[^】]{2,40}】/.test(firstLine) ||
+    /关于[^.\n]{2,60}?(?:通知|公告|方案)/.test(firstLine) ||
+    (/[大赛活动比赛招新启动]/.test(firstLine) && !hasDateInFirst);
+  const hasSections = /(?:^|\n)\s*(?:[一二三四五六七八九十]+[、.]|[（(][一二三四五六七八九十\d]+[)）]|\d+[.、)])\s*[^\n]/.test(src);
+  if (firstIsTitle && hasSections) return true;
+  if (/(?:具体(?:工作)?方案|通知|安排|有关事项|方案)\s*如下/.test(src)) return true;
+  return false;
+}
+
+// 是否存在明确的多通知信号（多个「关于…通知/公告」、通知一/二、--- / === 分隔）
+function hasExplicitMultiNotice(src) {
+  const aboutCount = (src.match(/关于[^.\n]{2,60}?(?:通知|公告)/g) || []).length;
+  if (aboutCount >= 2) return true;
+  return /(?:^|\n)\s*(?:通知[一二三四五六七八九十\d]+|[-—=]{3,})\s*(?:\n|$)/.test(src);
+}
+
+// 安全阀：拆出超过 5 条且没有多通知信号时，说明是把章节当通知，合并回 1 条
+function applySplitSafety(parts, src) {
+  const aboutCount = (src.match(/关于[^.\n]{2,60}?(?:通知|公告)/g) || []).length;
+  const hasSep = /(?:^|\n)\s*(?:[-—=]{3,}|通知[一二三四五六七八九十\d]+)/.test(src);
+  if (parts.length > 5 && aboutCount < 2 && !hasSep) return [src];
+  return parts;
+}
+
 function splitNotices(text) {
   const src = normalizeForParse(text).trim();
   if (!src) return [];
 
-  // 1) 编号列表（1. / 2. / 一、二、/（1））
+  // 0) 优先识别「单条完整通知」：内部一、二、三 / 1.2.3. 是章节，不能按通知拆
+  if (!hasExplicitMultiNotice(src) && isSingleLongNotice(src)) return [src];
   const lines = src.split('\n');
+
+  // 0.5) 明确分隔符：「通知一/通知二」「---」「====」
+  const inlineSepRe = /通知[一二三四五六七八九十\d]+\s*[:：]/g;
+  if ((src.match(inlineSepRe) || []).length >= 2) {
+    const parts = src.split(/(?=通知[一二三四五六七八九十\d]+\s*[:：])/).map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) return applySplitSafety(parts, src);
+  }
+  const sepRegex = /^\s*(?:通知[一二三四五六七八九十\d]+\s*[:：]?\s*|[-—=]{3,})\s*$/;
+  if (lines.some(l => sepRegex.test(l))) {
+    const parts = [];
+    let cur = [];
+    lines.forEach(line => {
+      if (sepRegex.test(line)) {
+        if (cur.join('\n').trim()) parts.push(cur.join('\n').trim());
+        cur = [];
+      } else {
+        cur.push(line);
+      }
+    });
+    if (cur.join('\n').trim()) parts.push(cur.join('\n').trim());
+    if (parts.length >= 2) return applySplitSafety(parts, src);
+  }
+
+  // 1) 编号列表（1. / 2. / 一、二、/（1））
   const numbered = [];
   lines.forEach(line => {
     const m = line.match(/^\s*(?:[一二三四五六七八九十]+[、.]|\d+[.、)]|[（(]\d+[)）])\s*(.*)$/);
@@ -1087,7 +1213,7 @@ function splitNotices(text) {
       numbered[numbered.length - 1] += '\n' + line.trim();
     }
   });
-  if (numbered.length >= 2) return numbered.filter(Boolean);
+  if (numbered.length >= 2) return applySplitSafety(numbered.filter(Boolean), src);
 
   // 1.5) 多个有意义的【标题】段落（排除【活动主题】【活动地点】这类字段标签）
   const isBracketTitle = line => {
@@ -1110,21 +1236,21 @@ function splitNotices(text) {
       }
     });
     if (cur.trim()) parts.push(cur.trim());
-    if (parts.length >= 2) return parts;
+    if (parts.length >= 2) return applySplitSafety(parts, src);
   }
 
   // 2) 空行分隔，且至少两块含日期/时间（避免把「标题+正文」拆开）
   const blocks = src.split(/\n\s*\n+/).map(b => b.trim()).filter(Boolean);
   if (blocks.length >= 2) {
     const rich = blocks.filter(b => collectDateTokens(b).length > 0 || collectClockTokens(b).length > 0);
-    if (rich.length >= 2) return blocks;
+    if (rich.length >= 2) return applySplitSafety(blocks, src);
   }
 
   // 3) 多个「关于…的通知」并列
   const aboutMatches = src.match(/关于[^。\n]{2,50}?的通知/g) || [];
   if (aboutMatches.length >= 2) {
     const parts = src.split(/(?=关于[^。\n]{2,50}?的通知)/).map(s => s.trim()).filter(Boolean);
-    if (parts.length >= 2) return parts;
+    if (parts.length >= 2) return applySplitSafety(parts, src);
   }
 
   // 4) 「XX安排：条目；条目」式列表（期末考试/补考安排等）
@@ -1132,7 +1258,7 @@ function splitNotices(text) {
   if (hm) {
     const clauses = hm[2].split(/[；;]/).map(s => s.trim()).filter(Boolean);
     const dated = clauses.filter(c => collectDateTokens(c).length > 0 || collectClockTokens(c).length > 0);
-    if (dated.length >= 2) return dated;
+    if (dated.length >= 2) return applySplitSafety(dated, src);
   }
   return [src];
 }
@@ -1173,6 +1299,13 @@ function extractTitle(text) {
   m = src.match(/(?:活动)?主题\s*[:：]\s*([^\n.；;【]{2,50})/);
   if (m) return refineTitle(m[1]);
 
+  // 0.5) 群聊/正文主标题：#xxxx#（去掉 #、表情与年份修饰）
+  m = src.match(/^#+\s*([^#\n]{2,60}?)\s*#+/);
+  if (m) {
+    const t = refineTitle(cleanThemeTitle(m[1]));
+    if (t && t !== '待办事项') return t;
+  }
+
   // 1) 「关于……的通知/公告/通报/决定」→ 取关于与的通知之间的核心短语
   m = src.match(/关于\s*([^.\n]{2,80}?)(?:的)?\s*(?:通知|公告|通报|决定|安排|说明|提示)/);
   if (m) {
@@ -1211,7 +1344,7 @@ function extractTitle(text) {
     ['选课', '选课'], ['补选', '选课（补选）'], ['正选', '选课（正选）'], ['预选', '选课（预选）'],
     ['补考', '补考'], ['期末考试', '期末考试'],
     ['体测补测', '体测补测'], ['体测', '体测'], ['体质健康', '体测'],
-    ['数学竞赛', '数学竞赛'], ['学科竞赛', '学科竞赛'], ['竞赛', '学科竞赛报名'],
+    ['数学竞赛', '数学竞赛'], ['职业规划大赛', '职业规划大赛'], ['学科竞赛', '学科竞赛'], ['竞赛', '学科竞赛报名'],
     ['奖学金', '奖学金申请'], ['助学金', '助学金申请'],
     ['缴费', '缴费'], ['学费', '学费缴纳'],
     ['讲座', '讲座'], ['图书馆', '图书馆'], ['开学典礼', '开学典礼'], ['迎新晚会', '迎新晚会'],
@@ -1507,10 +1640,10 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// 排序用"结束时间"：优先截止日(deadline)，其次时间字段里的结束日期
+// 排序用"结束时间"：优先截止时刻（纯日期按当天 23:59:59），其次时间字段里的结束日期
 function reminderSortTime(r) {
-  const d = parseDate(r.deadline);
-  if (d) return d;
+  const dm = deadlineMoment(r);
+  if (dm) return dm;
   if (r.time) {
     const dates = findAllDates(r.time);
     if (dates.length) {
@@ -1533,6 +1666,12 @@ function sortReminders() {
     return b.createdAt - a.createdAt;                    // 都无日期按创建时间倒序
   });
 }
+
+/* ---------- 批量状态编辑（仅前端内存，不持久化） ---------- */
+let batchMode = false;
+const batchSelected = new Set();
+let batchDeleteArmed = false;
+let batchDeleteTimer = null;
 
 function render() {
   sortReminders();
@@ -1561,15 +1700,20 @@ function render() {
     if (r.place) fields.push(`<div class="f"><span class="k">📍 地点</span>${escapeHtml(r.place)}</div>`);
     if (r.deadline) fields.push(`<div class="f"><span class="k">📅 截止</span>${escapeHtml(r.deadline)}</div>`);
     if (r.note) fields.push(`<div class="f-note" data-id="${r.id}" title="${escapeHtml(r.note)}">📝 ${escapeHtml(r.note)}</div>`);
+    const selected = batchMode && batchSelected.has(r.id);
+    const batchCheck = batchMode
+      ? `<button type="button" class="batch-check ${selected ? 'on' : ''}" data-act="batch-toggle" title="${selected ? '取消选择' : '选择'}">${selected ? '●' : '○'}</button>`
+      : '';
 
     return `
-      <li class="card ${r.done ? 'done' : ''}" data-id="${r.id}" style="border-left-color:${color}">
+      <li class="card ${r.done ? 'done' : ''} ${selected ? 'batch-selected' : ''}" data-id="${r.id}" style="border-left-color:${color}">
         <div class="card-head">
           <button class="star-btn ${r.starred ? 'on' : ''}" data-act="star" title="收藏置顶">${r.starred ? '⭐' : '☆'}</button>
           <span class="r-dot" style="background:${color}"></span>
           <div class="r-title">${escapeHtml(r.title || '未命名事项')}</div>
           ${statusTag}
           <span class="r-source ${r.source}">${sourceLabel}</span>
+          ${batchCheck}
         </div>
         <div class="fields">${fields.join('')}</div>
         <div class="card-actions">
@@ -1580,8 +1724,94 @@ function render() {
       </li>`;
   }).join('');
 
+  if (batchMode) updateBatchUI();
   if (currentView === 'calendar') renderCalendar();
   updateReminderBadge();
+}
+
+function resetBatchDeleteConfirm() {
+  batchDeleteArmed = false;
+  if (batchDeleteTimer) { clearTimeout(batchDeleteTimer); batchDeleteTimer = null; }
+  const btn = document.getElementById('batchDeleteBtn');
+  if (btn) { btn.classList.remove('confirm'); btn.textContent = '删除'; }
+}
+
+function updateBatchUI() {
+  const editBtn = document.getElementById('batchEditBtn');
+  const actions = document.getElementById('batchActions');
+  const listEl = document.getElementById('list');
+  if (editBtn) editBtn.classList.toggle('hidden', batchMode);
+  if (actions) actions.classList.toggle('hidden', !batchMode);
+  if (listEl) listEl.classList.toggle('batch-mode', batchMode);
+  if (batchMode) {
+    const ids = new Set(reminders.map(r => r.id));
+    batchSelected.forEach(id => { if (!ids.has(id)) batchSelected.delete(id); });
+  }
+  const allBtn = document.getElementById('batchSelectAllBtn');
+  if (allBtn) {
+    allBtn.textContent = (reminders.length > 0 && batchSelected.size === reminders.length) ? '取消全选' : '全选';
+  }
+}
+
+function enterBatchMode() {
+  batchMode = true;
+  batchSelected.clear();
+  resetBatchDeleteConfirm();
+  render();
+  updateBatchUI();
+}
+
+function exitBatchMode() {
+  batchMode = false;
+  batchSelected.clear();
+  resetBatchDeleteConfirm();
+  render();
+  updateBatchUI();
+}
+
+function toggleBatchSelect(id) {
+  if (batchSelected.has(id)) batchSelected.delete(id);
+  else batchSelected.add(id);
+  resetBatchDeleteConfirm();
+  render();
+}
+
+function batchSelectAll() {
+  if (reminders.length && batchSelected.size === reminders.length) batchSelected.clear();
+  else reminders.forEach(r => batchSelected.add(r.id));
+  resetBatchDeleteConfirm();
+  render();
+}
+
+function batchComplete() {
+  const n = batchSelected.size;
+  if (!n) { toast('请先选择事项'); return; }
+  reminders.forEach(r => { if (batchSelected.has(r.id)) r.done = true; });
+  save();
+  batchSelected.clear();
+  resetBatchDeleteConfirm();
+  render();
+  toast('已完成 ' + n + ' 条');
+}
+
+function batchDelete() {
+  const n = batchSelected.size;
+  if (!n) { toast('请先选择事项'); return; }
+  if (!batchDeleteArmed) {
+    batchDeleteArmed = true;
+    const btn = document.getElementById('batchDeleteBtn');
+    if (btn) { btn.classList.add('confirm'); btn.textContent = '再点确认'; }
+    toast('再点一次「删除」确认');
+    if (batchDeleteTimer) clearTimeout(batchDeleteTimer);
+    batchDeleteTimer = setTimeout(resetBatchDeleteConfirm, 2000);
+    return;
+  }
+  reminders = reminders.filter(r => !batchSelected.has(r.id));
+  save();
+  batchSelected.clear();
+  resetBatchDeleteConfirm();
+  render();
+  toast('已删除 ' + n + ' 条');
 }
 
 /* ---------- 事件委托：完成 / 删除 / 展开备注 ---------- */
@@ -1596,6 +1826,12 @@ document.getElementById('list').addEventListener('click', (e) => {
   const card = btn.closest('.card');
   const id = card.dataset.id;
   const act = btn.dataset.act;
+
+  if (act === 'batch-toggle') {
+    toggleBatchSelect(id);
+    return;
+  }
+  if (batchMode) return; // 批量模式下只响应选择圆圈，避免单条操作误触
 
   if (act === 'star') {
     const r = reminders.find(x => x.id === id);
@@ -1621,6 +1857,13 @@ document.getElementById('list').addEventListener('click', (e) => {
     }
   }
 });
+
+/* ---------- 批量状态编辑按钮 ---------- */
+document.getElementById('batchEditBtn').addEventListener('click', enterBatchMode);
+document.getElementById('batchSelectAllBtn').addEventListener('click', batchSelectAll);
+document.getElementById('batchDoneBtn').addEventListener('click', batchComplete);
+document.getElementById('batchDeleteBtn').addEventListener('click', batchDelete);
+document.getElementById('batchCancelBtn').addEventListener('click', exitBatchMode);
 
 /* ---------- 解析按钮 ---------- */
 let isParsing = false;
@@ -1829,6 +2072,7 @@ function resetManualForm() {
   setTimeRangeMode(false);
   document.getElementById('mPlace').value = '';
   document.getElementById('mDeadline').value = '';
+  document.getElementById('mDeadlineTime').value = '';
   document.getElementById('mNote').value = '';
   setRemindEditor('manual', false, []);
 }
@@ -1853,7 +2097,10 @@ document.getElementById('manualSaveBtn').addEventListener('click', () => {
     title: title,
     time: buildTimeValue(),
     place: document.getElementById('mPlace').value.trim(),
-    deadline: document.getElementById('mDeadline').value,
+    deadline: combineDeadlineValue(
+      document.getElementById('mDeadline').value,
+      document.getElementById('mDeadlineTime').value
+    ),
     note: document.getElementById('mNote').value.trim(),
     source: 'manual',
     done: false,
@@ -1966,14 +2213,26 @@ function dayTasks(date) {
     .filter(r => reminderCoversDate(r, date))
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 }
+// 截止时刻：deadline 带具体时刻 → 该日期该时刻；只有日期 → 当天 23:59:59.999
+function deadlineMoment(r) {
+  if (!r) return null;
+  const raw = String(r.deadline || '');
+  const d = parseDate(raw);
+  if (!d) return null;
+  const clock = lastClock(raw); // 基于原始字符串判断是否含 HH:MM / 中文时刻
+  if (clock) return new Date(d.getFullYear(), d.getMonth(), d.getDate(), clock.h, clock.m, 0, 0);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+
 // 事项的紧急状态色：red/orange/blue；已完成返回 null（仅列表文字标签用）
-function statusColor(r) {
-  if (r.done) return null;
-  const d = parseDate(r.deadline);
-  if (!d) return 'blue';
-  const today = startOfDay(new Date());
-  if (d < today) return 'red';
-  if (Math.round((d - today) / 86400000) <= 3) return 'orange';
+// now 可选（测试/复用），默认当前时间
+function statusColor(r, now) {
+  if (!r || r.done) return null;
+  const moment = deadlineMoment(r);
+  if (!moment) return 'blue';
+  const cur = (now && typeof now.getTime === 'function') ? now : new Date();
+  if (cur.getTime() > moment.getTime()) return 'red';
+  if (moment.getTime() - cur.getTime() <= 3 * 24 * 60 * 60 * 1000) return 'orange';
   return 'blue';
 }
 
@@ -2082,6 +2341,13 @@ function renderLegend() {
 }
 
 function switchView(view) {
+  if (batchMode) {
+    batchMode = false;
+    batchSelected.clear();
+    resetBatchDeleteConfirm();
+    updateBatchUI();
+    render();
+  }
   currentView = view;
   document.getElementById('listView').classList.toggle('hidden', view !== 'list');
   document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
@@ -2362,7 +2628,14 @@ function lastClock(str) {
 function remindBaseTime(r) {
   if (!r) return null;
   const dl = parseDate(r.deadline);
-  if (dl) return new Date(dl.getFullYear(), dl.getMonth(), dl.getDate(), 23, 59, 59, 0);
+  if (dl) {
+    // 有具体时刻 → 用该时刻；只有日期 → 沿用当天 23:59:59
+    const clock = lastClock(String(r.deadline || ''));
+    return new Date(
+      dl.getFullYear(), dl.getMonth(), dl.getDate(),
+      clock ? clock.h : 23, clock ? clock.m : 59, clock ? 0 : 59, 0
+    );
+  }
   const timeStr = String(r.time || '').trim();
   if (!timeStr) return null;
   const clock = lastClock(timeStr);
@@ -2465,7 +2738,7 @@ function renderRemindBox(key) {
   if (stateEl) stateEl.textContent = ed.on ? 'ON' : 'OFF';
   if (!box) return;
   box.classList.toggle('hidden', !ed.on);
-  if (!ed.on) return;
+  if (!ed.on) { box.innerHTML = ''; return; }
   // v1.5.3：第一组不显示 ×，第二组起显示 ×；单位下拉第一项「请选择」，最多 6 组
   const rows = ed.offsets.map((o, i) =>
     '<div class="remind-group" data-rem-idx="' + i + '">' +
@@ -2823,6 +3096,8 @@ document.getElementById('tplButtons').addEventListener('click', (e) => {
   setTimeRangeMode(false);
   document.getElementById('mPlace').value = '';
   document.getElementById('mDeadline').value = '';
+  document.getElementById('mDeadlineTime').value = '';
+  setRemindEditor('manual', false, []);
   const hint = document.getElementById('manualHint');
   if (hint) hint.classList.add('hidden');
   toast('已预填「' + (t.title || t.name) + '」，请填日期');
@@ -2919,6 +3194,13 @@ function toDateInputValue(str) {
   return str;
 }
 
+// 从 deadline 字符串取可选的 HH:MM 部分（无时刻返回空）
+function toTimeInputValue(str) {
+  if (!str) return '';
+  const clock = lastClock(String(str));
+  return clock ? fmtHm(clock.h, clock.m) : '';
+}
+
 function openEditModal(id) {
   const r = reminders.find(x => x.id === id);
   if (!r) return;
@@ -2927,6 +3209,7 @@ function openEditModal(id) {
   document.getElementById('eTime').value = r.time || '';
   document.getElementById('ePlace').value = r.place || '';
   document.getElementById('eDeadline').value = toDateInputValue(r.deadline);
+  document.getElementById('eDeadlineTime').value = toTimeInputValue(r.deadline);
   document.getElementById('eNote').value = r.note || '';
   setRemindEditor('edit', r.remindOn, r.remindOffsets);
   document.getElementById('editModal').classList.remove('hidden');
@@ -2949,7 +3232,10 @@ document.getElementById('editSaveBtn').addEventListener('click', () => {
   r.title = title;
   r.time = document.getElementById('eTime').value.trim();
   r.place = document.getElementById('ePlace').value.trim();
-  r.deadline = document.getElementById('eDeadline').value;
+  r.deadline = combineDeadlineValue(
+    document.getElementById('eDeadline').value,
+    document.getElementById('eDeadlineTime').value
+  );
   r.note = document.getElementById('eNote').value.trim();
   // 提醒条件变化时重置触发记录，让新提醒能再次展示
   const newRemindOn = document.getElementById('eRemindToggle').checked;

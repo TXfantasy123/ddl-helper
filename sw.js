@@ -1,6 +1,6 @@
 // Service Worker：缓存静态资源，实现离线打开
-// 版本号升级时自动失效旧缓存
-const CACHE_NAME = 'ddl-helper-v2';
+// 版本号升级时自动失效旧缓存（发版务必更新）
+const CACHE_NAME = 'ddl-helper-v1.8.0';
 const ASSETS = [
   '/',
   '/index.html',
