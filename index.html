@@ -148,7 +148,23 @@
   /* ===== 列表 ===== */
   .list-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .list-head h2 { font-size: 16px; font-weight: 700; }
-  .list-head .sub { font-size: 12px; color: var(--muted); margin-right: auto; }
+  .list-head .sub { font-size: 12px; color: var(--muted); }
+  .list-head-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-right: auto; }
+  .list-head-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .list-search {
+    width: 200px; max-width: 100%; padding: 6px 9px;
+    border: 1px solid var(--line); border-radius: 8px;
+    font-size: 13px; font-family: inherit; outline: none; color: var(--text);
+    background: #fff;
+  }
+  .list-search:focus { border-color: var(--primary); }
+  .list-filter-btn {
+    font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px;
+    background: #f1f5f9; color: var(--muted); white-space: nowrap;
+  }
+  .list-filter-btn.on { background: #eef2ff; color: var(--primary); }
+  .search-info { font-size: 12px; color: var(--primary); font-weight: 600; }
+  .list-head-tools .batch-actions { margin-left: 0; }
   .batch-edit-btn {
     font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px;
     background: #eef2ff; color: var(--primary);
@@ -352,7 +368,7 @@
   }
   .remind-item {
     border: 1px solid var(--line); border-radius: 10px; padding: 10px;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;
   }
   .remind-item-main { flex: 1; min-width: 0; }
   .remind-item-title { font-size: 14px; font-weight: 600; word-break: break-all; }
@@ -360,7 +376,23 @@
   .remind-status-tag.due { background: #fee2e2; color: #dc2626; }
   .remind-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .remind-item-lead { font-size: 12px; color: #b45309; margin-top: 3px; }
-  .remind-item .btn-done { flex: 0 0 auto; width: 82px; }
+  .remind-item-snooze { font-size: 12px; color: #7c3aed; margin-top: 3px; }
+  .remind-item-actions { display: flex; gap: 6px; flex: 0 0 auto; align-items: center; }
+  .remind-item .btn-snooze {
+    flex: 0 0 auto; font-size: 12px; font-weight: 600; padding: 6px 9px;
+    border-radius: 8px; background: #f1f5f9; color: var(--primary);
+  }
+  .remind-item .btn-snooze:hover { background: #e0e7ff; }
+  .remind-item .btn-done { flex: 0 0 auto; width: auto; padding: 6px 10px; }
+  .snooze-menu {
+    flex: 1 1 100%; display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line);
+  }
+  .snooze-opt {
+    font-size: 12px; padding: 5px 9px; border-radius: 8px;
+    background: #eef2ff; color: var(--primary); font-weight: 600;
+  }
+  .snooze-opt:hover { background: #e0e7ff; }
   .remind-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
   .remind-footer button { width: 100%; flex: none; }
   .remind-footer .primary { flex: none; }
@@ -398,6 +430,8 @@
     .remind-pill { font-size: 11px; padding: 4px 8px; }
     .cal-day-head { align-items: flex-start; }
     .cal-day-head .batch-actions { width: 100%; margin-left: 0; }
+    .list-head-tools { width: 100%; }
+    .list-search { flex: 1 1 140px; width: auto; }
   }
   .hidden { display: none; }
 </style>
@@ -503,14 +537,21 @@
 
       <div id="listView">
         <div class="list-head">
-          <h2>事项列表</h2>
-          <span class="sub" id="listCount"></span>
-          <button type="button" class="batch-edit-btn" id="batchEditBtn">状态编辑</button>
-          <div class="batch-actions hidden" id="batchActions">
-            <button type="button" class="batch-btn" id="batchSelectAllBtn">全选</button>
-            <button type="button" class="batch-btn" id="batchDoneBtn">完成</button>
-            <button type="button" class="batch-btn danger" id="batchDeleteBtn">删除</button>
-            <button type="button" class="batch-btn" id="batchCancelBtn">取消</button>
+          <div class="list-head-title">
+            <h2>事项列表</h2>
+            <span class="sub" id="listCount"></span>
+            <span class="search-info hidden" id="searchInfo"></span>
+          </div>
+          <div class="list-head-tools">
+            <input type="search" class="list-search" id="listSearchInput" placeholder="搜索标题 / 备注 / 地点…">
+            <button type="button" class="list-filter-btn" id="hideDoneBtn" aria-pressed="false">隐藏已完成</button>
+            <button type="button" class="batch-edit-btn" id="batchEditBtn">状态编辑</button>
+            <div class="batch-actions hidden" id="batchActions">
+              <button type="button" class="batch-btn" id="batchSelectAllBtn">全选</button>
+              <button type="button" class="batch-btn" id="batchDoneBtn">完成</button>
+              <button type="button" class="batch-btn danger" id="batchDeleteBtn">删除</button>
+              <button type="button" class="batch-btn" id="batchCancelBtn">取消</button>
+            </div>
           </div>
         </div>
         <ul id="list" style="list-style:none"></ul>
@@ -761,6 +802,8 @@ function load() {
     r.remindOffsets = normalizeStoredOffsets(r.remindOffsets);
     if (r.remindAcked === undefined) r.remindAcked = false;
     if (r.remindFiredAt === undefined) r.remindFiredAt = null;
+    if (r.snoozeUntil === undefined || r.snoozeUntil === null) r.snoozeUntil = null;
+    else { const su = Number(r.snoozeUntil); r.snoozeUntil = (Number.isFinite(su) && su > 0) ? su : null; }
   });
   // 颜色方案升级：按创建顺序用新调色板重分配，修复旧调色板里"琥珀/橙"等近似色（只做一次）
   if (localStorage.getItem('ddl_color_ver') !== COLOR_VERSION) {
@@ -1806,7 +1849,26 @@ function sortReminders() {
   });
 }
 
-/* ---------- 批量状态编辑（仅前端内存，不持久化；列表/日历共用） ---------- */
+/* ---------- 列表筛选 / 批量状态编辑（仅前端内存，不持久化选择） ---------- */
+const HIDE_DONE_STORAGE = 'ddl_hide_done';
+function getHideDone() {
+  try { return localStorage.getItem(HIDE_DONE_STORAGE) === 'true'; } catch (e) { return false; }
+}
+function setHideDone(on) {
+  try { localStorage.setItem(HIDE_DONE_STORAGE, on ? 'true' : 'false'); } catch (e) {}
+}
+let hideDone = getHideDone();
+let listSearch = '';
+
+function visibleReminders() {
+  const q = String(listSearch || '').trim().toLowerCase();
+  return reminders.filter(r => {
+    if (hideDone && r.done) return false;
+    if (!q) return true;
+    return [r.title, r.note, r.place, r.time].some(v => String(v || '').toLowerCase().includes(q));
+  });
+}
+
 let batchMode = false;
 let batchView = null; // 'list' | 'calendar'
 const batchSelected = new Set();
@@ -1819,16 +1881,29 @@ function render() {
   const empty = document.getElementById('empty');
   const weekCount = document.getElementById('weekCount');
   const listCount = document.getElementById('listCount');
+  const searchInfo = document.getElementById('searchInfo');
 
   weekCount.textContent = countThisWeek();
 
   const total = reminders.length;
   const undone = reminders.filter(r => !r.done).length;
-  listCount.textContent = total ? `共 ${total} 条 · 未完成 ${undone} 条` : '';
+  const doneCount = total - undone;
+  const completion = total ? Math.round(doneCount / total * 100) : 0;
+  listCount.textContent = total
+    ? `共 ${total} 条 · 未完成 ${undone} 条 · 已完成 ${doneCount} 条（完成率 ${completion}%）`
+    : '';
 
-  empty.classList.toggle('hidden', total > 0);
+  const visible = visibleReminders();
+  const filtering = !!String(listSearch || '').trim() || hideDone;
+  if (searchInfo) {
+    searchInfo.textContent = filtering ? `找到 ${visible.length} 条` : '';
+    searchInfo.classList.toggle('hidden', !filtering);
+  }
 
-  list.innerHTML = reminders.map(r => {
+  empty.classList.toggle('hidden', visible.length > 0);
+  empty.textContent = total === 0 ? '还没有提醒，粘贴一条通知试试吧 👆' : '没有匹配的事项';
+
+  list.innerHTML = visible.map(r => {
     const sourceLabel = r.source === 'manual' ? '手动' : 'AI';
     const doneBtnText = r.done ? '↩ 恢复' : '✓ 完成';
     const doneBtnCls = r.done ? 'btn-done undo' : 'btn-done';
@@ -1876,7 +1951,8 @@ function batchScopePool() {
   if (batchView === 'calendar') {
     return selectedDay ? reminders.filter(r => reminderCoversDate(r, selectedDay)) : [];
   }
-  return reminders.slice();
+  // 列表批量只作用于当前可见（搜索/隐藏已完成过滤后）的事项
+  return visibleReminders();
 }
 
 function resetBatchDeleteConfirm() {
@@ -1911,7 +1987,8 @@ function updateBatchUI() {
   }
   const listAll = document.getElementById('batchSelectAllBtn');
   if (listAll) {
-    listAll.textContent = (reminders.length > 0 && batchSelected.size === reminders.length) ? '取消全选' : '全选';
+    const pool = visibleReminders();
+    listAll.textContent = (pool.length > 0 && batchSelected.size === pool.length) ? '取消全选' : '全选';
   }
   const calAll = document.getElementById('calBatchSelectAllBtn');
   if (calAll) {
@@ -2033,6 +2110,26 @@ document.getElementById('list').addEventListener('click', (e) => {
   }
 });
 
+/* ---------- 列表搜索 / 隐藏已完成 ---------- */
+function updateHideDoneUI() {
+  const btn = document.getElementById('hideDoneBtn');
+  if (!btn) return;
+  btn.classList.toggle('on', hideDone);
+  btn.setAttribute('aria-pressed', hideDone ? 'true' : 'false');
+  btn.textContent = hideDone ? '✓ 隐藏已完成' : '隐藏已完成';
+}
+document.getElementById('hideDoneBtn').addEventListener('click', () => {
+  hideDone = !hideDone;
+  setHideDone(hideDone);
+  updateHideDoneUI();
+  render();
+});
+document.getElementById('listSearchInput').addEventListener('input', (e) => {
+  listSearch = e.target.value;
+  render();
+});
+updateHideDoneUI();
+
 /* ---------- 批量状态编辑按钮（列表 / 日历） ---------- */
 document.getElementById('batchEditBtn').addEventListener('click', () => enterBatchMode('list'));
 document.getElementById('batchSelectAllBtn').addEventListener('click', batchSelectAll);
@@ -2086,6 +2183,7 @@ async function doParse(text) {
       remindOffsets: [],
       remindAcked: false,
       remindFiredAt: null,
+      snoozeUntil: null,
     });
   });
   save();
@@ -2291,6 +2389,7 @@ document.getElementById('manualSaveBtn').addEventListener('click', () => {
     remindOffsets: collectRemindOffsets('manual'),
     remindAcked: false,
     remindFiredAt: null,
+    snoozeUntil: null,
   });
   save(); render();
   resetManualForm();
@@ -2858,8 +2957,14 @@ function reminderTime(r) {
 // 到期判断：仅用于「自动弹窗 + 浏览器通知」触发（不受待提醒清单影响）
 function isReminderDue(r, now) {
   if (!r || r.done || !r.remindOn) return false;
+  const nowMs = (now || new Date()).getTime();
+  // 稍后提醒优先：snooze 未来时间前不按原截止时间触发
+  if (r.snoozeUntil !== undefined && r.snoozeUntil !== null) {
+    const su = Number(r.snoozeUntil);
+    if (Number.isFinite(su)) return nowMs >= su;
+  }
   const t = reminderTime(r);
-  return !!t && t.getTime() <= (now || new Date()).getTime();
+  return !!t && t.getTime() <= nowMs;
 }
 
 // 到期且尚未提醒过（自动弹窗/通知的触发源）
@@ -2910,7 +3015,11 @@ function markRemindersFired(items) {
   const now = Date.now();
   let changed = false;
   (items || []).forEach(r => {
-    if (!r.remindFiredAt) { r.remindFiredAt = now; changed = true; }
+    if (!r.remindFiredAt) {
+      r.remindFiredAt = now;
+      r.snoozeUntil = null; // 触发后清除稍后提醒
+      changed = true;
+    }
   });
   return changed;
 }
@@ -3053,6 +3162,8 @@ bindRemindEditor('manual');
 bindRemindEditor('edit');
 
 /* ---------- 提醒弹窗 ---------- */
+let reminderSnoozeOpenId = null;
+
 function remindItemHtml(r) {
   const hasOffset = normalizeStoredOffsets(r.remindOffsets).length > 0;
   const lead = hasOffset ? remindSummaryText(r.remindOffsets) : '到点提醒';
@@ -3060,6 +3171,18 @@ function remindItemHtml(r) {
   const statusTag = isReminderDue(r)
     ? '<span class="remind-status-tag due">已到点</span>'
     : '<span class="remind-status-tag">未到点</span>';
+  const snoozeText = (r.snoozeUntil && !r.remindFiredAt)
+    ? '<div class="remind-item-snooze">⏰ 稍后提醒 · ' + escapeHtml(fmtDateTime(new Date(r.snoozeUntil))) + '</div>'
+    : '';
+  const menuOpen = reminderSnoozeOpenId === r.id;
+  const snoozeMenu = menuOpen
+    ? '<div class="snooze-menu">' +
+        '<button type="button" class="snooze-opt" data-remind-act="snooze-set" data-snooze-min="10">10 分钟</button>' +
+        '<button type="button" class="snooze-opt" data-remind-act="snooze-set" data-snooze-min="30">30 分钟</button>' +
+        '<button type="button" class="snooze-opt" data-remind-act="snooze-set" data-snooze-min="60">1 小时</button>' +
+        '<button type="button" class="snooze-opt" data-remind-act="snooze-set" data-snooze-min="1440">明天同一时间</button>' +
+      '</div>'
+    : '';
   const meta = [];
   if (r.time) meta.push('⏰ ' + escapeHtml(r.time));
   if (r.deadline) meta.push('📅 截止 ' + escapeHtml(r.deadline));
@@ -3068,8 +3191,13 @@ function remindItemHtml(r) {
       '<div class="remind-item-title">' + (r.starred ? '⭐ ' : '') + escapeHtml(r.title || '未命名事项') + statusTag + '</div>' +
       (meta.length ? '<div class="remind-item-meta">' + meta.join('　') + '</div>' : '') +
       '<div class="remind-item-lead">🔔 ' + escapeHtml(lead) + (rt ? ' · ' + fmtDateTime(rt) : '') + '</div>' +
+      snoozeText +
     '</div>' +
-    '<button type="button" class="btn-done" data-remind-act="toggle">✓ 完成</button>' +
+    '<div class="remind-item-actions">' +
+      '<button type="button" class="btn-snooze" data-remind-act="snooze">稍后</button>' +
+      '<button type="button" class="btn-done" data-remind-act="toggle">✓ 完成</button>' +
+    '</div>' +
+    snoozeMenu +
   '</div>';
 }
 
@@ -3097,6 +3225,7 @@ function openReminderModal() {
 // × 与「我知道了」完全一致：只关闭弹窗，不写任何事项字段（不设 acked、不改 done/starred/提醒配置）
 function closeReminderModal() {
   reminderSessionDueIds = null;
+  reminderSnoozeOpenId = null;
   document.getElementById('remindModal').classList.add('hidden');
   updateReminderBadge();
 }
@@ -3108,7 +3237,26 @@ function onRemindListClick(e) {
   if (!itemEl) return;
   const r = reminders.find(x => x.id === itemEl.dataset.remindId);
   if (!r) return;
-  if (btn.dataset.remindAct === 'toggle') {
+  const act = btn.dataset.remindAct;
+  if (act === 'snooze') {
+    reminderSnoozeOpenId = reminderSnoozeOpenId === r.id ? null : r.id;
+    renderReminderModal();
+    return;
+  }
+  if (act === 'snooze-set') {
+    const mins = parseInt(btn.dataset.snoozeMin, 10);
+    if (!Number.isFinite(mins) || mins <= 0) return;
+    r.snoozeUntil = Date.now() + mins * 60000;
+    r.remindFiredAt = null; // 稍后提醒重新回到待提醒清单
+    r.remindOn = true;      // 历史事项稍后时重新启用提醒
+    reminderSnoozeOpenId = null;
+    save();
+    render();
+    renderReminderModal();
+    toast('已稍后提醒：' + fmtDateTime(new Date(r.snoozeUntil)));
+    return;
+  }
+  if (act === 'toggle') {
     r.done = !r.done;
     save(); render(); renderReminderModal();
     toast(r.done ? '已完成' : '已恢复');
@@ -3430,6 +3578,7 @@ document.getElementById('imageInput').addEventListener('change', async (e) => {
             remindOffsets: [],
             remindAcked: false,
             remindFiredAt: null,
+      snoozeUntil: null,
           });
         });
         if (res.results.length) { save(); render(); okCount++; }
@@ -3707,6 +3856,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     done: r.done, starred: r.starred, createdAt: r.createdAt,
     remindOn: !!r.remindOn, remindOffsets: normalizeStoredOffsets(r.remindOffsets),
     remindAcked: !!r.remindAcked, remindFiredAt: r.remindFiredAt || null,
+    snoozeUntil: r.snoozeUntil || null,
   }));
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -3744,6 +3894,8 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
         item.remindOffsets = normalizeStoredOffsets(item.remindOffsets);
         if (item.remindAcked === undefined) item.remindAcked = false;
         if (item.remindFiredAt === undefined) item.remindFiredAt = null;
+        if (item.snoozeUntil === undefined || item.snoozeUntil === null) item.snoozeUntil = null;
+        else { const su = Number(item.snoozeUntil); item.snoozeUntil = (Number.isFinite(su) && su > 0) ? su : null; }
         if (!item.color) item.color = nextColor(); // 缺色则分配
         reminders.push(item);
         existingIds.add(item.id);
