@@ -40,6 +40,29 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 1.1) GET 静态文件（a.html / b.html / sw.js / vendor/* / icons/* 等）
+  //      用于 UI 多版本对比：/a.html 与 /b.html
+  if (req.method === 'GET') {
+    const urlPath = decodeURIComponent((req.url || '').split('?')[0]);
+    const safePath = path.normalize(path.join(__dirname, urlPath));
+    const inRoot = safePath === __dirname || safePath.startsWith(__dirname + path.sep);
+    if (inRoot && fs.existsSync(safePath) && fs.statSync(safePath).isFile()) {
+      const ext = path.extname(safePath).toLowerCase();
+      const MIME = {
+        '.html': 'text/html; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+        '.pdf': 'application/pdf', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      };
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      res.end(fs.readFileSync(safePath));
+      return;
+    }
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
