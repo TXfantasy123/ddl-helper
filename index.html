@@ -803,19 +803,46 @@
   /* 日历 */
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .cal-nav { width: 32px; height: 32px; padding: 0; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 16px; }
+  .cal-title-wrap { display: flex; align-items: baseline; justify-content: center; gap: 10px; min-width: 0; flex: 1; }
   .cal-title { font-weight: 600; font-size: 15px; }
+  .agenda-total { font-size: 12px; color: var(--muted); white-space: nowrap; }
   .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; color: var(--muted); font-size: 11px; margin-bottom: 0; padding: 8px 0; background: var(--surface-2); border: 1px solid var(--border); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
-  .cal-cell { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 0; font-size: 13px; cursor: pointer; background: var(--surface); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(96px, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; height: clamp(720px, calc(100vh - 200px), 960px); }
+  .cal-cell { position: relative; min-height: 96px; aspect-ratio: auto; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 25px 5px 4px; border-radius: 0; font-size: 13px; cursor: pointer; background: var(--surface); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
   .cal-cell:nth-child(7n) { border-right: 0; }
   .cal-cell.empty { background: var(--surface-2); cursor: default; }
   .cal-cell:hover { background: var(--surface-2); }
-  .cal-cell.today { outline: 2px solid var(--primary); outline-offset: -2px; font-weight: 700; }
+  .cal-cell.today { outline: 0; font-weight: normal; }
   .cal-cell.selected { background: var(--primary-soft); }
-  .cal-day-num { position: absolute; top: 5px; left: 7px; font-size: 12px; font-weight: 600; line-height: 1; }
+  .cal-day-num { position: absolute; top: 4px; left: 5px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: 600; line-height: 1; }
+  .cal-cell.today .cal-day-num { background: var(--primary); color: #fff; }
+  .cal-cell.cal-weekend .cal-day-num { color: var(--muted); }
+  .cal-cell.cal-weekend.today .cal-day-num { color: #fff; }
   .cal-count { position: absolute; top: 4px; right: 5px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 4px; font-size: 10px; text-align: center; background: var(--surface-2); color: var(--muted); border-radius: 999px; }
-  .cal-star { position: absolute; top: 4px; left: 24px; font-size: 10px; line-height: 1; color: var(--warn); }
+  .cal-star { position: absolute; top: 4px; left: 27px; font-size: 10px; line-height: 1; color: var(--warn); }
   .cal-star .ic { width: 10px; height: 10px; }
+  .cal-events { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; flex: 1; }
+  .cal-event { display: flex; align-items: center; gap: 4px; flex: 0 0 18px; height: 18px; padding: 0 3px 0 4px; border-left: 2px solid var(--c, #94a3b8); border-radius: 2px; font-size: 12px; line-height: 18px; white-space: nowrap; overflow: hidden; color: var(--fg); cursor: grab; }
+  .cal-event:hover { background: var(--surface-2); }
+  .cal-event-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-event.done { opacity: .5; text-decoration: line-through; }
+  .cal-event.deadline { border-left-width: 4px; font-weight: 700; }
+  .cal-more { align-self: flex-start; height: 15px; padding: 0 4px; border: 0; background: transparent; color: var(--muted); font-size: 10px; line-height: 15px; border-radius: 3px; }
+  .cal-more:hover { color: var(--primary); background: var(--primary-soft); }
+  #calendarView.cal-density-compact .cal-event { flex-basis: 15px; height: 15px; font-size: 11px; line-height: 15px; }
+  #calendarView.cal-density-compact .cal-events { gap: 1px; }
+  .cal-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  .cal-left { min-width: 0; }
+  .cal-side { min-width: 0; display: flex; flex-direction: column; gap: 0; }
+  .cal-side .cal-day-head { margin-top: 0; }
+  .cal-side .cal-legend { margin-top: 12px; }
+  @media (min-width: 1200px) {
+    #calendarView .cal-main { grid-template-columns: minmax(0, 1fr) 320px; }
+    #calendarView.cal-hide-daypanel .cal-main { grid-template-columns: minmax(0, 1fr); }
+    #calendarView.cal-hide-daypanel .cal-side-day { display: none; }
+    #calendarView .cal-side { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; }
+    #calendarView .cal-side .cal-day-list { max-height: calc(100vh - 190px); overflow-y: auto; padding-right: 2px; }
+  }
   .cal-day-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
   .cal-day-title { margin-top: 0; font-weight: 600; font-size: 14px; }
   .cal-day-head .batch-actions { margin-left: auto; }
@@ -844,9 +871,9 @@
   .modal.hidden { display: none; }
   .modal-mask { position: absolute; inset: 0; background: var(--overlay); }
   .modal-box { position: relative; width: min(560px, 100%); max-width: 560px; max-height: 88vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); padding: 20px; }
-  .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; position: sticky; top: 0; z-index: 2; background: var(--surface); padding-right: 44px; min-height: 46px; }
   .modal-head h3 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  .modal-close { width: 32px; height: 32px; padding: 0; background: transparent; border: 0; color: var(--muted); border-radius: var(--radius); }
+  .modal-close { position: absolute; top: 14px; right: 14px; z-index: 3; width: 32px; height: 32px; padding: 0; background: transparent; border: 0; color: var(--muted); border-radius: var(--radius); }
   .modal-close:hover { background: var(--surface-2); color: var(--fg); }
   .modal-close .ic { width: 16px; height: 16px; }
   .key-hint-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 10px; }
@@ -1151,10 +1178,28 @@
   .guide-steps li { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
   .guide-steps b { display: block; font-size: 13px; color: var(--fg); }
   .guide-steps span { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
-  .changelog-list { display: grid; gap: 10px; }
-  .changelog-entry { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
-  .changelog-entry h4 { font-size: 13px; color: var(--primary); margin-bottom: 4px; }
+  #changelogModal { z-index: 280; }
+  .changelog-modal-box { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; }
+  .changelog-modal-box .modal-head { flex: 0 0 auto; }
+  .changelog-count { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .changelog-list { display: grid; gap: 10px; min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .changelog-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .changelog-group-head {
+    width: 100%; min-height: 36px; padding: 0 10px; display: flex; align-items: center; gap: 8px;
+    border: 0; background: var(--surface-2); color: var(--fg); font-size: 12px; font-weight: 600;
+    text-align: left;
+  }
+  .changelog-group-head small { color: var(--muted); font-weight: 400; }
+  .changelog-group-head .ic { margin-left: auto; width: 14px; height: 14px; transition: transform .15s; }
+  .changelog-group.open .changelog-group-head .ic { transform: rotate(180deg); }
+  .changelog-group-body { display: grid; gap: 8px; padding: 8px; }
+  .changelog-group-body.hidden { display: none; }
+  .changelog-entry { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .changelog-entry h4 { font-size: 13px; color: var(--primary); margin-bottom: 4px; display: flex; align-items: baseline; gap: 6px; }
+  .changelog-entry h4 .changelog-title { font-size: 12px; color: var(--muted); font-weight: 400; }
   .changelog-entry ul { margin-left: 18px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .changelog-extra.hidden { display: none; }
+  .changelog-more { margin-top: 5px; height: 26px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--primary); font-size: 11px; }
   .settings-version-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); }
   .settings-version { font-size: 12px; color: var(--muted); }
   .settings-version-row .ghost { height: 30px; font-size: 12px; }
@@ -1177,42 +1222,79 @@
     background: transparent; border: 0; color: var(--muted); border-radius: 5px;
   }
   .cal-view-btn.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
-  .cal-week-view { margin-top: 0; }
-  .cal-week-grid {
-    display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 6px;
-    overflow-x: auto; padding-bottom: 4px;
+  /* ===== 议程视图 ===== */
+  .agenda-view { margin-top: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .agenda-list {
+    max-height: clamp(720px, calc(100vh - 200px), 960px);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
   }
-  .cal-week-day {
-    min-width: 120px; min-height: 120px; padding: 8px;
+  .agenda-day { border-bottom: 1px solid var(--border); }
+  .agenda-day:last-child { border-bottom: 0; }
+  .agenda-day-head {
+    width: 100%; min-height: 36px; padding: 6px 10px;
+    display: flex; align-items: center; gap: 8px;
+    border: 0; border-left: 3px solid transparent;
+    background: var(--surface); color: var(--fg); text-align: left;
+    font-size: 13px; font-weight: 600;
+  }
+  .agenda-day-head:hover { background: var(--surface-2); }
+  .agenda-day.today .agenda-day-head { border-left-color: var(--primary); color: var(--primary); }
+  .agenda-day-label { min-width: 0; }
+  .agenda-day-count { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
+  .agenda-items { padding: 4px 8px 8px; }
+  .agenda-item {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 40px; padding: 5px 6px 5px 9px;
+    border-left: 4px solid var(--c, #94a3b8);
+    border-radius: 3px; cursor: pointer; background: transparent;
+  }
+  .agenda-item:hover { background: var(--surface-2); }
+  .agenda-item.done { opacity: .55; }
+  .agenda-item.done .agenda-title { text-decoration: line-through; }
+  .agenda-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .agenda-title { font-size: 14px; font-weight: 600; color: var(--fg); white-space: normal; overflow-wrap: anywhere; }
+  .agenda-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; color: var(--muted); }
+  .agenda-meta .agenda-status { font-size: 11px; font-weight: 600; padding: 0 5px; border-radius: 999px; }
+  .agenda-status.danger { color: var(--danger); background: var(--danger-soft); }
+  .agenda-status.warn { color: var(--warn); background: var(--warn-soft); }
+  .agenda-status.muted { color: var(--muted); background: var(--surface-2); }
+  .agenda-actions { display: flex; gap: 5px; align-items: center; flex: 0 0 auto; }
+  .agenda-actions button { height: 28px; padding: 0 8px; font-size: 12px; }
+  .agenda-empty { color: var(--muted); font-size: 12px; padding: 7px 12px 9px; }
+  .agenda-more { align-self: center; height: 30px; padding: 0 12px; font-size: 12px; }
+  #calendarView.cal-density-compact .agenda-item { min-height: 32px; padding-top: 3px; padding-bottom: 3px; }
+  #calendarView.cal-density-compact .agenda-title { font-size: 13px; }
+  #calendarView.cal-density-compact .agenda-meta { font-size: 11px; }
+  @media (max-width: 767px) {
+    .agenda-item { flex-wrap: wrap; align-items: flex-start; }
+    .agenda-actions { width: 100%; justify-content: flex-end; }
+    .agenda-meta { width: 100%; }
+  }
+  .cal-hover-pop {
+    position: fixed; z-index: 190; width: min(320px, calc(100vw - 24px)); max-width: 320px;
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: 6px;
+    border-radius: var(--radius); box-shadow: var(--shadow-pop);
+    padding: 10px; color: var(--fg); font-size: 12px;
   }
-  .cal-week-day.today { outline: 2px solid var(--primary); outline-offset: -2px; }
-  .cal-week-day.selected { background: var(--primary-soft); }
-  .cal-week-day-head {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 4px;
-    background: transparent; border: 0; padding: 0; text-align: left; color: var(--fg);
-    font-size: 12px; font-weight: 600;
-  }
-  .cal-week-day-head span { color: var(--muted); font-weight: 500; font-size: 11px; }
-  .cal-week-items { display: flex; flex-direction: column; gap: 4px; }
-  .cal-week-item {
-    display: flex; align-items: flex-start; gap: 5px; width: 100%;
-    padding: 4px 5px; background: var(--surface-2); border: 1px solid transparent;
-    border-radius: 5px; text-align: left; color: var(--fg); font-size: 11px; line-height: 1.35;
-  }
-  .cal-week-item:hover { border-color: var(--border); }
-  .cal-week-item .week-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-  .cal-week-item .week-title { flex: 1; min-width: 0; word-break: break-all; }
-  .cal-week-item small { display: block; color: var(--muted); font-size: 10px; }
-  .cal-week-empty { color: var(--muted); font-size: 11px; padding: 4px 0; }
+  .cal-hover-head { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .cal-hover-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .cal-hover-item { display: flex; flex-direction: column; gap: 1px; width: 100%; padding: 5px 6px; border: 0; border-left: 3px solid var(--c, #94a3b8); border-radius: 3px; background: transparent; color: var(--fg); text-align: left; }
+  .cal-hover-item:hover { background: var(--surface-2); }
+  .cal-hover-item.done { opacity: .55; }
+  .cal-hover-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .cal-hover-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 11px; }
+  .cal-hover-empty { color: var(--muted); padding: 6px 2px; }
+  .cal-hover-all { width: 100%; height: 28px; margin-top: 7px; font-size: 12px; }
   .cal-cell.drag-over { outline: 2px solid var(--primary); outline-offset: -2px; background: var(--primary-soft); }
   .cal-line[draggable="true"] { cursor: grab; }
   .cal-line.dragging { opacity: .35; }
+  .cal-event.dragging { opacity: .35; }
   @media (max-width: 640px) {
     .cal-head { flex-wrap: wrap; gap: 6px; }
     .cal-title { order: 3; width: 100%; text-align: center; font-size: 13px; }
-    .cal-week-grid { grid-template-columns: repeat(7, minmax(110px, 1fr)); }
   }
 
   /* ===== v2.0.1 视图/提醒/历史修复 ===== */
@@ -1280,6 +1362,9 @@
 
   /* ===== v2.1.0 防呆 ===== */
   .load-more-btn { display: block; margin: 10px auto 2px; height: 32px; padding: 0 14px; font-size: 12px; }
+  .dup-hint { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 8px 14px; background: var(--warn-soft); color: var(--warn-fg); border-bottom: 1px solid var(--warn-border); font-size: 12px; }
+  .dup-hint-btn { height: 28px; padding: 0 10px; font-size: 12px; }
+  .dup-hint .primary { color: #fff; }
   .drop-overlay {
     position: fixed; inset: 0; z-index: 400;
     display: flex; align-items: center; justify-content: center;
@@ -1355,6 +1440,7 @@
   <div id="errorBar" class="error-bar hidden"></div>
   <div id="toast" class="toast toast-stack hidden"></div>
   <div id="dropOverlay" class="drop-overlay hidden" aria-hidden="true"><div class="drop-overlay-box">松开以解析文件</div></div>
+  <div id="calHoverPop" class="cal-hover-pop hidden"></div>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
@@ -1418,6 +1504,11 @@
         </div>
       </div>
     </header>
+  <div id="dupHint" class="dup-hint hidden">
+    <span id="dupHintText"></span>
+    <button type="button" class="dup-hint-btn primary" id="dupHintMergeBtn">一键合并</button>
+    <button type="button" class="dup-hint-btn ghost" id="dupHintIgnoreBtn">忽略</button>
+  </div>
   <div id="storageHint" class="storage-hint hidden"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-alert-triangle"></use></svg>浏览器禁用了本地存储，提醒数据刷新后会丢失</div>
   <div id="corruptionHint" class="storage-hint corruption-hint hidden"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-alert-triangle"></use></svg>检测到本地数据损坏，原文已备份<button type="button" class="ghost corruption-restore-btn" id="corruptionRestoreBtn">从备份恢复</button></div>
 
@@ -1542,38 +1633,47 @@
             <button type="button" class="cal-nav" id="calPrev">‹</button>
             <button type="button" class="cal-today-btn" id="calTodayBtn">今天</button>
           </div>
-          <div class="cal-title" id="calTitle"></div>
+          <div class="cal-title-wrap"><div class="cal-title" id="calTitle"></div><span class="agenda-total hidden" id="agendaTotal"></span></div>
           <div class="cal-head-group">
             <div class="cal-view-switch" role="group" aria-label="日历视图">
               <button type="button" class="cal-view-btn active" id="calViewMonth">月</button>
-              <button type="button" class="cal-view-btn" id="calViewWeek">周</button>
+              <button type="button" class="cal-view-btn" id="calViewWeek">议程</button>
             </div>
             <button type="button" class="cal-nav" id="calNext">›</button>
           </div>
         </div>
-        <div class="cal-weekdays" id="calWeekdays">
-          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div id="calWeekView" class="cal-week-view hidden">
-          <div id="calWeekGrid" class="cal-week-grid"></div>
-        </div>
-        <div class="cal-day-head">
-          <div class="cal-day-title" id="calDayTitle"></div>
-          <button type="button" class="batch-edit-btn" id="calBatchEditBtn">状态编辑</button>
-          <div class="batch-actions hidden" id="calBatchActions">
-            <button type="button" class="batch-btn" id="calBatchSelectAllBtn">全选</button>
-            <button type="button" class="batch-btn" id="calBatchDoneBtn">完成</button>
-            <button type="button" class="batch-btn" id="calBatchRescheduleBtn">改期</button>
-            <button type="button" class="batch-btn" id="calBatchRemindBtn">设提醒</button>
-            <button type="button" class="batch-btn danger" id="calBatchDeleteBtn">删除</button>
-            <button type="button" class="batch-btn" id="calBatchCancelBtn">取消</button>
+        <div class="cal-main">
+          <div class="cal-left">
+            <div class="cal-weekdays" id="calWeekdays">
+              <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div id="calWeekView" class="agenda-view hidden">
+              <div id="agendaList" class="agenda-list"></div>
+              <button type="button" class="ghost agenda-more" id="agendaMoreBtn">显示后面 7 天</button>
+            </div>
           </div>
-        </div>
-        <div class="cal-day-list" id="calDayList"></div>
-        <div class="cal-legend">
-          <button type="button" class="cal-legend-toggle" id="calLegendToggle"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-palette"></use></svg>图例 <svg class="ic" aria-hidden="true"><use href="#ic-chevron-down"></use></svg></button>
-          <div class="cal-legend-body hidden" id="calLegendBody"></div>
+          <aside class="cal-side">
+            <div class="cal-side-day">
+              <div class="cal-day-head">
+                <div class="cal-day-title" id="calDayTitle"></div>
+                <button type="button" class="batch-edit-btn" id="calBatchEditBtn">状态编辑</button>
+                <div class="batch-actions hidden" id="calBatchActions">
+                  <button type="button" class="batch-btn" id="calBatchSelectAllBtn">全选</button>
+                  <button type="button" class="batch-btn" id="calBatchDoneBtn">完成</button>
+                  <button type="button" class="batch-btn" id="calBatchRescheduleBtn">改期</button>
+                  <button type="button" class="batch-btn" id="calBatchRemindBtn">设提醒</button>
+                  <button type="button" class="batch-btn danger" id="calBatchDeleteBtn">删除</button>
+                  <button type="button" class="batch-btn" id="calBatchCancelBtn">取消</button>
+                </div>
+              </div>
+              <div class="cal-day-list" id="calDayList"></div>
+            </div>
+            <div class="cal-legend">
+              <button type="button" class="cal-legend-toggle" id="calLegendToggle"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-palette"></use></svg>图例 <svg class="ic" aria-hidden="true"><use href="#ic-chevron-down"></use></svg></button>
+              <div class="cal-legend-body hidden" id="calLegendBody"></div>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
@@ -1833,7 +1933,7 @@
     <div class="modal-mask"></div>
     <div class="modal-box changelog-modal-box">
       <div class="modal-head">
-        <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-sparkles"></use></svg>更新日志</h3>
+        <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-sparkles"></use></svg>更新日志<span class="changelog-count" id="changelogStats"></span></h3>
         <button type="button" class="modal-close" id="changelogClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="changelog-list" id="changelogList"></div>
@@ -1916,6 +2016,33 @@
       <div class="input-actions notify-test-row">
         <button type="button" class="ghost" id="testNotifyBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bell"></use></svg>发送测试通知</button>
       </div>
+      <div class="settings-section-title">日历</div>
+      <div class="form-row">
+        <label>显示样式</label>
+        <div class="theme-segment" id="calStyleSegment" role="group" aria-label="日历显示样式">
+          <button type="button" class="theme-seg-btn active" id="calStyleTextBtn" aria-pressed="true">文字标签</button>
+          <button type="button" class="theme-seg-btn" id="calStyleLineBtn" aria-pressed="false">彩色线</button>
+        </div>
+      </div>
+      <div class="form-row"><label>密度</label>
+        <select id="calDensitySelect">
+          <option value="comfortable">舒适（12px）</option>
+          <option value="compact">紧凑（11px）</option>
+        </select>
+      </div>
+      <div class="form-row"><label>每格最多</label>
+        <select id="calMaxItemsSelect">
+          <option value="2">2 条</option>
+          <option value="3">3 条</option>
+          <option value="4">4 条</option>
+          <option value="5">5 条</option>
+          <option value="0">不限</option>
+        </select>
+      </div>
+      <div class="form-row"><label>悬停预览</label><input type="checkbox" id="calHoverPreviewToggle" checked></div>
+      <div class="form-row"><label>周末淡化</label><input type="checkbox" id="calWeekendDimToggle" checked></div>
+      <div class="form-row"><label>右侧当天面板</label><input type="checkbox" id="calDayPanelToggle" checked></div>
+      <div class="settings-hint">宽屏 ≥1200px 时显示右侧当天面板；所有日历设置即时生效。</div>
       <div class="settings-hint">无 key 走本地基础解析；AI 解析关或模型不支持识图时截图按钮置灰</div>
       <div class="input-actions">
         <button type="button" class="primary" id="settingsSaveBtn">保存</button>
@@ -1925,13 +2052,18 @@
         <button type="button" class="ghost" id="importBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-upload"></use></svg>导入数据</button>
         <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
       </div>
+      <div class="settings-section-title">数据清理</div>
+      <div class="input-actions">
+        <button type="button" class="ghost" id="mergeDupBtn">清理重复事项</button>
+      </div>
+      <div class="settings-hint">仅合并标题与截止时间完全相同的重复事项，不做模糊匹配。</div>
       <div class="settings-section-title">备份与恢复</div>
       <div class="backup-list" id="backupList"><div class="settings-hint">加载中…</div></div>
       <div class="input-actions">
         <button type="button" class="ghost danger-text" id="clearAllBtn">清空所有事项</button>
       </div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.1.0</span>
+        <span class="settings-version">DDL 小管家 v2.5.1</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
     </div>
@@ -3435,6 +3567,9 @@ let showHidden = false;
 const expandedCardIds = new Set();
 const LIST_PAGE_SIZE = 50;
 let listShown = LIST_PAGE_SIZE;
+let dupHintIgnored = false;
+let dupMergeArmed = false;
+let dupMergeTimer = null;
 
 /* ---------- 快捷筛选（全部 / 今天 / 本周 / 已逾期） ---------- */
 const QUICK_FILTER_STORAGE = 'ddl_quick_filter';
@@ -3636,7 +3771,93 @@ function render() {
   const remindModal = document.getElementById('remindModal');
   if (remindModal && !remindModal.classList.contains('hidden')) renderReminderModal();
   updateReminderBadge();
+  updateDupUI();
 }
+
+/* ---------- 重复事项检测 / 合并 ---------- */
+function findDuplicateGroups() {
+  const map = new Map();
+  reminders.forEach(r => {
+    const title = String(r.title || '').trim();
+    const key = title + '|' + String(r.deadline || '');
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  });
+  return [...map.entries()]
+    .filter(([, items]) => items.length >= 2)
+    .map(([key, items]) => ({ key, items }));
+}
+function updateDupUI() {
+  const groups = findDuplicateGroups();
+  const groupCount = groups.length;
+  const total = groups.reduce((sum, g) => sum + g.items.length, 0);
+  const hint = document.getElementById('dupHint');
+  const text = document.getElementById('dupHintText');
+  const settingsBtn = document.getElementById('mergeDupBtn');
+  if (text) text.textContent = '检测到 ' + groupCount + ' 组重复事项（共 ' + total + ' 条）';
+  if (hint) hint.classList.toggle('hidden', !(groupCount > 0 && !dupHintIgnored && currentView === 'list'));
+  const hintBtn = document.getElementById('dupHintMergeBtn');
+  if (hintBtn) hintBtn.textContent = dupMergeArmed ? '确认合并' : '一键合并';
+  if (settingsBtn) {
+    settingsBtn.disabled = groupCount === 0;
+    settingsBtn.textContent = groupCount === 0 ? '暂无重复' : (dupMergeArmed ? '确认合并' : '清理重复事项');
+  }
+}
+function resetDupMergeArm() {
+  dupMergeArmed = false;
+  if (dupMergeTimer) { clearTimeout(dupMergeTimer); dupMergeTimer = null; }
+  const hintBtn = document.getElementById('dupHintMergeBtn');
+  if (hintBtn) hintBtn.textContent = '一键合并';
+  const settingsBtn = document.getElementById('mergeDupBtn');
+  if (settingsBtn) {
+    const n = findDuplicateGroups().length;
+    settingsBtn.disabled = n === 0;
+    settingsBtn.textContent = n === 0 ? '暂无重复' : '清理重复事项';
+  }
+}
+function requestMergeDuplicates() {
+  const groups = findDuplicateGroups();
+  if (!groups.length) return;
+  if (!dupMergeArmed) {
+    dupMergeArmed = true;
+    if (dupMergeTimer) clearTimeout(dupMergeTimer);
+    dupMergeTimer = setTimeout(resetDupMergeArm, 2000);
+    updateDupUI();
+    toast('再点一次确认合并');
+    return;
+  }
+  resetDupMergeArm();
+  mergeDuplicateGroups(groups);
+}
+function mergeDuplicateGroups(groups) {
+  if (!groups || !groups.length) return;
+  pushUndo('合并重复事项');
+  const removeIds = new Set();
+  groups.forEach(g => {
+    const sorted = g.items.slice().sort((a, b) => {
+      const ar = a.remindOn ? 1 : 0, br = b.remindOn ? 1 : 0;
+      if (ar !== br) return br - ar;
+      const ad = a.done ? 1 : 0, bd = b.done ? 1 : 0;
+      if (ad !== bd) return ad - bd;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+    const keep = sorted[0];
+    g.items.forEach(r => { if (!keep || r.id !== keep.id) removeIds.add(r.id); });
+  });
+  const before = reminders.length;
+  reminders = reminders.filter(r => !removeIds.has(r.id));
+  const deleted = before - reminders.length;
+  save();
+  render();
+  toastUndo('已合并 ' + groups.length + ' 组，删除 ' + deleted + ' 条');
+}
+document.getElementById('dupHintMergeBtn').addEventListener('click', requestMergeDuplicates);
+document.getElementById('dupHintIgnoreBtn').addEventListener('click', () => {
+  resetDupMergeArm();
+  dupHintIgnored = true;
+  updateDupUI();
+});
+document.getElementById('mergeDupBtn').addEventListener('click', requestMergeDuplicates);
 
 function batchScopePool() {
   if (batchView === 'calendar') {
@@ -4028,26 +4249,629 @@ function openGuideModal() {
 function closeGuideModal() {
   document.getElementById('guideModal').classList.add('hidden');
 }
-const CHANGELOG_SUMMARY = [
-  { version: 'v2.1.0', items: ['全局撤销（Ctrl+Z / toast 撤销按钮，覆盖删除/完成/隐藏/改期/导入/清空）', '数据损坏保护：坏数据另存 + 锁定不覆盖 + 从备份恢复', '编辑弹窗未保存修改拦截', '重复事项检测（预览标记 + 保存二次确认）', '过去截止时间警告', '全局粘贴与文件拖拽解析', '快捷日期/时刻按钮 + 截止默认今天 23:59', '列表分页加载更多（每页 50 条）'] },
-  { version: 'v2.0.1', items: ['提醒记录清空不再复活旧提醒（水位机制）', '历史命名统一：已提醒 · 待处理 / 提醒记录', '隐藏事项不再参与提醒与角标', '日历视图隐藏仅列表生效的筛选控件', '角标只统计可触发的提醒、统计口径说明', '截图只保留一道确认（原文并入预览）', '破坏性操作后强制备份快照'] },
-  { version: 'v2.0.0', items: ['解析预览确认 / 拆合 / 换方式重解析 / OCR 原文可编辑', '搜索高亮、快捷筛选、批量改期、排序切换、拖拽排序、快捷键', '日历周视图、拖拽改期、回到今天、双击新建', '提醒分组 / 提醒记录 / 自定义稍后 / 通知点击定位', '导入预览、Key 测试、IndexedDB 自动备份、统计面板', '全局体验：toast 队列、空态引导、骨架屏、版本号'] },
-  { version: 'v1.14.0', items: ['解析结果预览确认', '截图 OCR 识别原文可编辑', '解析失败原因提示'] },
-  { version: 'v1.13.0', items: ['浅色 / 深色 / 跟随系统主题', '系统主题跟随与防闪白', '侧边栏主题快捷切换'] }
-];
-function openChangelogModal() {
-  const list = document.getElementById('changelogList');
-  if (list) {
-    list.innerHTML = CHANGELOG_SUMMARY.map(entry =>
-      '<div class="changelog-entry"><h4>' + escapeHtml(entry.version) + '</h4><ul>' +
-      entry.items.map(it => '<li>' + escapeHtml(it) + '</li>').join('') + '</ul></div>'
-    ).join('');
+const CHANGELOG_FULL = [
+  {
+    "version": "v2.5.1",
+    "title": "本地服务不再常驻后台",
+    "items": [
+      "**关闭页面自动退出**：页面 `pagehide` 时通过 `navigator.sendBeacon('/api/bye')` 通知本地服务，宽限 90 秒后 `node` 进程自行退出（刷新/继续使用会取消退出）",
+      "**常驻开关**：`node server.js --keep-alive` 可保持常驻（适合作书签随时打开）",
+      "**释放文件夹句柄**：服务启动后 `process.chdir(os.tmpdir())`，不再锁住项目目录（资源监视器里 node 持有 `ddl-helper` 目录句柄的问题）",
+      "**立即停止**：仍可双击 `停止.bat`"
+    ]
+  },
+  {
+    "version": "v2.5.0",
+    "title": "周视图改造为议程视图",
+    "items": [
+      "**视图切换**：`月` / `议程`；议程模式标题显示「本周 M月D日 - M月D日」+「共 N 项」",
+      "**纵向按天分组**：今天/明天/昨天标记、周几、日期、当天条数；空日显示「无事项」",
+      "**事项行**：4px 色条 + 完整标题换行 + 截止/下次提醒/状态标签 + 「完成 / 编辑」；完成可撤销",
+      "**交互**：点击行或编辑打开编辑弹窗；点击组头选中该日并联动右侧当天面板",
+      "**追加与密度**：「显示后面 7 天」每次追加 7 天；舒适 40px / 紧凑 32px 行高",
+      "**清理**：移除旧 `renderWeekGrid()` 与 `cal-week-*` 样式"
+    ]
+  },
+  {
+    "version": "v2.4.0",
+    "title": "更新日志弹窗修复 + 重复事项清理",
+    "items": [
+      "**更新日志**：从设置进入时先隐藏设置、关闭后返回设置；弹窗 z-index 提升到 280",
+      "**关闭按钮固定**：所有弹窗的 × 改为绝对定位右上角，头部 sticky 不随内容滚动",
+      "**日志补全**：内嵌全部 52 个版本（v0.1.0 → v2.4.0），按大版本分组、默认展开 v2，单条超 6 项可「展开全部」",
+      "**重复事项清理**：`findDuplicateGroups()` 按标题+截止精确分组，列表顶部提示「检测到 N 组重复」+「一键合并」，保留有提醒/未完成/最早的条目，可撤销",
+      "**设置入口**：「数据清理」新增「清理重复事项」，无重复时禁用",
+      "**日历减负**：悬停浮层限制 240×320px；格内同名最多显示 2 条，其余计入 +N"
+    ]
+  },
+  {
+    "version": "v2.3.0",
+    "title": "日历页重构（事件文字 + 用户可配置）",
+    "items": [
+      "**格子内容**：月视图默认由「彩色线带」改为**事件文字列表**（左侧 2px 色条 + 单行省略），已完成删除线、截止当天加粗加粗色条；超出条数显示 `+N`；`grid-auto-rows: minmax(96px,1fr)` 自适应 5/6 周高度；今天日期圆形蓝底、周末淡化。",
+      "**可配置项**（`localStorage['ddl_cal_prefs']`，设置面板「日历」分组）：显示样式（文字 / 彩色线）、密度（舒适 12px / 紧凑 11px）、每格最多（2/3/4/5/不限）、悬停预览、周末淡化、右侧当天面板；全部即时生效。",
+      "**悬停预览** `#calHoverPop`：300ms 显示当天全部事项（色条/标题/时间/截止），8 条以上内部滚动，点击编辑、底部「查看当天全部」，屏幕边缘自动避让。",
+      "**右侧当天面板**：≥1200px 两栏（`1fr 320px`），点日期右侧即时更新，窄屏回退到日历下方列表。",
+      "**拖拽**：文字事件可拖到任意日期格改 deadline（保留原时刻）；彩色线模式行为不变。",
+      "**周视图**：同步为文字事件列表。"
+    ]
+  },
+  {
+    "version": "v2.1.0",
+    "title": "便捷度 + 防呆增强（8 项）",
+    "items": [
+      "**全局撤销**：内存栈最多 20 步；覆盖单条/批量删除、完成/恢复、隐藏、改期、批量设提醒、清空全部、导入、恢复备份、解析入库；toast 提供「撤销」按钮（5 秒），`Ctrl/Cmd+Z` 亦可；撤销本身不入栈。",
+      "**数据损坏保护**：`load()` JSON 解析失败时把原文备份到 `ddl_helper_corrupted_<ts>`，原 key 不清空，`storageLocked` 阻止覆盖写入，顶部横幅提供「从备份恢复」；导出/导入/恢复成功后解锁。",
+      "**编辑未保存提示**：×/遮罩/Esc 关闭前比较初始快照，有修改首次拦截并提示，2 秒内二次关闭才丢弃。",
+      "**重复事项检测**：`isDuplicateReminder(title, deadline, excludeId)`；预览重复行标「已存在」并默认取消勾选；手动/编辑保存首次点击变二次确认。",
+      "**过期截止警告**：预览过期行显示红色「已过期」；保存时首次点击变「截止时间已过，再点一次保存」（不阻止保存）。",
+      "**全局粘贴/拖拽**：焦点不在输入框时 `Ctrl+V` 自动填入；图片粘贴走截图；文件拖入窗口显示 `#dropOverlay`，按类型分派到截图/文档流程。",
+      "**快捷日期/时刻**：手动添加与编辑均提供 `今天/明天/本周五/下周/月底` 与 `23:59/12:00/08:00`；手动添加默认今天 23:59。",
+      "**列表分页**：每页 50 条 + 「加载更多（还有 N 条）」；搜索/筛选/排序/视图切换重置分页；计数仍为全量。"
+    ]
+  },
+  {
+    "version": "v2.0.1",
+    "title": "修复 11 项内部矛盾",
+    "items": [
+      "**清空提醒历史不再复活旧提醒**：新增 `localStorage['ddl_remind_history_cleared']` 水位；清空只推进水位，不再修改 `remindFiredAt`；两个历史视图都按 `firedAt > clearedAt` 过滤。",
+      "**历史命名统一**：提醒弹窗「历史提醒事项」→「已提醒 · 待处理」；侧边栏「提醒历史」→「提醒记录」；记录弹窗按「待处理 / 已完成」分组。",
+      "**隐藏事项不参与提醒**：`pendingReminderItems`/`currentReminderItems`/`isReminderDue`/角标/通知全部排除 `hidden`；日历仍显示。",
+      "日历视图隐藏仅对列表生效的控件（搜索、快捷筛选、只看未完成、显示隐藏、排序、状态编辑），并显示提示「筛选与排序仅对列表生效」。",
+      "角标只统计有可用提醒时间的待提醒（新增 `hasRemindTime`）；无时间事项仍在当前清单的「未设置时间」组。",
+      "统计弹窗新增口径说明「按创建时间落在本周/本月」。",
+      "截图只保留一道确认：OCR 后直接进解析预览；预览顶部新增可折叠「识别原文（可编辑）」+「用原文重新解析」（`#ocrModal` 保留但不再自动弹出）。",
+      "预览有未保存编辑时，首次点「重新解析」需二次确认，避免误丢修改。",
+      "`writeBackupSnapshot(key, force, dataOverride)` 支持强制快照：清空所有 / 导入覆盖 / 恢复备份后写入操作前数据的快照。",
+      "批量设提醒跳过无时间事项（全部无时间则拒绝；部分则只设置有时间的并提示跳过数）。",
+      "提醒记录按「今天 / 昨天 / 更早」分组。"
+    ]
+  },
+  {
+    "version": "v2.0.0",
+    "title": "大规模功能增强（三批）",
+    "items": [
+      "解析结果改为**预览确认**（`#previewModal`）：可勾选、可编辑标题/时间/地点/截止，未勾选不入库；空结果显示「没有识别到事项」。",
+      "预览支持**拆行 / 合并**（按句号/分号/换行拆，行数同步计数，至少 1 行）与**换方式重解析**（AI 当前模型 / 离线规则，使用 `lastParseText`）。",
+      "截图：前端 canvas 压缩（最长边 >1600 或 ≥1.5MB → 1600 / JPEG 0.85）→ OCR → **识别原文弹窗可编辑**（`#ocrModal`）→ 再解析。",
+      "解析失败给具体原因（`describeParseIssue`）；全部缺截止时间时预览顶部提示；AI 异常提示并回退本地规则。",
+      "扫描件 PDF 改为弹窗引导（`#pdfScanModal`）：改用截图识别 / 手动添加 / 取消。",
+      "排序切换 `#sortSelect`（默认/截止/创建/完成，`ddl_sort` 持久化）；默认模式下卡片可**拖拽排序**（写 `r.order`）。",
+      "卡片**摘要 + 详情折叠**（时间/地点/备注收进详情，展开状态跨 render 保留）。",
+      "快捷键：`Ctrl/Cmd+K`、`/` 聚焦搜索，`N` 新建，`Esc` 关闭最上层弹窗（输入框内不触发）。",
+      "日历：**周视图**（`#calViewWeek`，周一~周日，可切回月）、**回到今天**、**拖拽任务线改期**（保留原时刻）、当天超 6 条显示 `+N`、**双击日期格新建**并预填日期。",
+      "待提醒清单按「今天 / 本周 / 以后 / 未设置时间」分组；新增**提醒历史**（`#remindHistoryModal`，含已完成，二次确认清空）。",
+      "稍后提醒新增「自定义…」（分钟数，`#snoozeCustomModal`）。",
+      "通知点击定位：待提醒内打开弹窗并高亮；否则切列表滚动并高亮 2 秒。",
+      "导出结构升级为 `{schemaVersion:1, appVersion, exportedAt, reminders}`；导入兼容新旧两种格式。",
+      "**IndexedDB 自动备份**（`ddl_backup/snapshots`，按天快照、保留 7 份、启动清理），设置内可列出并恢复。",
+      "设置新增「清空所有事项」（二次确认，模板与设置保留）与**统计面板**（本周/本月：新增/完成/未完成/逾期/完成率/平均提前量），完成操作写入 `doneAt`。",
+      "全局：toast 队列（最多 3 条）、空态引导（示例通知/使用说明）、`:focus-visible` 焦点环、解析骨架屏、设置内版本号 + 更新日志。"
+    ]
+  },
+  {
+    "version": "v1.13.3",
+    "title": "修复切换主题时按钮延迟/闪烁",
+    "items": [
+      "根因：按钮/卡片/输入框带 `transition: border-color .15s, box-shadow .15s`，换主题时颜色是「瞬间变化 + 过渡补间」，导致新旧主题混在一起闪一下。",
+      "修复：`applyTheme()` 切换时给 `<html>` 加 `.theme-switching`（`*` 与伪元素 `transition: none !important`），两次 `requestAnimationFrame` 后移除 → 主题瞬间整体切换，不再补间。",
+      "另加 `html { background: var(--bg); }`，避免深色↔浅色切换时 html 层露出白底闪光。"
+    ]
+  },
+  {
+    "version": "v1.13.2",
+    "title": "修复搜索框图标与占位文字重叠",
+    "items": [
+      "根因：全局输入框规则 `input:not([type=\"checkbox\"]):not([type=\"radio\"])` 特异性 (0,2,1) 高于 `.search-wrap .list-search` (0,2,0)，把 `padding-left` 覆盖回 10px，导致放大镜图标压住「搜索标题…」文字。",
+      "修复：选择器改为 `.search-wrap input.list-search`（同为 (0,2,1) 且源码在后 → 生效），`padding-left: 34px`；图标补 `top:50%; transform:translateY(-50%)` 垂直居中、`display:block`。"
+    ]
+  },
+  {
+    "version": "v1.13.1",
+    "title": "启动体验优化（无窗口）",
+    "items": [
+      "新增 `DDL小管家.lnk` 快捷方式：目标 `wscript.exe` + `启动.vbs`，内置 `icons/app.ico` 图标，双击**无任何控制台窗口**。",
+      "`启动.vbs` 增加「已启动检测」：3000 端口已在监听时只打开浏览器，不再重复启动第二个 node 进程。",
+      "`start.bat` 重写：去掉无意义的 `pause`，改为静默委托 VBS 后立即退出（窗口一闪即关）；缺 Node.js 时用 Windows 弹窗提示。",
+      "`停止.bat` 去掉 `pause`，执行后 1 秒自动关闭。",
+      "`icons/app.ico` 由 `icon-192.png` 生成（16/32/48/64/128/256 多尺寸）。"
+    ]
+  },
+  {
+    "version": "v1.13.0",
+    "title": "主题切换（浅色 / 深色 / 跟随系统）",
+    "items": [
+      "`localStorage['ddl_theme']`（`light|dark|system`，默认 system）；`<head>` 内联防闪白脚本在 CSS 前同步设 `data-theme` 并更新 `theme-color`。",
+      "`html[data-theme=\"dark\"]` 一套完整 token（`#09090B` 底 / `#111113` 卡 / `#27272A` 边框 / `#FAFAFA` 文字 / `#3B82F6` accent / 深色阴影与遮罩）；替换 68 处组件层硬编码颜色为语义变量，并补齐日历/弹窗/toast/select/滚动条等深色兜底。",
+      "系统模式监听 `matchMedia('(prefers-color-scheme: dark)')` 变化自动跟随；固定浅/深时不受影响。",
+      "入口：设置面板「主题」三段控件（`#themeSegment` / `#themeLightBtn` / `#themeDarkBtn` / `#themeSystemBtn`）+ 侧边栏快捷切换按钮 `#themeToggleBtn`（sun/moon/monitor 图标循环）。",
+      "SVG sprite 新增 `ic-sun` / `ic-moon` / `ic-monitor`；元素 id 137 → 147。",
+      "对比度：深色正文 19.06:1、muted 7.36:1；浅色正文 19.06:1、muted 4.83:1；深色主按钮实心底用 `#2563EB`（白字 5.17:1）。"
+    ]
+  },
+  {
+    "version": "v1.12.0",
+    "title": "全面重置 UI（shadcn/ui 风格 + 左侧栏仪表盘）",
+    "items": [
+      "**布局重构**：新增 248px 左侧栏 + 主区结构；`#tabList`/`#tabCalendar` 变为侧边栏「事项列表 / 日历」导航项；`#remindEntryBtn`+`#remindBadge` 进侧边栏；`#settingsBtn` 置底；`#weekCount` 变「本周 DDL」统计卡；搜索/只看未完成/状态编辑上移至主区顶栏；输入区独立成卡片。",
+      "**视觉重设**：shadcn/ui 风格 token（`#FAFAFA` 底 / `#FFFFFF` 卡 / `#E4E4E7` 边框 / `#09090B` 文字 / `#2563EB` 主色 / 8px 圆角 / 极轻阴影），系统字体栈，正文 14px；旧规则保留为兼容层。",
+      "**零逻辑改动**：HTML 结构重排、CSS 全量重写，JS 逐字符未变；137 个元素 id、108 个 `getElementById` 目标全部保留。",
+      "**响应式**：<1024px 侧边栏折叠为顶部横向导航条，<640px 进一步压缩。",
+      "**备选方案归档**：`ui-variants/b-linear-dark.html`（Linear 深色）、`ui-variants/c-daisyui-light.html`（daisyUI/Flowbite 浅色），结构与功能相同，仅主题不同。",
+      "`server.js` 新增 GET 静态文件托管（`/a.html`、`/sw.js`、`/vendor/*` 等），便于多版本对比与本地预览。",
+      "`sw.js` 缓存版本升级到 `ddl-helper-v1.12.0`。"
+    ]
+  },
+  {
+    "version": "v1.11.1",
+    "title": "日历连线修复 + 缓存版本",
+    "items": [
+      "新增 `taskDateSpan(r)`：`parseTimeDates(r.time)` + `parseDate(r.deadline)` 归一化后取 `{min,max}`；`reminderCoversDate` 改为区间覆盖（时间段中间日期连续有线）。",
+      "新增 `buildMonthSlots()`：按月内日期交集贪心分配全局槽位（按 `createdAt`），`renderCalendar` 用 `slot*LINE_STEP` 作 `bottom`，同一任务跨天不跳位；`MAX_LINES=6` 时当天 ≤6 条按槽位画、>6 条取最低 6 槽，其余靠角标与当天列表兜底。",
+      "`reminderInMonth` 改为区间相交；`sw.js` CACHE_NAME 升级到 `ddl-helper-v1.11.1`（此前缓存优先导致旧页面可能一直被返回）。",
+      "已清除所有硬编码 API key（server.js 的默认 key 已移除，全目录无 `sk-` 残留）。",
+      "以电脑端为主，手机适配暂缓。",
+      "待办：`advanceDays`（提前提醒天数）字段已存、提醒功能未做。"
+    ]
+  },
+  {
+    "version": "v1.11.0",
+    "title": "emoji 换内联 SVG 图标",
+    "items": [
+      "`<body>` 顶部新增隐藏 SVG sprite（25 个 24×24 Feather/Lucide 风格 symbol），无外部 CDN/图标库；`.ic` 随字号、收藏实心、loader 旋转。",
+      "新增 `icon(name, extraClass)`；顶栏/输入区/列表/日历/提醒弹窗/空状态/搜索框全部替换，emoji 残留 0；通知标题改「提醒：<标题>」。"
+    ]
+  },
+  {
+    "version": "v1.10.2",
+    "title": "离线文档按钮置灰",
+    "items": [
+      "「上传文档」在 AI 关闭或无 Key 时置灰（`updateUploadBtn()` 同步 `#docBtn`），点击提示「AI 解析未开启，文档解析不可用」，与「上传截图」一致。"
+    ]
+  },
+  {
+    "version": "v1.10.1",
+    "title": "按事项隐藏",
+    "items": [
+      "事项新增 `hidden` 字段（默认 false）；load 老数据补 false，手动/AI/截图新建均带 false，导出含、导入缺省补 false。",
+      "`render()` 默认不渲染 hidden 事项（统计、批量全选同样排除）；新增「显示隐藏（N）」入口（N=0 隐藏按钮），开启后显示 hidden 项（「已隐藏」标签 + `.is-hidden` 淡化），入口变「收起隐藏（N）」。",
+      "批量工具栏新增「隐藏」：选中 → `hidden=true` + toast；显示隐藏模式下变「取消隐藏」→ `hidden=false`。",
+      "原「隐藏已完成」改为「只看未完成」（仅临时视图过滤，不改数据），与搜索/显示隐藏叠加。",
+      "hidden 只影响列表；日历与提醒（待清单/通知/稍后提醒）不受影响。"
+    ]
+  },
+  {
+    "version": "v1.10.0",
+    "title": "功能闭环补齐",
+    "items": [
+      "隐藏已完成：列表标题行「隐藏已完成」按钮（`ddl_hide_done`，默认关），开启后只渲染未完成；与搜索叠加；批量「全选」范围改为当前可见事项（`batchScopePool`/全选标签同步）。",
+      "搜索：`#listSearchInput` 实时匹配 title/note/place/time（不区分大小写、trim），显示「找到 N 条」，无匹配空态；排序不变。",
+      "完成统计：列表计数改为「共 N 条 · 未完成 M 条 · 已完成 K 条（完成率 P%）」，N=0 不显示。",
+      "稍后提醒：提醒弹窗每项新增「稍后」按钮 → 页面内菜单（10 分钟/30 分钟/1 小时/明天同一时间）→ `snoozeUntil`、清空 `remindFiredAt`（历史项重新启用 remindOn）；`isReminderDue` 有 snoozeUntil 时以其为准，触发后清空；当前栏标注「⏰ 稍后提醒 · 时间」；`snoozeUntil` 兼容 load/新建/导入/导出。"
+    ]
+  },
+  {
+    "version": "v1.9.2",
+    "title": "提醒弹窗改「待提醒清单」（方案 B）",
+    "items": [
+      "新增 `pendingReminderItems()`（`remindOn && !done && !remindFiredAt`，不管到没到点）；「当前提醒事项」与顶部角标改用该集合，按提醒时间升序（`compareReminderTime`），每项标「未到点 / 已到点」。",
+      "`currentReminderItems()` 保留为「到期且未提醒过」，仅用于自动弹窗与浏览器通知触发。",
+      "手动打开弹窗不写 `remindFiredAt`；到点触发时才写，并用 `reminderSessionDueIds` 让本批在本次会话中仍显示在当前栏，关闭后进入历史。",
+      "一键收藏改为收藏当前栏全部（`currentReminderDisplayItems()`）。"
+    ]
+  },
+  {
+    "version": "v1.9.1",
+    "title": "修复提醒弹窗空快照显示暂无",
+    "items": [
+      "根因：先打开过空弹窗把 `reminderShownIds` 锁成 `[]`，之后设置提醒并保存时已打开的弹窗未刷新，`currentShownReminders()` 仍返回空。",
+      "`renderReminderModal()` 增加保险：找出实时到期但不在快照里的 `dueLive`，并入当前栏、补进快照、标记 `remindFiredAt` 后渲染；`render()` 在弹窗打开时调用 `renderReminderModal()` 同步。"
+    ]
+  },
+  {
+    "version": "v1.9.0",
+    "title": "主动提醒（定时检查 + 浏览器通知）",
+    "items": [
+      "新增 `REMIND_CHECK_INTERVAL=30000`、`remindCheckTimer`、`startReminderPolling()`（先 clear 再 set 单实例）；`checkDueReminders()` 复用 `currentReminderItems()`，到期且弹窗关闭时自动 `openReminderModal()` 并写 `remindFiredAt`、更新角标。",
+      "设置面板新增「浏览器通知」开关（`ddl_notify_enabled`，默认关）：不支持则禁用；`granted` 直接开；`default` 请求权限；`denied` 回退并提示。触发时 `notifyDueReminders()` 发系统通知（标题「⏰ 提醒：<title>」、body 含截止与提前量、tag `ddl-<id>`），点击通知 `window.focus()` + 打开弹窗。",
+      "不做 PWA 推送：页面关闭后无法通知。"
+    ]
+  },
+  {
+    "version": "v1.8.3",
+    "title": "日历批量状态编辑 + 示例占位一致",
+    "items": [
+      "日历视图日列表标题行加「状态编辑」`#calBatchEditBtn`，进入后替换为 `#calBatchActions`（全选/完成/删除/取消）；新增 `batchView`（list/calendar）与 `batchScopePool()`，日历全选只选当前选中日事项，列表仍为全部 reminders；日列表渲染 `.batch-check` ○/● 与 `.batch-selected`，batch-mode 下隐藏单条操作并拦截点击。",
+      "新增 `buildExampleNotice()` 与 `syncExamplePlaceholder()`：textarea 去掉静态 placeholder，加载时设为「把班群 / 教务处的通知文字粘贴到这里，例如：\\n」+ 当周动态示例；「填入示例」使用同一函数，占位提示与填入内容逐字一致。"
+    ]
+  },
+  {
+    "version": "v1.8.2",
+    "title": "离线解析时间/地点修复",
+    "items": [
+      "`extractTime`：与 cutoff（截止词）同一天的日期 token 全部移除（含其后的截止时刻）；新增 `findSignatureDateTokens` 剔除文末落款日期（委员会/学生会/协会/学院/团委/主办/承办行尾日期，或末行孤立日期），用「定于/举行/报名/初赛/决赛」等正文词保护。",
+      "`buildTimeText`：多日期按真实时间升序拼接、同日去重、相同端点范围退化为单日期。",
+      "`extractPlace`：新增泛词黑名单（赛场/现场/台上/群里/网上/线上/群内/会场/场地）；「在/到/至/于 + 场所」后接「上/中/内/里」方位词时跳过继续匹配。",
+      "模板弹窗去掉「提前天数」；手动添加按钮文案改「添加」。"
+    ]
+  },
+  {
+    "version": "v1.8.1",
+    "title": "AI 解析时间字段修复",
+    "items": [
+      "`AI_PARSE_TIP` 重写：time 纯日期 → `YYYY-MM-DD`（禁止补 00:00/23:59）、纯时刻 → `HH:MM`、日期+时刻 → `YYYY-MM-DD HH:MM`、时间段 → `YYYY-MM-DD - YYYY-MM-DD`；时间段取最早开始到最晚结束（覆盖初赛/院赛等全部日期）；deadline 取截止词的日期+时刻；title 要求带机构名。",
+      "`normalizeAITimeField` 兜底重写：ISO 时间段（空格/T 分隔、可带秒、`-`/`—`/`~`/`至`/`到`）解析；区间首端 00:00、末端 23:59 视为虚构时刻去掉，两端都有则退化纯日期；单日期 00:00 去时刻；真实时刻保留。"
+    ]
+  },
+  {
+    "version": "v1.8.0",
+    "title": "提醒区紧凑化 + 默认关 + 批量状态编辑",
+    "items": [
+      "提醒设置区：`.remind-box` `width:fit-content; max-width:340px; padding:8px 10px`；数值框 56px、单位下拉 68px、组距 6px；每组块级向下堆叠；满 6 组隐藏＋；≤430px 自适应。",
+      "提醒默认关：点模板预填时 `setRemindEditor('manual', false, [])` 重置开关与设置区，并清空截止日期/时刻；手动添加默认 OFF；编辑已有事项按自身状态回显。",
+      "列表批量「状态编辑」：标题行右侧按钮，进入后替换为［全选］［完成］［删除］［取消］；卡片右侧圆圈 ○/●、选中高亮；批量模式屏蔽单条操作防误触；完成批量置 done、删除两步确认、取消退出；操作 toast 数量；选择仅内存，切换视图/刷新退出。"
+    ]
+  },
+  {
+    "version": "v1.7.1",
+    "title": "逾期状态按真实时间判断",
+    "items": [
+      "新增 `deadlineMoment(r)`：基于原始 deadline 字符串（用 `lastClock` 判断是否带时刻）返回截止时刻——带时刻用该时刻、纯日期用当天 23:59:59.999、无日期 null。",
+      "`statusColor(r, now?)` 改为 `now > deadlineMoment` → 已逾期、剩余 ≤3 天 → 即将到期；`now` 可选便于测试。",
+      "`reminderSortTime` 对 deadline 改用 `deadlineMoment`（纯日期按 23:59:59 参与排序）。",
+      "状态标签文字不变。"
+    ]
+  },
+  {
+    "version": "v1.7.0",
+    "title": "截止日 → 截止时间",
+    "items": [
+      "手动添加/编辑表单标签改「截止时间」，日期框右侧新增可选 `type=\"time\"`（`#mDeadlineTime` / `#eDeadlineTime`），默认空。",
+      "新增 `combineDeadlineValue(date, time)`：仅日期 → `YYYY-MM-DD`；日期+时刻 → `YYYY-MM-DD HH:MM`；新增 `toTimeInputValue` 编辑回显。",
+      "`parseDate` 支持 `YYYY-MM-DD HH:MM`（带时分；纯日期仍 00:00，日历覆盖不受影响）。",
+      "`remindBaseTime`：截止时间带时刻用该时刻，纯日期仍 23:59:59（老数据兼容）；列表/日历/提醒弹窗显示完整截止值，排序按完整时间。"
+    ]
+  },
+  {
+    "version": "v1.6.2",
+    "title": "数量/规格误判日期修复",
+    "items": [
+      "新增 `isQuantityAfter(src, endIndex)`：数字日期/范围匹配后若紧跟量词（分钟/小时/秒/张/个/条/人/次/篇/页/份/项/名/位/元/块/MB/GB/KB/字符/字/天/周/分/%）则排除该 token。",
+      "修复「1-2分钟」被解析成「1月2日」导致 time 区间被拉长的问题；`10月2-3日` 等带月份前缀的真实范围仍正常。"
+    ]
+  },
+  {
+    "version": "v1.6.1",
+    "title": "单条长通知过度拆分修复",
+    "items": [
+      "新增 `isSingleLongNotice`：首行标题（`#…#`/【…】/「关于…的通知/方案」/含大赛·活动·比赛·招新）且正文有编号小节，或出现「具体方案如下/通知如下/安排如下」→ 整段作为 1 条，不按编号拆。",
+      "`splitNotices` 保留真正多通知拆分：多个「关于…通知」、新增「通知一/通知二」「---」「===」分隔符、空行分隔且各段有日期。",
+      "新增 `applySplitSafety`：拆分 >5 条、无多个「关于…通知」、无明确分隔符 → 合并为 1 条。",
+      "标题补充 `#主标题#` 提取（去 #/表情/年份修饰），关键词表补「职业规划大赛」。"
+    ]
+  },
+  {
+    "version": "v1.6.0",
+    "title": "离线文字解析强化",
+    "items": [
+      "新增 `normalizeForParse`（全角转半角/去表情）、`collectDateTokens`、`collectClockTokens`、`buildTimeText`、`pruneDateTokens`、`splitNotices`（按空行/编号/多个「关于…通知」/【标题】拆分）。",
+      "重写 `extractTitle`（含 `cleanThemeTitle`：优先「关于…的通知」→「现将…通知如下」→【】标题 → 事件短语 → 关键词主题 → 兜底首句去称呼套话）、`findAllDates`（token 化）、`extractDeadline`（截止词优先 + 报名/活动时间兜底）、`extractTime`（中文数字、点半/一刻、上下午、区间、相对时间）、`extractPlace`（显式地点/线上会议/校园场所/教室号）。",
+      "新增 `mockParseAll`：先 `splitNotices` 再逐条 `mockParse`，离线解析支持一条文本多条通知；`doParse` 的离线分支改用 `mockParseAll`。",
+      "相对日期输出换算后的具体日期；time 中剔除截止词对应日期/时刻，避免与 deadline 重复。"
+    ]
+  },
+  {
+    "version": "v1.5.4",
+    "title": "日历显示三项修复",
+    "items": [
+      "当天事项列表：`.cal-day-item` 加内联 `border-left:3px solid ${r.color}`，与事项列表颜色一致。",
+      "图例：新增 `reminderInMonth`（只含当前年月有覆盖日的事项）与 `hasScheduledDate`（排除无日期事项）；无日期改底部提示「另有 N 条未排期事项」；空月显示「本月日历暂无事项」。",
+      "日期解析：重写 `findAllDates`（支持 `10/18`、`10月14`、`10月22-23日`、同日范围展开）；删除 `parseTimeRange`，`reminderCoversDate` 改为按 time 中实际出现的每一天覆盖；新增 `inferYearForMd`（缺年份取距今天最近的一年），`parseDate`/`parseTimeDates` 统一走该推断。"
+    ]
+  },
+  {
+    "version": "v1.5.3",
+    "title": "截图识别两步法 + 提醒首组去掉 ×",
+    "items": [
+      "提醒设置第 1 组不再显示 ×（第 2 组起可删）。",
+      "截图识别改为两步：`/api/parse-image` 新增 `mode:'ocr'`（`jsonMode:false`，返回 `{text}`）→ 前端把转写文本交给 `doParse()` 复用文字解析（支持多条）；OCR 失败/空文本自动回退旧直读。",
+      "旧直读 prompt 升级：`YYYY-MM-DD HH:MM`、中文数字换算、截止词优先、空标题首句概括、支持多条 JSON 数组。",
+      "`server.js` 与 `api/parse-image.js` 同步；`callLLM` 增加 `jsonMode` 参数。"
+    ]
+  },
+  {
+    "version": "v1.5.2",
+    "title": "开关/提醒组/时间解析修复",
+    "items": [
+      "开关圆点：ON 用 `left: calc(100% - 18px - 3px)` 贴最右，OFF 贴最左；3 处开关统一。",
+      "提醒「结束前」：最多 6 组（满 6 后 ＋ 隐藏）、每组都有 ×（可删到 0 组）、新组单位默认「请选择」、选单位后按 年→月→周→天→小时→分钟 稳定重排。",
+      "时间解析：新增 `cnNumToInt` 中文数字转换 + 上下午 24 小时制；`extractTime` 支持日期+时间组合与时间段；`extractDeadline` 支持截止类关键词；AI 空标题用正文首句兜底；AI 返回时间做 ISO/中文规范化。"
+    ]
+  },
+  {
+    "version": "v1.5.1",
+    "title": "提醒弹窗语义修正",
+    "items": [
+      "「我知道了」与右上角 × 统一为同一个关闭函数：只关弹窗，不写任何事项字段（不设 acked、不改 done/starred/remindOn/remindOffsets）。",
+      "当前/历史改由 `remindFiredAt` 判断：当前 = 到期 && 未完成 && 未展示过；历史 = 已展示 && 未完成；`remindAcked` 保留字段但不再使用。",
+      "自动弹窗展示时仅写 `remindFiredAt`（用于「不再自动弹出」）；手动打开 pill 时若无当前提醒则零写入。"
+    ]
+  },
+  {
+    "version": "v1.5.0",
+    "title": "模板编辑模式 + 提醒功能",
+    "items": [
+      "模板区改为「编辑模式」：默认无 ×/添加入口/恢复默认；点「编辑」显示，点「完成」隐藏。",
+      "事项数据新增 `remindOn` / `remindOffsets` / `remindAcked` / `remindFiredAt`；提醒时间 = 基准时间 − Σ(v×单位分钟)（基准：截止日 23:59:59 / 时间段结束 / 时间点；月按 30 天、年按 365 天折算）。",
+      "设置区：提醒开关（默认关）→ 打开后显示「结束前：」+ 整数输入 + 单位下拉（年/月/周/天/小时/分钟）+ 第二组；非正整数清空并 toast「请填写阿拉伯整数」；汇总如「提醒 3天5小时」。",
+      "提醒弹窗：当前提醒 / 历史提醒两栏，可完成/恢复、一键收藏当前、我知道了；顶部「提醒事项」入口（带角标）；页面打开时到期自动弹一次，确认后不再弹。",
+      "「提醒列表」→「事项列表」；导出/导入含提醒字段并兼容老数据。"
+    ]
+  },
+  {
+    "version": "v1.4.0",
+    "title": "模板自定义",
+    "items": [
+      "模板库支持自定义：模板对象改为 `{ id, name, title, defaultNote, advanceDays, builtin }`，独立存 localStorage（key `ddl_templates_v1`）。",
+      "每个模板 chip 加常驻「×」两步确认移除；末尾「＋ 添加模板」弹窗（名称/默认标题/默认备注/提前天数）；新增「恢复默认模板」。",
+      "首次加载写入 10 个内置模板；之后以存储为准（删空保持空）；JSON 损坏回退默认；导出/导入不受影响。",
+      "`sw.js` 缓存版本 `ddl-helper-v1` → `ddl-helper-v2`（避免旧缓存）。"
+    ]
+  },
+  {
+    "version": "v1.3.2",
+    "title": "修复任务颜色区分",
+    "items": [
+      "旧调色板含近似色（`#f59e0b` 琥珀 与 `#f97316` 橙、`#3b82f6` 蓝 与 `#6366f1` 靛），导致多任务同色。",
+      "调色板改为色相 30° 均匀分布 12 色；`nextColor()` 优先取当前未使用的颜色；`load()` 用 `COLOR_VERSION` 标记按创建顺序一次性重分配旧任务颜色。"
+    ]
+  },
+  {
+    "version": "v1.3.1",
+    "title": "修复日历任务线",
+    "items": [
+      "原 `buildSlotMap` 用全局创建顺序做槽位，`renderCalendar` 只画 slot<6 的任务 → 第 7 个及以后创建的任务永不画线（同一天多任务只显示 1 条）。",
+      "改为按天分配槽位：每天按创建时间取前 6 个，本地槽位 0..5（`bottom=idx*6px`），每天最多 6 条线，超出靠角标+点击详情；删除 `buildSlotMap` 死代码。"
+    ]
+  },
+  {
+    "version": "v1.3.0",
+    "title": "文档解析（docx/pdf）",
+    "items": [
+      "输入区加「 上传文档」（accept .docx/.pdf）。",
+      "docx 用 mammoth.js `extractRawText`；pdf 用 pdf.js 逐页 `getTextContent` 拼接。",
+      "提取文本走现有 `doParse`（由 parseBtn 逻辑抽取公共函数复用）。",
+      "依赖放 `vendor/` 本地（mammoth.browser.min.js / pdf.min.js / pdf.worker.min.js），vendor 优先 + CDN 回退，pdf workerSrc 用本地。",
+      "PDF 文字过少 → toast「该 PDF 可能是扫描件」；解析失败 → toast「文档解析失败」。"
+    ]
+  },
+  {
+    "version": "v1.2.1",
+    "title": "AI 解析开关（智能默认）",
+    "items": [
+      "设置项 `aiEnabled`：优先读 localStorage('ddl_ai_enabled')；未手动设置则智能默认（有 key=开、无 key=关）；仅手动切换才写入，用户选择优先。",
+      "主界面输入区上方加 on/off 拨动开关（`aiToggle` + ON/OFF 状态显示）；无 key 点开关 toast「请先填写 API Key」并回弹。",
+      "解析逻辑：`aiEnabled && key` → AI（失败回退 mock）；否则 mock，文案区分「AI 已关闭」/「未设置 API key」。",
+      "截图识别：`aiEnabled=false` 或无 key 时置灰 + 提示「AI 解析未开启，截图识别不可用」。"
+    ]
+  },
+  {
+    "version": "v1.2.0",
+    "title": "日历彩色任务线",
+    "items": [
+      "数据模型加 `color` 字段：12 色调色板 `PALETTE` 循环分配，load 老数据补色。",
+      "日历：每个任务画一条彩色横线穿过日期；截止日线段末端加圆点；已完成透明；移除红橙蓝状态色和「截止」标签。",
+      "列表：左侧竖条=任务色、状态改文字标签（已逾期红/即将到期橙）、标题前同色圆点。",
+      "日历下方「颜色块=任务名」图例（可折叠）；当天任务列表标题带同色圆点。",
+      "**线段对齐**：任务按创建时间分配全局固定槽位（`buildSlotMap`），线段绝对定位 `bottom=槽位*6px`，保证跨天任务在相邻日期保持同一行；最多显示前 6 个槽位，超出靠角标+点击详情。"
+    ]
+  },
+  {
+    "version": "v1.1.1",
+    "title": "API key 保密（档位2）",
+    "items": [
+      "输入框 `type=text` + `-webkit-text-security:disc` 掩码（避开浏览器自带密码眼睛图标，无明文查看按钮）。",
+      "打开不回显明文，仅显示「已保存 key（尾号 ****XXXX），留空则保持不变」。",
+      "保存留空保留原值、非空覆盖；新增「清除 key」按钮才删除。"
+    ]
+  },
+  {
+    "version": "v1.1.0",
+    "title": "数据导出/导入",
+    "items": [
+      "导出：reminders → JSON → `Blob + a[download]`，文件名 `ddl-helper-backup-YYYY-MM-DD.json`，**不含 API key**。",
+      "导入：FileReader 读 JSON → 校验数组 + id/title → 按 id 去重合并 → 老数据补 starred/done/color → save/render。"
+    ]
+  },
+  {
+    "version": "v1.0.0",
+    "title": "部署 + PWA",
+    "items": [
+      "项目结构：`api/parse.js`、`api/parse-image.js`（Vercel serverless，ESM）+ `vercel.json` + `manifest.json` + `sw.js` + `icons/`。",
+      "前端统一走 `/api/parse`、`/api/parse-image` 同源代理（移除直连和 USE_LOCAL_SERVER）。",
+      "PWA：manifest（standalone）+ Service Worker 离线缓存 + 占位图标。",
+      "server.js 加 `/api/parse`、`/api/parse-image` 路由（与 Vercel 逻辑一致），保留 `/parse` 旧接口。"
+    ]
+  },
+  {
+    "version": "v0.9.0",
+    "title": "多模型兼容 + server.js 托管",
+    "items": [
+      "设置面板扩展 5 字段：baseUrl / API Key / model / visionModel(留空复用 model) / visionFlag。",
+      "预设服务商：DeepSeek、通义千问、智谱GLM、Kimi、OpenAI、自定义。",
+      "解析统一走 `POST {baseUrl}/chat/completions`（OpenAI 兼容）。",
+      "`visionFlag=false` → 截图按钮置灰，提示「当前模型不支持识图，可粘贴文字」。",
+      "server.js 加 `GET /` 托管页面（本地/手机局域网可开），前端本地后端地址动态化（同源）。"
+    ]
+  },
+  {
+    "version": "v0.8.0",
+    "title": "API key 设置",
+    "items": [
+      "header 加「 设置」→ 设置面板（modal，无 alert/confirm）。",
+      "key 存 localStorage(`ddl_api_key`)；`getAPIKey()` 动态读取。",
+      "无 key 时解析走 mock（toast「未设置 API key，已用本地基础解析」）；截图无 key 提示。"
+    ]
+  },
+  {
+    "version": "v0.7.1",
+    "title": "token 优化",
+    "items": [
+      "`SYSTEM_PROMPT` 去掉 note 字段（只返回 title/time/place/deadline），note 由前端填原文。",
+      "（注：曾实现「截断 200 字」版本后按用户要求撤销，最终为「note=完整原文」。）"
+    ]
+  },
+  {
+    "version": "v0.6.1",
+    "title": "收藏置顶",
+    "items": [
+      "数据模型加 `starred` 字段（老数据兼容）。",
+      "列表卡片「⭐ 收藏」按钮 + `sortReminders` 收藏优先置顶。",
+      "日历格子左上角 ⭐ + 当天事项列表标题旁 ⭐。"
+    ]
+  },
+  {
+    "version": "v0.6.0",
+    "title": "批量解析",
+    "items": [
+      "`SYSTEM_PROMPT` 改为返回 JSON 数组；`parseWithAI` 返回数组（单对象自动包成数组）。",
+      "图片 input 加 `multiple`，逐张识别 + 进度「识别中 x/N」。",
+      "文本与图片共用 `isParsing` 锁定态；空校验「请先粘贴通知或上传截图」。"
+    ]
+  },
+  {
+    "version": "v0.5.1",
+    "title": "状态显示重构",
+    "items": [
+      "日历改多状态圆点（每未完成事项一个红/橙/蓝点，已完成不显示）。",
+      "列表左侧 4px 状态竖条 + 「 截止」字段着色。",
+      "统一状态色：逾期红 `#dc2626`、即将橙 `#f97316`、未来蓝 `#3b82f6`、完成灰 `#94a3b8`。"
+    ]
+  },
+  {
+    "version": "v0.5.0",
+    "title": "日历时间维度标记",
+    "items": [
+      "区分截止日（红框+「截止」标签）、时间段（起止日期画色带）、时间点（蓝点）。",
+      "`reminderCoversDate` 三类覆盖（截止日/时间段区间/单日时间点）。"
+    ]
+  },
+  {
+    "version": "v0.4.0",
+    "title": "截图识别",
+    "items": [
+      "「 上传截图」→ `FileReader` 转 base64 → DeepSeek 视觉模型多模态请求（`image_url`）。",
+      "失败 toast「截图识别失败，请改用粘贴文字」。"
+    ]
+  },
+  {
+    "version": "v0.3.0",
+    "title": "P1 日历视图 + 模板库",
+    "items": [
+      "日历：列表/日历 tab、月历网格（原生 JS）、日期角标、四色状态（逾期红/今天橙/未来蓝/完成灰）、点击当天看事项。",
+      "模板库：10 个模板按钮（选课·正选/补选、四六级、体测、奖学金、缴费、毕业论文、学科竞赛、证书、校历节点），点一下预填表单。"
+    ]
+  },
+  {
+    "version": "v0.2.0",
+    "title": "接入 DeepSeek API",
+    "items": [
+      "顶部配置常量 + `parseWithAI`（OpenAI 兼容 `/chat/completions`，`response_format=json_object`）+ `normalizeAIResult`。",
+      "解析按钮 async：先调 AI，失败回退 mockParse + toast。",
+      "新增 `server.js` 本地后端（原生 http + Node fetch，代理持 key，解决 CORS）。",
+      "解析中锁定态：`isParsing` 防重、按钮 disabled + 「⏳ 解析中…」、点击即清空输入框。"
+    ]
+  },
+  {
+    "version": "v0.1.0",
+    "title": "P0 第一版（mock 解析跑通全链路）",
+    "items": [
+      "单文件 `index.html`，纯前端 + localStorage，无构建、无服务器。",
+      "mock 正则解析：`extractTitle / extractTime / extractPlace / extractDeadline`。",
+      "提醒列表（完成/删除）、顶部「本周 N 个 DDL」统计、手动添加、示例按钮。"
+    ]
+  },
+  {
+    "version": "v0.1.x",
+    "title": "P0 bug 修复（累计 9+ 项）",
+    "items": [
+      "关键词表按江汉大学教务处（jwzx.jhun.edu.cn）栏目扩充：正选/预选/补选、重修/免听/免修、转专业（降转）、辅修、微专业、课外锻炼、体育保健班、创新大赛、教学成果奖等。"
+    ]
   }
+];
+let changelogFromSettings = false;
+let changelogGroupOpen = { v2: true, v1: false, v0: false };
+function changelogMajor(version) {
+  const m = /^v(\d+)/.exec(String(version || ''));
+  return m ? 'v' + m[1] : 'v0';
+}
+function changelogEntryHtml(entry) {
+  const items = Array.isArray(entry.items) ? entry.items : [];
+  const first = items.slice(0, 6);
+  const rest = items.slice(6);
+  return '<div class="changelog-entry"><h4><span>' + escapeHtml(entry.version || '') +
+    '</span><span class="changelog-title">' + escapeHtml(entry.title || '') + '</span></h4><ul>' +
+    first.map(it => '<li>' + escapeHtml(it) + '</li>').join('') +
+    rest.map(it => '<li class="changelog-extra hidden">' + escapeHtml(it) + '</li>').join('') +
+    '</ul>' +
+    (rest.length ? '<button type="button" class="changelog-more" data-changelog-more="1" data-total="' + items.length + '">展开全部 ' + items.length + ' 条</button>' : '') +
+    '</div>';
+}
+function renderChangelog() {
+  const list = document.getElementById('changelogList');
+  const stats = document.getElementById('changelogStats');
+  if (stats) stats.textContent = '共 ' + CHANGELOG_FULL.length + ' 个版本';
+  if (!list) return;
+  const groups = { v2: [], v1: [], v0: [] };
+  CHANGELOG_FULL.forEach(entry => {
+    const major = changelogMajor(entry.version);
+    if (!groups[major]) groups[major] = [];
+    groups[major].push(entry);
+  });
+  list.innerHTML = ['v2', 'v1', 'v0'].map(g => {
+    const entries = groups[g] || [];
+    const open = !!changelogGroupOpen[g];
+    return '<section class="changelog-group' + (open ? ' open' : '') + '" data-changelog-group="' + g + '">' +
+      '<button type="button" class="changelog-group-head" data-changelog-toggle="' + g + '"><span>' + g + ' 大版本</span><small>共 ' + entries.length + ' 个版本</small><svg class="ic" aria-hidden="true"><use href="#ic-chevron-down"></use></svg></button>' +
+      '<div class="changelog-group-body' + (open ? '' : ' hidden') + '">' + entries.map(changelogEntryHtml).join('') + '</div></section>';
+  }).join('');
+}
+function openChangelogModal() {
+  const settings = document.getElementById('settingsModal');
+  changelogFromSettings = !!(settings && !settings.classList.contains('hidden'));
+  if (changelogFromSettings) settings.classList.add('hidden');
+  changelogGroupOpen = { v2: true, v1: false, v0: false };
+  renderChangelog();
   document.getElementById('changelogModal').classList.remove('hidden');
 }
 function closeChangelogModal() {
   document.getElementById('changelogModal').classList.add('hidden');
+  if (changelogFromSettings) {
+    changelogFromSettings = false;
+    document.getElementById('settingsModal').classList.remove('hidden');
+  }
 }
+document.getElementById('changelogList').addEventListener('click', (e) => {
+  const groupBtn = e.target.closest('[data-changelog-toggle]');
+  if (groupBtn) {
+    const g = groupBtn.dataset.changelogToggle;
+    changelogGroupOpen[g] = !changelogGroupOpen[g];
+    renderChangelog();
+    return;
+  }
+  const more = e.target.closest('[data-changelog-more]');
+  if (more) {
+    const entry = more.closest('.changelog-entry');
+    if (!entry) return;
+    const extras = entry.querySelectorAll('.changelog-extra');
+    const expanded = extras.length && !extras[0].classList.contains('hidden');
+    extras.forEach(li => li.classList.toggle('hidden', expanded));
+    more.textContent = expanded ? '展开全部 ' + more.dataset.total + ' 条' : '收起';
+  }
+});
+document.getElementById('changelogModal').addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-mask')) closeChangelogModal();
+});
 document.getElementById('empty').addEventListener('click', (e) => {
   if (e.target.closest('#emptyExampleBtn')) document.getElementById('exampleBtn').click();
   else if (e.target.closest('#emptyGuideBtn')) openGuideModal();
@@ -4922,6 +5746,65 @@ let calendarYear = null, calendarMonth = null;
 let selectedDay = null;
 let calendarViewMode = 'month';
 
+const CAL_PREF_STORAGE = 'ddl_cal_prefs';
+const CAL_PREF_DEFAULTS = {
+  eventStyle: 'text',
+  density: 'comfortable',
+  maxItems: 4,
+  hoverPreview: true,
+  weekendDim: true,
+  dayPanel: true,
+};
+function normalizeCalPrefs(obj) {
+  const src = obj && typeof obj === 'object' ? obj : {};
+  const max = Number(src.maxItems);
+  return {
+    eventStyle: src.eventStyle === 'line' ? 'line' : 'text',
+    density: src.density === 'compact' ? 'compact' : 'comfortable',
+    maxItems: [0, 2, 3, 4, 5].includes(max) ? max : CAL_PREF_DEFAULTS.maxItems,
+    hoverPreview: src.hoverPreview !== false,
+    weekendDim: src.weekendDim !== false,
+    dayPanel: src.dayPanel !== false,
+  };
+}
+function loadCalPrefs() {
+  try {
+    const raw = localStorage.getItem(CAL_PREF_STORAGE);
+    if (!raw) return Object.assign({}, CAL_PREF_DEFAULTS);
+    return normalizeCalPrefs(JSON.parse(raw));
+  } catch (e) {
+    return Object.assign({}, CAL_PREF_DEFAULTS);
+  }
+}
+let calPrefs = loadCalPrefs();
+function updateCalendarSettingsUI() {
+  const textBtn = document.getElementById('calStyleTextBtn');
+  const lineBtn = document.getElementById('calStyleLineBtn');
+  if (textBtn && lineBtn) {
+    const isText = calPrefs.eventStyle === 'text';
+    textBtn.classList.toggle('active', isText);
+    lineBtn.classList.toggle('active', !isText);
+    textBtn.setAttribute('aria-pressed', isText ? 'true' : 'false');
+    lineBtn.setAttribute('aria-pressed', isText ? 'false' : 'true');
+  }
+  const density = document.getElementById('calDensitySelect');
+  if (density) density.value = calPrefs.density;
+  const maxItems = document.getElementById('calMaxItemsSelect');
+  if (maxItems) maxItems.value = String(calPrefs.maxItems);
+  const hover = document.getElementById('calHoverPreviewToggle');
+  if (hover) hover.checked = calPrefs.hoverPreview;
+  const weekend = document.getElementById('calWeekendDimToggle');
+  if (weekend) weekend.checked = calPrefs.weekendDim;
+  const dayPanel = document.getElementById('calDayPanelToggle');
+  if (dayPanel) dayPanel.checked = calPrefs.dayPanel;
+}
+function saveCalPrefs(patch) {
+  calPrefs = normalizeCalPrefs(Object.assign({}, calPrefs, patch || {}));
+  try { localStorage.setItem(CAL_PREF_STORAGE, JSON.stringify(calPrefs)); } catch (e) {}
+  updateCalendarSettingsUI();
+  if (typeof renderCalendar === 'function') renderCalendar();
+}
+
 function startOfDay(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 }
@@ -5046,41 +5929,126 @@ function calendarWeekStart() {
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return d;
 }
-function renderWeekGrid() {
-  const el = document.getElementById('calWeekGrid');
+function calEventHtml(r, date, extraAttrs) {
+  const isDeadline = !!date && isSameDay(parseDate(r.deadline), date);
+  const cls = 'cal-event' + (isDeadline ? ' deadline' : '') + (r.done ? ' done' : '');
+  return '<div class="' + cls + '" data-id="' + escapeHtml(r.id) + '" ' + (extraAttrs || '') +
+    ' style="--c:' + (r.color || '#94a3b8') + '" title="' + escapeHtml(r.title || '未命名事项') + '">' +
+    '<span class="cal-event-title">' + escapeHtml(r.title || '未命名事项') + '</span></div>';
+}
+function calMoreHtml(count, extraAttrs) {
+  return '<button type="button" class="cal-more" ' + (extraAttrs || '') + '>+' + count + '</button>';
+}
+// 显示层去重：同一标题最多显示 2 条；maxItems=0 时不限制总条数，但仍限制同名。
+function limitCalendarTasks(items, maxItems) {
+  const out = [];
+  const counts = new Map();
+  for (const r of items) {
+    if (maxItems > 0 && out.length >= maxItems) break;
+    const title = String(r.title || '未命名事项').trim();
+    const n = counts.get(title) || 0;
+    if (n >= 2) continue;
+    counts.set(title, n + 1);
+    out.push(r);
+  }
+  return { items: out, hidden: Math.max(0, items.length - out.length) };
+}
+let agendaDays = 7;
+function agendaDateText(date) {
+  return (date.getMonth() + 1) + '/' + date.getDate();
+}
+function agendaWeekdayText(date) {
+  return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
+}
+function agendaRelativeLabel(date) {
+  const today = startOfDay(new Date());
+  const d = startOfDay(date);
+  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '明天';
+  if (diff === -1) return '昨天';
+  return '';
+}
+function agendaDeadlineShort(value) {
+  const d = parseDate(value);
+  return d ? agendaDateText(d) : String(value || '');
+}
+function agendaStatusHtml(r, date) {
+  if (r.done) return '<span class="agenda-status muted">已完成</span>';
+  if (isSameDay(parseDate(r.deadline), date)) return '<span class="agenda-status warn">今天到期</span>';
+  const st = statusColor(r);
+  if (st === 'red') return '<span class="agenda-status danger">已逾期</span>';
+  if (st === 'orange') return '<span class="agenda-status warn">即将到期</span>';
+  return '';
+}
+function agendaItemHtml(r, date) {
+  const meta = [];
+  if (r.deadline) meta.push('<span>截止 ' + escapeHtml(agendaDeadlineShort(r.deadline)) + '</span>');
+  const remind = nextRemindState(r);
+  if (remind && remind.at) meta.push('<span>提醒 ' + escapeHtml(fmtDateTime(remind.at)) + '</span>');
+  else if (remind && remind.kind === 'due') meta.push('<span>提醒已到</span>');
+  else if (remind && remind.kind === 'fired') meta.push('<span>已提醒</span>');
+  const status = agendaStatusHtml(r, date);
+  return '<div class="agenda-item' + (r.done ? ' done' : '') + '" data-id="' + escapeHtml(r.id) + '" style="--c:' + (r.color || '#94a3b8') + '">' +
+    '<div class="agenda-main"><div class="agenda-title">' + escapeHtml(r.title || '未命名事项') + '</div></div>' +
+    '<div class="agenda-meta">' + meta.join('') + status + '</div>' +
+    '<div class="agenda-actions">' +
+      '<button type="button" class="btn-done' + (r.done ? ' undo' : '') + '" data-agenda-act="toggle">' + (r.done ? '恢复' : '完成') + '</button>' +
+      '<button type="button" class="btn-edit" data-agenda-act="edit">编辑</button>' +
+    '</div>' +
+  '</div>';
+}
+function countAgendaItems(start, days) {
+  let total = 0;
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    total += dayTasks(d).length;
+  }
+  return total;
+}
+function updateAgendaTotal(start) {
+  const el = document.getElementById('agendaTotal');
+  if (!el) return;
+  el.textContent = '共 ' + countAgendaItems(start || calendarWeekStart(), agendaDays) + ' 项';
+  el.classList.remove('hidden');
+}
+function renderAgenda() {
+  const el = document.getElementById('agendaList');
   if (!el) return;
   const start = calendarWeekStart();
-  const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   const today = new Date();
   let html = '';
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < agendaDays; i++) {
     const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-    const dstr = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
     const items = dayTasks(d);
-    const itemsHtml = items.length
-      ? items.map(r => {
-          const meta = r.deadline || '无截止';
-          return '<button type="button" class="cal-week-item" data-week-date="' + dstr + '" data-week-id="' + escapeHtml(r.id) + '" title="' + escapeHtml(r.title || '未命名事项') + '">' +
-            '<span class="week-dot" style="background:' + (r.color || '#94a3b8') + '"></span>' +
-            '<span class="week-title">' + escapeHtml(r.title || '未命名事项') + '<small>' + escapeHtml(meta) + '</small></span>' +
-          '</button>';
-        }).join('')
-      : '<div class="cal-week-empty">无事项</div>';
-    const cls = 'cal-week-day' +
-      (isSameDay(d, today) ? ' today' : '') +
-      (selectedDay && isSameDay(d, selectedDay) ? ' selected' : '');
-    html += '<div class="' + cls + '" data-week-date="' + dstr + '">' +
-      '<button type="button" class="cal-week-day-head" data-week-date="' + dstr + '"><b>' + dayNames[i] + '</b><span>' + (d.getMonth() + 1) + '/' + d.getDate() + '</span></button>' +
-      '<div class="cal-week-items">' + itemsHtml + '</div>' +
-    '</div>';
+    const rel = agendaRelativeLabel(d);
+    const dayCls = 'agenda-day' + (isSameDay(d, today) ? ' today' : '');
+    const label = (rel ? rel + ' · ' : '') + agendaWeekdayText(d) + ' ' + agendaDateText(d);
+    const rows = items.length
+      ? items.map(r => agendaItemHtml(r, d)).join('')
+      : '<div class="agenda-empty">无事项</div>';
+    html += '<section class="' + dayCls + '" data-date="' + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '">' +
+      '<button type="button" class="agenda-day-head" data-agenda-date="' + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '">' +
+        '<span class="agenda-day-label">' + escapeHtml(label) + '</span><span class="agenda-day-count">' + items.length + ' 项</span>' +
+      '</button>' +
+      '<div class="agenda-items">' + rows + '</div></section>';
   }
   el.innerHTML = html;
+  updateAgendaTotal(start);
 }
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
   const title = document.getElementById('calTitle');
   if (!grid || !title) return;
   ensureCalendarInit();
+  hideCalHover();
+  const calView = document.getElementById('calendarView');
+  const textMode = calPrefs.eventStyle === 'text';
+  if (calView) {
+    calView.classList.toggle('cal-hide-daypanel', !calPrefs.dayPanel);
+    calView.classList.toggle('cal-density-compact', calPrefs.density === 'compact');
+  }
+  grid.classList.toggle('cal-text-mode', textMode);
   const weekdays = document.getElementById('calWeekdays');
   const weekView = document.getElementById('calWeekView');
   document.getElementById('calViewMonth').classList.toggle('active', calendarViewMode === 'month');
@@ -5091,8 +6059,9 @@ function renderCalendar() {
     if (weekView) weekView.classList.remove('hidden');
     const start = calendarWeekStart();
     const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
-    title.textContent = fmtDate(start) + ' - ' + fmtDate(end);
-    renderWeekGrid();
+    title.textContent = '本周 ' + fmtDate(start) + ' - ' + fmtDate(end);
+    updateAgendaTotal(start);
+    renderAgenda();
     renderDayList();
     renderLegend();
     if (batchMode) updateBatchUI();
@@ -5101,6 +6070,8 @@ function renderCalendar() {
   grid.classList.remove('hidden');
   if (weekdays) weekdays.classList.remove('hidden');
   if (weekView) weekView.classList.add('hidden');
+  const agendaTotalEl = document.getElementById('agendaTotal');
+  if (agendaTotalEl) agendaTotalEl.classList.add('hidden');
   title.textContent = calendarYear + ' 年 ' + (calendarMonth + 1) + ' 月';
   const startWeekday = new Date(calendarYear, calendarMonth, 1).getDay();
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
@@ -5117,30 +6088,39 @@ function renderCalendar() {
     let cls = 'cal-cell';
     if (isToday) cls += ' today';
     if (isSel) cls += ' selected';
-    let extras = '';
-    if (info && info.hasStar) extras += '<span class="cal-star">' + icon('star') + '</span>';
-    let badge = '';
-    if (info && info.total > 6) {
-      const extra = info.total - 6;
-      badge = `<span class="cal-count" title="还有 ${extra} 条，点击查看当天全部">+${extra}</span>`;
-    } else if (info && info.count > 0) {
-      badge = `<span class="cal-count">${info.count}</span>`;
-    }
-    // 使用月份全局稳定槽位，跨天保持同一 bottom；当天超过 6 条时只画槽位最小的 6 条，
-    // 其余靠角标+当天列表兜底；但如果当天总共不超过 6 条，即使槽位偏大也要画（避免整条消失）。
+    if (calPrefs.weekendDim && (date.getDay() === 0 || date.getDay() === 6)) cls += ' cal-weekend';
     const allTasks = dayTasks(date).slice().sort((a, b) => (slotOf.get(a.id) ?? 0) - (slotOf.get(b.id) ?? 0));
-    const tasks = allTasks.length <= MAX_LINES
-      ? allTasks
-      : allTasks.filter(t => (slotOf.get(t.id) ?? 0) < MAX_LINES).slice(0, MAX_LINES);
-    let linesHtml = '';
-    if (tasks.length) {
-      linesHtml = '<div class="cal-lines">' + tasks.map(t => {
-        const isDl = isSameDay(parseDate(t.deadline), date);
-        const lineCls = 'cal-line' + (isDl ? ' deadline' : '') + (t.done ? ' done' : '');
-        return `<div class="${lineCls}" draggable="true" data-id="${escapeHtml(t.id)}" style="--c:${t.color || '#94a3b8'};bottom:${(slotOf.get(t.id) ?? 0) * LINE_STEP}px"></div>`;
-      }).join('') + '</div>';
+    let body = '';
+    if (textMode) {
+      const limited = limitCalendarTasks(allTasks, calPrefs.maxItems);
+      const extra = limited.hidden;
+      body = '<div class="cal-events">' + limited.items.map(t => calEventHtml(t, date, 'draggable="true"')).join('') + '</div>';
+      if (extra > 0) body += calMoreHtml(extra, 'data-cal-more="1"');
+      if (allTasks.length) body += `<span class="cal-count" title="当天 ${allTasks.length} 条事项">${allTasks.length}</span>`;
+    } else {
+      let extras = '';
+      if (info && info.hasStar) extras += '<span class="cal-star">' + icon('star') + '</span>';
+      let badge = '';
+      if (info && info.total > 6) {
+        const extra = info.total - 6;
+        badge = `<span class="cal-count" title="还有 ${extra} 条，点击查看当天全部">+${extra}</span>`;
+      } else if (info && info.count > 0) {
+        badge = `<span class="cal-count">${info.count}</span>`;
+      }
+      const tasks = allTasks.length <= MAX_LINES
+        ? allTasks
+        : allTasks.filter(t => (slotOf.get(t.id) ?? 0) < MAX_LINES).slice(0, MAX_LINES);
+      let linesHtml = '';
+      if (tasks.length) {
+        linesHtml = '<div class="cal-lines">' + tasks.map(t => {
+          const isDl = isSameDay(parseDate(t.deadline), date);
+          const lineCls = 'cal-line' + (isDl ? ' deadline' : '') + (t.done ? ' done' : '');
+          return `<div class="${lineCls}" draggable="true" data-id="${escapeHtml(t.id)}" style="--c:${t.color || '#94a3b8'};bottom:${(slotOf.get(t.id) ?? 0) * LINE_STEP}px"></div>`;
+        }).join('') + '</div>';
+      }
+      body = linesHtml + extras + badge;
     }
-    cells += `<div class="${cls}" data-date="${calendarYear}-${calendarMonth + 1}-${d}"><span class="cal-day-num">${d}</span>${linesHtml}${extras}${badge}</div>`;
+    cells += `<div class="${cls}" data-date="${calendarYear}-${calendarMonth + 1}-${d}"><span class="cal-day-num">${d}</span>${body}</div>`;
   }
   grid.innerHTML = cells;
   renderDayList();
@@ -5226,6 +6206,8 @@ function updateListControlsVisibility(view) {
 }
 function switchView(view) {
   listShown = LIST_PAGE_SIZE;
+  agendaDays = 7;
+  hideCalHover();
   if (batchMode) {
     batchMode = false;
     batchView = null;
@@ -5240,7 +6222,16 @@ function switchView(view) {
   document.getElementById('tabList').classList.toggle('active', view === 'list');
   document.getElementById('tabCalendar').classList.toggle('active', view === 'calendar');
   updateListControlsVisibility(view);
-  if (view === 'calendar') renderCalendar();
+  updateDupUI();
+  if (view === 'calendar') {
+    if (!selectedDay) {
+      const now = new Date();
+      selectedDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      calendarYear = selectedDay.getFullYear();
+      calendarMonth = selectedDay.getMonth();
+    }
+    renderCalendar();
+  }
 }
 
 /* =====================================================================
@@ -6288,6 +7279,7 @@ document.getElementById('calLegendToggle').addEventListener('click', () => {
 });
 document.getElementById('calPrev').addEventListener('click', () => {
   ensureCalendarInit();
+  agendaDays = 7;
   if (calendarViewMode === 'week') {
     const start = calendarWeekStart();
     start.setDate(start.getDate() - 7);
@@ -6302,6 +7294,7 @@ document.getElementById('calPrev').addEventListener('click', () => {
 });
 document.getElementById('calNext').addEventListener('click', () => {
   ensureCalendarInit();
+  agendaDays = 7;
   if (calendarViewMode === 'week') {
     const start = calendarWeekStart();
     start.setDate(start.getDate() + 7);
@@ -6316,6 +7309,7 @@ document.getElementById('calNext').addEventListener('click', () => {
 });
 document.getElementById('calTodayBtn').addEventListener('click', () => {
   const now = new Date();
+  agendaDays = 7;
   selectedDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   calendarYear = selectedDay.getFullYear();
   calendarMonth = selectedDay.getMonth();
@@ -6323,6 +7317,7 @@ document.getElementById('calTodayBtn').addEventListener('click', () => {
 });
 function setCalendarViewMode(mode) {
   calendarViewMode = mode === 'week' ? 'week' : 'month';
+  agendaDays = 7;
   if (!selectedDay) selectedDay = new Date();
   calendarYear = selectedDay.getFullYear();
   calendarMonth = selectedDay.getMonth();
@@ -6330,17 +7325,50 @@ function setCalendarViewMode(mode) {
 }
 document.getElementById('calViewMonth').addEventListener('click', () => setCalendarViewMode('month'));
 document.getElementById('calViewWeek').addEventListener('click', () => setCalendarViewMode('week'));
-document.getElementById('calWeekGrid').addEventListener('click', (e) => {
-  const target = e.target.closest('[data-week-date]');
-  if (!target) return;
-  const [y, m, d] = target.dataset.weekDate.split('-').map(Number);
-  selectedDay = new Date(y, m - 1, d);
-  calendarYear = y;
-  calendarMonth = m - 1;
-  if (batchMode && batchView === 'calendar') { batchSelected.clear(); resetBatchDeleteConfirm(); }
-  renderCalendar();
+document.getElementById('agendaList').addEventListener('click', (e) => {
+  const actBtn = e.target.closest('button[data-agenda-act]');
+  if (actBtn) {
+    const item = actBtn.closest('.agenda-item');
+    const id = item && item.dataset.id;
+    if (!id) return;
+    if (actBtn.dataset.agendaAct === 'edit') {
+      openEditModal(id);
+      return;
+    }
+    const r = reminders.find(x => x.id === id);
+    if (!r) return;
+    const wasDone = !!r.done;
+    pushUndo(wasDone ? '恢复事项' : '完成事项');
+    setReminderDone(r, !r.done);
+    save();
+    render();
+    toastUndo(wasDone ? '已恢复' : '已完成');
+    return;
+  }
+  const dayHead = e.target.closest('[data-agenda-date]');
+  if (dayHead) {
+    const [y, m, d] = dayHead.dataset.agendaDate.split('-').map(Number);
+    selectedDay = new Date(y, m - 1, d);
+    calendarYear = y;
+    calendarMonth = m - 1;
+    if (batchMode && batchView === 'calendar') { batchSelected.clear(); resetBatchDeleteConfirm(); }
+    renderDayList();
+    return;
+  }
+  const item = e.target.closest('.agenda-item[data-id]');
+  if (item) openEditModal(item.dataset.id);
+});
+document.getElementById('agendaMoreBtn').addEventListener('click', () => {
+  agendaDays += 7;
+  renderAgenda();
 });
 document.getElementById('calGrid').addEventListener('click', (e) => {
+  const eventEl = e.target.closest('.cal-event[data-id]');
+  if (eventEl && !batchMode) {
+    hideCalHover();
+    openEditModal(eventEl.dataset.id);
+    return;
+  }
   const cell = e.target.closest('.cal-cell[data-date]');
   if (!cell) return;
   const [y, m, d] = cell.dataset.date.split('-').map(Number);
@@ -6378,14 +7406,107 @@ document.getElementById('calGrid').addEventListener('dblclick', (e) => {
   openManualForDate(new Date(y, m - 1, d));
 });
 
+/* ---------- 日历格子悬停预览 ---------- */
+let calHoverTimer = null, calHoverCell = null, calHoverDate = null;
+function hideCalHover() {
+  if (calHoverTimer) { clearTimeout(calHoverTimer); calHoverTimer = null; }
+  calHoverCell = null;
+  calHoverDate = null;
+  const pop = document.getElementById('calHoverPop');
+  if (pop) pop.classList.add('hidden');
+}
+function showCalHover(cell, date) {
+  if (!cell || !date || !calPrefs.hoverPreview || batchMode || currentView !== 'calendar' || calendarViewMode !== 'month') return;
+  const items = dayTasks(date);
+  if (!items.length) return;
+  const pop = document.getElementById('calHoverPop');
+  if (!pop) return;
+  const rows = items.map(r => {
+    const meta = [];
+    if (r.time) meta.push(r.time);
+    if (r.deadline) meta.push('截止 ' + r.deadline);
+    return '<button type="button" class="cal-hover-item' + (r.done ? ' done' : '') + '" data-id="' + escapeHtml(r.id) + '" style="--c:' + (r.color || '#94a3b8') + '">' +
+      '<span class="cal-hover-title">' + escapeHtml(r.title || '未命名事项') + '</span>' +
+      (meta.length ? '<span class="cal-hover-meta">' + escapeHtml(meta.join(' · ')) + '</span>' : '') +
+    '</button>';
+  }).join('');
+  pop.innerHTML = '<div class="cal-hover-head">' + fmtDate(date) + ' · ' + items.length + ' 条</div>' +
+    '<div class="cal-hover-list">' + rows + '</div>' +
+    '<button type="button" class="ghost cal-hover-all" data-cal-hover-all="1">查看当天全部</button>';
+  pop.classList.remove('hidden');
+  const rect = cell.getBoundingClientRect();
+  const pr = pop.getBoundingClientRect();
+  const vw = window.innerWidth || document.documentElement.clientWidth || 1200;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+  let left = rect.right - 2;
+  if (left + pr.width > vw - 8) left = rect.left - pr.width + 2;
+  left = Math.max(8, Math.min(left, vw - pr.width - 8));
+  let top = Math.min(rect.top, vh - pr.height - 8);
+  top = Math.max(8, top);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  calHoverCell = cell;
+  calHoverDate = date;
+}
+function cancelCalHoverTimer() {
+  if (calHoverTimer) { clearTimeout(calHoverTimer); calHoverTimer = null; }
+}
+document.getElementById('calGrid').addEventListener('mouseover', (e) => {
+  const cell = e.target.closest('.cal-cell[data-date]');
+  if (!cell || cell === calHoverCell) return;
+  cancelCalHoverTimer();
+  hideCalHover();
+  const [y, m, d] = cell.dataset.date.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  calHoverCell = cell;
+  calHoverDate = date;
+  calHoverTimer = setTimeout(() => showCalHover(cell, date), 300);
+});
+document.getElementById('calGrid').addEventListener('mouseout', (e) => {
+  const cell = e.target.closest('.cal-cell[data-date]');
+  if (!cell) return;
+  const related = e.relatedTarget;
+  const pop = document.getElementById('calHoverPop');
+  if (related && (cell.contains(related) || (pop && pop.contains(related)))) return;
+  cancelCalHoverTimer();
+  hideCalHover();
+});
+document.getElementById('calGrid').addEventListener('mouseleave', hideCalHover);
+document.getElementById('calHoverPop').addEventListener('mouseenter', cancelCalHoverTimer);
+document.getElementById('calHoverPop').addEventListener('mouseleave', hideCalHover);
+document.getElementById('calHoverPop').addEventListener('click', (e) => {
+  const all = e.target.closest('[data-cal-hover-all]');
+  if (all) {
+    if (calHoverDate) {
+      selectedDay = new Date(calHoverDate.getFullYear(), calHoverDate.getMonth(), calHoverDate.getDate());
+      calendarYear = selectedDay.getFullYear();
+      calendarMonth = selectedDay.getMonth();
+      hideCalHover();
+      renderCalendar();
+    }
+    return;
+  }
+  const item = e.target.closest('.cal-hover-item[data-id]');
+  if (item) {
+    hideCalHover();
+    openEditModal(item.dataset.id);
+  }
+});
+window.addEventListener('scroll', (e) => {
+  const pop = document.getElementById('calHoverPop');
+  if (pop && e && (e.target === pop || pop.contains(e.target))) return;
+  hideCalHover();
+}, true);
+
 /* ---------- 日历任务线拖拽改期 ---------- */
 let calendarDragId = null;
 function clearCalendarDragOver() {
   document.querySelectorAll('.cal-cell.drag-over').forEach(el => el.classList.remove('drag-over'));
 }
 document.getElementById('calGrid').addEventListener('dragstart', (e) => {
-  const line = e.target.closest('.cal-line[data-id]');
+  const line = e.target.closest('.cal-line[data-id], .cal-event[data-id]');
   if (!line) return;
+  hideCalHover();
   calendarDragId = line.dataset.id;
   line.classList.add('dragging');
   if (e.dataTransfer) {
@@ -6426,7 +7547,7 @@ document.getElementById('calGrid').addEventListener('drop', (e) => {
 document.getElementById('calGrid').addEventListener('dragend', () => {
   calendarDragId = null;
   clearCalendarDragOver();
-  document.querySelectorAll('#calGrid .cal-line.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('#calGrid .cal-line.dragging, #calGrid .cal-event.dragging').forEach(el => el.classList.remove('dragging'));
 });
 document.getElementById('calDayList').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-cal-act]');
@@ -6838,7 +7959,17 @@ function fillSettingsForm() {
   document.getElementById('visionFlagInput').checked = getVisionFlag();
   updateApiKeyHint();
   updateNotifyToggleUI();
+  updateCalendarSettingsUI();
 }
+
+document.getElementById('calStyleTextBtn').addEventListener('click', () => saveCalPrefs({ eventStyle: 'text' }));
+document.getElementById('calStyleLineBtn').addEventListener('click', () => saveCalPrefs({ eventStyle: 'line' }));
+document.getElementById('calDensitySelect').addEventListener('change', (e) => saveCalPrefs({ density: e.target.value }));
+document.getElementById('calMaxItemsSelect').addEventListener('change', (e) => saveCalPrefs({ maxItems: Number(e.target.value) }));
+document.getElementById('calHoverPreviewToggle').addEventListener('change', (e) => saveCalPrefs({ hoverPreview: e.target.checked }));
+document.getElementById('calWeekendDimToggle').addEventListener('change', (e) => saveCalPrefs({ weekendDim: e.target.checked }));
+document.getElementById('calDayPanelToggle').addEventListener('change', (e) => saveCalPrefs({ dayPanel: e.target.checked }));
+updateCalendarSettingsUI();
 
 function updateApiKeyHint() {
   const hint = document.getElementById('apiKeyHint');
@@ -6955,6 +8086,7 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
   fillSettingsForm();
   resetBackupRestore();
   renderBackupList();
+  updateDupUI();
   document.getElementById('settingsModal').classList.remove('hidden');
 });
 document.getElementById('settingsClose').addEventListener('click', () => {
@@ -7074,7 +8206,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.5.1';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
@@ -7475,6 +8607,18 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+
+// 页面关闭时通知本地服务：让 node 进程在宽限期后自动退出，避免常驻后台。
+// （仅本地 server.js 有 /api/bye；Vercel/file:// 下请求失败无副作用）
+window.addEventListener('pagehide', () => {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      navigator.sendBeacon('/api/bye', '');
+    } else {
+      fetch('/api/bye', { method: 'POST', keepalive: true }).catch(() => {});
+    }
+  } catch (e) { /* 忽略 */ }
+});
 
 /* ---------- 启动 ---------- */
 checkStorage();

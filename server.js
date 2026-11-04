@@ -10,6 +10,11 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3000;
+// 默认行为：浏览器页面关闭后（收到 /api/bye）等待宽限期自动退出，避免 node 常驻后台。
+// 需要常驻时用：node server.js --keep-alive
+const KEEP_ALIVE = process.argv.includes('--keep-alive');
+const EXIT_GRACE_MS = 90 * 1000;
+let pendingExitAt = 0;
 
 const TEXT_SYSTEM_PROMPT = `你是校园通知解析助手。用户会提供一条或多条校园通知，请把每一条通知分别解析，提取：标题(简短概括事项，如'创业项目入驻申报')、时间、地点、截止日期。只输出JSON数组，格式：[{"title":"","time":"","place":"","deadline":""}]，每条通知对应数组里的一个对象，没有的字段留空字符串。只有一条通知时也输出长度为1的数组。不要输出JSON以外的任何内容。`;
 // v1.5.3：截图识别改为两步法 —— 第一步逐字 OCR 转写，第二步交给前端文字解析链
@@ -27,6 +32,15 @@ const IMAGE_SYSTEM_PROMPT = `你是校园通知解析助手。请从这张（或
 4. title 必须简短具体；确实无法提炼时用正文首句前20字概括，不要输出空标题或"待办事项"。`;
 
 const server = http.createServer((req, res) => {
+  // 0) 页面关闭通知：设置宽限期后自动退出；任何后续请求都会取消退出
+  if (req.url === '/api/bye') {
+    if (!KEEP_ALIVE) pendingExitAt = Date.now() + EXIT_GRACE_MS;
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+  pendingExitAt = 0;
+
   // 1) GET / → 托管同目录 index.html
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
     try {
@@ -197,4 +211,21 @@ server.listen(PORT, () => {
   console.log('  页面：http://localhost:' + PORT + '/');
   console.log('  文字解析：http://localhost:' + PORT + '/api/parse');
   console.log('  截图识别：http://localhost:' + PORT + '/api/parse-image');
+  // 释放对项目目录的句柄：否则 Windows 里 node 会锁住该文件夹（资源监视器可见），
+  // 导致文件夹无法删除/移动。文件读取一律用 __dirname，切换 cwd 不影响功能。
+  try { process.chdir(require('os').tmpdir()); } catch (e) {}
+  if (KEEP_ALIVE) {
+    console.log('  模式：常驻（--keep-alive），不会自动退出');
+  } else {
+    console.log('  模式：页面关闭后约 90 秒自动退出（想常驻用 --keep-alive）');
+  }
 });
+
+// 页面关闭后延迟退出（宽限期内有新请求则取消）
+setInterval(() => {
+  if (KEEP_ALIVE || !pendingExitAt) return;
+  if (Date.now() >= pendingExitAt) {
+    console.log('页面已关闭，DDL 小管家服务自动退出。');
+    process.exit(0);
+  }
+}, 5000).unref();
