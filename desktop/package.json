@@ -1,7 +1,7 @@
 {
   "name": "ddl-helper-desktop",
   "productName": "DDL小管家",
-  "version": "2.13.0",
+  "version": "2.13.1",
   "description": "DDL 小管家 · 桌面版（校园通知一键变提醒）",
   "main": "main.js",
   "author": "TXfantasy",
@@ -10,8 +10,8 @@
   "scripts": {
     "prep": "node ../make-desktop-app.js",
     "start": "npm run prep && electron .",
-    "dist": "npm run prep && electron-builder --win nsis && node fix-update-yml.js",
-    "dist:ci": "npm run prep && electron-builder --win nsis --publish never && node fix-update-yml.js",
+    "dist": "npm run prep && electron-builder --win nsis",
+    "dist:ci": "npm run prep && electron-builder --win nsis --publish never",
     "dist:all": "npm run prep && electron-builder --win nsis portable",
     "dist:installer": "npm run prep && electron-builder --win nsis",
     "dist:portable": "npm run prep && electron-builder --win portable",
@@ -62,7 +62,7 @@
       "uninstallDisplayName": "DDL小管家",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "DDL小管家-安装程序-v${version}.${ext}",
+      "artifactName": "DDLHelper-Setup-v${version}.${ext}",
       "installerIcon": "app/icons/app.ico",
       "uninstallerIcon": "app/icons/app.ico",
       "installerHeaderIcon": "app/icons/app.ico",

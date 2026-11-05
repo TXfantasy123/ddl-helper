@@ -2175,7 +2175,7 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.13.0</span>
+        <span class="settings-version">DDL 小管家 v2.13.1</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -4443,6 +4443,15 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('modal-mask')) closeGuideModal();
 });
 const CHANGELOG_FULL = [
+  {
+    "version": "v2.13.1",
+    "title": "修复软件内更新下载 404",
+    "items": [
+      "**根因**：GitHub Release 会把中文文件名清洗成 ASCII（`DDL小管家-…` → `DDL.-.-…`），用中文名拼出的下载地址必然 404",
+      "**修复**：安装包文件名改为 ASCII（`DDLHelper-Setup-v{版本}.exe`），`latest.yml` 与之一致；Release 里额外附一份中文名副本，方便手动下载辨认",
+      "**结果**：检查更新 → 下载 → 重启并安装 全流程可用"
+    ]
+  },
   {
     "version": "v2.13.0",
     "title": "国内更新源 + 菜单不被裁切 + 关闭询问排版",
@@ -8936,7 +8945,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.13.0';
+const APP_VERSION = '2.13.1';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key

@@ -2,7 +2,7 @@
 
 > 校园事务 AI 备忘工具：把班群、教务处的通知文字、截图或 docx/pdf 文档**一键变成提醒**，内置高校高频事务模板，并用日历直观呈现"哪天有 DDL"。
 
-- **版本**：v2.13.0
+- **版本**：v2.13.1
 - **目标用户**：大学生（尤其大一新生，通知多、容易漏截止日）
 - **形态**：**Windows 桌面版为主**（exe 安装包），网页版作为「下载前的试用」同时保留
 
@@ -12,7 +12,7 @@
 
 | | 桌面版（推荐） | 网页版（试用） |
 |---|---|---|
-| 获取 | 下载 `DDL小管家-安装程序-v2.12.0.exe` 安装 | 打开网址即可 |
+| 获取 | 下载 `DDLHelper-Setup-v2.13.1.exe` 安装 | 打开网址即可 |
 | 系统通知 / 托盘 / 开机自启 | ✅ | ❌（受浏览器限制） |
 | 软件内更新 | ✅ 一键下载并重启安装 | ❌ |
 | 离线使用 | ✅ | 需要联网首次加载 |
@@ -26,7 +26,8 @@
 
 ### 安装
 
-1. 到 [Releases](https://github.com/TXfantasy123/ddl-helper/releases) 下载最新的 `DDL小管家-安装程序-vX.Y.Z.exe`
+1. 到 [Releases](https://github.com/TXfantasy123/ddl-helper/releases) 下载最新的 `DDLHelper-Setup-vX.Y.Z.exe`
+   （Release 里另有中文名副本 `DDL小管家-安装程序-vX.Y.Z.exe`，内容相同，**自动更新用的是 ASCII 名那份**，因为 GitHub 会把中文文件名清洗成 ASCII 导致下载 404）
 2. 双击 → **选择安装位置** → 安装
 3. 自动创建桌面图标 + 开始菜单项，装完自动启动
 
@@ -48,7 +49,7 @@ npm install --registry=https://registry.npmmirror.com
 npm run dist
 ```
 
-产物：`desktop\release\DDL小管家-安装程序-v{版本}.exe`
+产物：`desktop\release\DDLHelper-Setup-v{版本}.exe`
 
 > ⚠️ 构建产物不要放在 DSH 沙箱工作区里运行（那里文件被标为低完整性，双击安装会报 `Error writing temporary file`），复制到桌面或其他盘再用。
 
@@ -132,7 +133,7 @@ git tag vX.Y.Z; git push origin vX.Y.Z
 1. 打包后，把 `desktop/release/` 里的两样东西上传到你的静态存储
    （腾讯云 COS / 阿里云 OSS / Gitee Release / 自建 Nginx 都行）：
    ```
-   DDL小管家-安装程序-vX.Y.Z.exe
+   DDLHelper-Setup-vX.Y.Z.exe
    latest.yml
    ```
 2. 记下目录地址，例如 `https://cdn.example.com/ddl/`
