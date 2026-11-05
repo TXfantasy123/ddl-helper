@@ -16,6 +16,12 @@ const KEEP_ALIVE = process.argv.includes('--keep-alive');
 const EXIT_GRACE_MS = 90 * 1000;
 let pendingExitAt = 0;
 
+// 桌面版：主进程把解密后的 API Key 注入到这里，请求体里就不需要带明文
+let injectedApiKey = '';
+function setApiKey(k) {
+  injectedApiKey = String(k || '');
+}
+
 const TEXT_SYSTEM_PROMPT = `你是校园通知解析助手。用户会提供一条或多条校园通知，请把每一条通知分别解析，提取：标题(简短概括事项，如'创业项目入驻申报')、时间、地点、截止日期。只输出JSON数组，格式：[{"title":"","time":"","place":"","deadline":""}]，每条通知对应数组里的一个对象，没有的字段留空字符串。只有一条通知时也输出长度为1的数组。不要输出JSON以外的任何内容。`;
 // v1.5.3：截图识别改为两步法 —— 第一步逐字 OCR 转写，第二步交给前端文字解析链
 const OCR_SYSTEM_PROMPT = `你是校园通知图片转写助手。请逐字原样转写图片里出现的所有文字，要求：
@@ -82,10 +88,11 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-  // 2) POST /api/parse（文字解析，key 由前端传入）
+  // 2) POST /api/parse（文字解析；key 优先用请求里的，桌面版由主进程注入）
   if (req.method === 'POST' && req.url === '/api/parse') {
     readBody(req).then(body => {
-      const { text, baseUrl, model, apiKey } = body || {};
+      const { text, baseUrl, model } = body || {};
+      const apiKey = (body && body.apiKey) || injectedApiKey;
       if (!text) return json(res, 400, { error: '缺少 text' });
       if (!apiKey) return json(res, 400, { error: '缺少 apiKey' });
       callLLM({
@@ -104,7 +111,8 @@ const server = http.createServer((req, res) => {
   //    不带 mode  → 旧行为：直接 JSON 提取（prompt 已升级，支持多条，返回数组）
   if (req.method === 'POST' && req.url === '/api/parse-image') {
     readBody(req).then(body => {
-      const { image, baseUrl, visionModel, apiKey, mode } = body || {};
+      const { image, baseUrl, visionModel, mode } = body || {};
+      const apiKey = (body && body.apiKey) || injectedApiKey;
       if (!image) return json(res, 400, { error: '缺少 image' });
       if (!apiKey) return json(res, 400, { error: '缺少 apiKey' });
       const isOcr = mode === 'ocr';
@@ -126,10 +134,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 4) POST /parse（旧接口，兼容旧调用；key 由前端传入，不硬编码）
+  // 4) POST /parse（旧接口，兼容旧调用；key 由前端传入或主进程注入）
   if (req.method === 'POST' && req.url === '/parse') {
     readBody(req).then(body => {
-      const { text, apiKey } = body || {};
+      const text = body && body.text;
+      const apiKey = (body && body.apiKey) || injectedApiKey;
       if (!text) return json(res, 400, { error: '缺少 text 字段' });
       if (!apiKey) return json(res, 400, { error: '缺少 apiKey' });
       callLLM({
@@ -229,3 +238,5 @@ setInterval(() => {
     process.exit(0);
   }
 }, 5000).unref();
+
+module.exports = { setApiKey };

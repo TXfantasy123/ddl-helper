@@ -1,9 +1,9 @@
 // DDL 小管家 · Electron 主进程
 // 启动内嵌 HTTP 服务（随机端口），再用应用窗口打开；无需安装 Node，也不会弹浏览器。
-const { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage, session, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { startServer } = require('./server-core.js');
+const serverCore = require('./server-core.js');
 
 // 显卡驱动不稳定的机器（曾出现 nvlddmkm.sys 0x116 蓝屏）默认关掉 GPU 加速
 app.disableHardwareAcceleration();
@@ -187,6 +187,104 @@ ipcMain.handle('update:install', () => {
 });
 ipcMain.handle('update:get-version', () => app.getVersion());
 
+/* ---------- API Key 安全存储（DPAPI 加密，页面拿不到明文） ---------- */
+function encryptKey(plain) {
+  try {
+    if (!safeStorage.isEncryptionAvailable()) return '';
+    return safeStorage.encryptString(String(plain)).toString('base64');
+  } catch (e) {
+    return '';
+  }
+}
+function decryptKey() {
+  try {
+    const b64 = settings.apiKeyEnc;
+    if (!b64) return '';
+    if (!safeStorage.isEncryptionAvailable()) return '';
+    return safeStorage.decryptString(Buffer.from(b64, 'base64'));
+  } catch (e) {
+    return '';
+  }
+}
+function syncApiKeyToServer() {
+  const key = decryptKey();
+  try { serverCore.setApiKey(key); } catch (e) { /* 忽略 */ }
+  return key;
+}
+ipcMain.handle('key:save', (_e, plain) => {
+  const value = String(plain || '').trim();
+  if (!value) return { ok: false, message: '内容为空' };
+  const enc = encryptKey(value);
+  if (!enc) return { ok: false, message: '系统加密不可用，未保存' };
+  settings.apiKeyEnc = enc;
+  saveSettings();
+  syncApiKeyToServer();
+  return { ok: true, tail: '****' + value.slice(-4) };
+});
+ipcMain.handle('key:status', () => {
+  const key = decryptKey();
+  return { has: !!key, tail: key ? ('****' + key.slice(-4)) : '' };
+});
+ipcMain.handle('key:clear', () => {
+  delete settings.apiKeyEnc;
+  saveSettings();
+  syncApiKeyToServer();
+  return { ok: true };
+});
+
+/* ---------- 缓存清理（只清缓存，不动用户数据） ---------- */
+const CACHE_DIRS = [
+  'Cache', 'Code Cache', 'GPUCache', 'GPUPersistentCache', 'GrShaderCache',
+  'ShaderCache', 'DawnGraphiteCache', 'DawnWebGPUCache', 'Service Worker',
+  'Shared Dictionary', 'Dictionaries', 'blob_storage',
+];
+function dirSize(p) {
+  try {
+    let total = 0;
+    for (const name of fs.readdirSync(p)) {
+      const fp = path.join(p, name);
+      const st = fs.statSync(fp);
+      if (st.isDirectory()) total += dirSize(fp);
+      else total += st.size;
+    }
+    return total;
+  } catch (e) {
+    return 0;
+  }
+}
+ipcMain.handle('cache:size', () => {
+  try {
+    const base = app.getPath('userData');
+    let total = 0;
+    for (const d of CACHE_DIRS) {
+      const p = path.join(base, d);
+      if (fs.existsSync(p)) total += dirSize(p);
+    }
+    return { bytes: total };
+  } catch (e) {
+    return { bytes: 0, error: String((e && e.message) || e) };
+  }
+});
+ipcMain.handle('cache:clear', async () => {
+  try {
+    const sess = session.defaultSession;
+    // 只清缓存类存储：不动 localstorage / indexdb（事项、备份、API Key 都在那里）
+    try { await sess.clearCache(); } catch (e) { /* 忽略 */ }
+    try {
+      await sess.clearStorageData({ storages: ['appcache', 'cachestorage', 'serviceworkers', 'shadercache'] });
+    } catch (e) { /* 忽略 */ }
+    // 清完后顺手删掉残留的缓存目录
+    const base = app.getPath('userData');
+    for (const d of CACHE_DIRS) {
+      const p = path.join(base, d);
+      try { if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true }); } catch (e) { /* 占用中就算了 */ }
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: String((e && e.message) || e) };
+  }
+});
+
 /* 更新源：留空走 GitHub Releases；填地址则走 generic（国内镜像 / 自建静态目录） */
 function applyUpdateFeed(up) {
   if (!up) return;
@@ -228,7 +326,7 @@ ipcMain.handle('close:apply', (_e, action, remember) => {
 async function createWindow() {
   let url = null;
   try {
-    const port = await startServer(0);
+    const port = await serverCore.startServer(0);
     url = 'http://127.0.0.1:' + port + '/';
   } catch (e) {
     // 服务起不来就退回本地文件（离线解析仍可用，AI 不可用）
@@ -296,6 +394,7 @@ async function createWindow() {
 
 app.whenReady().then(() => {
   loadSettings();
+  syncApiKeyToServer(); // 把加密保存的 Key 注入内嵌服务，页面无需持有明文
   createWindow();
   // 安装版启动 10 秒后静默检查一次更新（不打扰使用）
   if (app.isPackaged) {

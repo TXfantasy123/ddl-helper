@@ -29,6 +29,15 @@ contextBridge.exposeInMainWorld('ddlDesktop', {
   installUpdate: () => ipcRenderer.invoke('update:install'),
   getUpdateFeed: () => ipcRenderer.invoke('update:feed-get'),
   setUpdateFeed: (url) => ipcRenderer.invoke('update:feed-set', url),
+
+  // 缓存（只清缓存，不动用户数据）
+  getCacheSize: () => ipcRenderer.invoke('cache:size'),
+  clearCache: () => ipcRenderer.invoke('cache:clear'),
+
+  // API Key：加密保存在系统凭据里，页面只能拿到尾号
+  saveApiKey: (key) => ipcRenderer.invoke('key:save', key),
+  getKeyStatus: () => ipcRenderer.invoke('key:status'),
+  clearApiKey: () => ipcRenderer.invoke('key:clear'),
   onUpdateStatus: (cb) => {
     const handler = (_e, payload) => { try { cb(payload); } catch (e) { /* 忽略 */ } };
     ipcRenderer.on('update:status', handler);

@@ -1,7 +1,7 @@
 {
   "name": "ddl-helper-desktop",
   "productName": "DDL小管家",
-  "version": "2.13.2",
+  "version": "2.14.0",
   "description": "DDL 小管家 · 桌面版（校园通知一键变提醒）",
   "main": "main.js",
   "author": "TXfantasy",

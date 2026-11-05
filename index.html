@@ -568,6 +568,15 @@
   .key-hint-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
   .clear-key-btn { padding: 4px 10px; font-size: 12px; flex-shrink: 0; }
   .key-masked { -webkit-text-security: disc; }
+  .key-input-wrap { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
+  .key-input-wrap input { width: 100%; padding-right: 34px; }
+  .key-eye-btn {
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; color: var(--muted); border-radius: 6px; cursor: pointer;
+  }
+  .key-eye-btn:hover { color: var(--fg); background: var(--surface-2); }
+  .key-eye-btn .ic { width: 16px; height: 16px; }
   .settings-providers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .form-row input[type="checkbox"] { flex: 0 0 auto; width: auto; margin-top: 8px; }
   .form-row .switch input[type="checkbox"] { width: 0; height: 0; margin: 0; }
@@ -1481,6 +1490,7 @@
     <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
     <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
     <symbol id="ic-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></symbol>
+    <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
     <symbol id="ic-loader" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></symbol>
     <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line></symbol>
     <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></symbol>
@@ -2060,7 +2070,11 @@
       <div class="settings-section-title">AI 配置</div>
       <div class="settings-providers" id="settingsProviders"></div>
       <div class="form-row"><label>API 地址</label><input id="baseUrlInput" placeholder="如 https://api.deepseek.com"></div>
-      <div class="form-row"><label>API Key</label><input id="apiKeyInput" type="text" class="key-masked" placeholder="填你自己的 API key" autocomplete="off"></div>
+      <div class="form-row"><label>API Key</label>
+        <div class="key-input-wrap">
+          <input id="apiKeyInput" type="text" class="key-masked" placeholder="填你自己的 API key" autocomplete="off">
+        </div>
+      </div>
       <div class="key-hint-row">
         <span class="settings-hint" id="apiKeyHint"></span>
         <button type="button" class="ghost clear-key-btn" id="clearKeyBtn">清除 key</button>
@@ -2171,11 +2185,17 @@
       <div class="input-actions">
         <button type="button" class="ghost danger-text" id="clearAllBtn">清空所有事项</button>
       </div>
+      <div class="settings-section-title">缓存</div>
+      <div class="input-actions">
+        <button type="button" class="ghost" id="clearCacheBtn">清理缓存</button>
+      </div>
+      <div class="settings-hint" id="cacheHint">正在统计…</div>
+      <div class="settings-hint">只清理网页缓存和临时文件，不会删除事项、提醒设置、API Key 和备份。</div>
       </div>
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.13.2</span>
+        <span class="settings-version">DDL 小管家 v2.14.0</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -2350,7 +2370,24 @@ function getSetting(key, fallback) {
     return fallback;
   }
 }
-function getAPIKey() { return getSetting(API_KEY_STORAGE, ''); }
+/* 桌面版：Key 由主进程用 Windows DPAPI 加密保存并注入内嵌服务，页面只保留「是否有 key / 尾号」 */
+let desktopKeyState = { has: false, tail: '' };
+function refreshDesktopKeyState() {
+  const bridge = getDesktopBridge();
+  if (!bridge || typeof bridge.getKeyStatus !== 'function') return Promise.resolve();
+  return Promise.resolve(bridge.getKeyStatus())
+    .then((s) => { desktopKeyState = s || { has: false, tail: '' }; })
+    .catch(() => { desktopKeyState = { has: false, tail: '' }; });
+}
+function hasApiKey() {
+  if (getDesktopBridge()) return !!desktopKeyState.has;
+  return !!getSetting(API_KEY_STORAGE, '');
+}
+function getAPIKey() {
+  // 桌面版永不把明文交给页面：请求体不带 key，由内嵌服务注入
+  if (getDesktopBridge()) return '';
+  return getSetting(API_KEY_STORAGE, '');
+}
 function getBaseUrl() { return getSetting(BASE_URL_STORAGE, DEFAULT_BASE_URL).replace(/\/+$/, ''); }
 function getModel() { return getSetting(MODEL_STORAGE, DEFAULT_MODEL); }
 function getVisionFlag() { return getSetting(VISION_FLAG_STORAGE, 'true') === 'true'; }
@@ -2366,7 +2403,7 @@ function getAiEnabled() {
     const stored = localStorage.getItem(AI_ENABLED_STORAGE);
     if (stored !== null) return stored === 'true';
   } catch (e) {}
-  return !!getAPIKey();
+  return hasApiKey();
 }
 function getSkipPreview() {
   try { return localStorage.getItem(SKIP_PREVIEW_STORAGE) === 'true'; } catch (e) { return false; }
@@ -4444,6 +4481,16 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
 });
 const CHANGELOG_FULL = [
   {
+    "version": "v2.14.0",
+    "title": "API Key 加密存储 + 清理缓存",
+    "items": [
+      "**API Key 不可提取**：桌面版输入后立即交给主进程，用 Windows DPAPI（`safeStorage`）加密存进 settings.json；页面从此拿不到明文（`getAPIKey()` 在桌面版恒为空串），请求也不带 key，由内嵌服务注入",
+      "**不回显、不失焦残留**：设置里只显示「已加密保存 ****abcd」；输入框失焦即清空；移除了显示/隐藏按钮",
+      "**清理缓存**：设置 → 数据 → 清理缓存（两步确认），只清网页缓存与临时文件，不动事项、提醒、API Key、备份",
+      "**缓存统计**：打开数据页显示当前缓存大小"
+    ]
+  },
+  {
     "version": "v2.13.2",
     "title": "检查更新改为「取版本号最大的 Release」",
     "items": [
@@ -5233,7 +5280,7 @@ function hideSkeletonLoader() {
 let lastParseUsedMode = 'offline';
 async function collectParseResults(text, mode) {
   let results = null;
-  const useAI = mode === 'ai' || (mode === undefined && getAiEnabled() && getAPIKey());
+  const useAI = mode === 'ai' || (mode === undefined && getAiEnabled() && hasApiKey());
   if (mode === 'offline') {
     results = mockParseAll(text);
     lastParseUsedMode = 'offline';
@@ -5242,7 +5289,7 @@ async function collectParseResults(text, mode) {
       results = mockParseAll(text);
       lastParseUsedMode = 'offline';
       toast('AI 解析未开启，已用本地基础解析');
-    } else if (!getAPIKey()) {
+    } else if (!hasApiKey()) {
       results = mockParseAll(text);
       lastParseUsedMode = 'offline';
       toast('未设置 API key，已用本地基础解析');
@@ -5259,7 +5306,7 @@ async function collectParseResults(text, mode) {
         toast('AI 解析失败：' + msg + '，已改用本地规则');
       }
     }
-  } else if (!getAPIKey()) {
+  } else if (!hasApiKey()) {
     results = mockParseAll(text);
     lastParseUsedMode = 'offline';
     toast('未设置 API key，已用本地基础解析');
@@ -5723,7 +5770,7 @@ async function extractDocText(file) {
 }
 
 document.getElementById('docBtn').addEventListener('click', () => {
-  if (!getAiEnabled() || !getAPIKey()) {
+  if (!getAiEnabled() || !hasApiKey()) {
     toast('AI 解析未开启，文档解析不可用');
     return;
   }
@@ -5732,7 +5779,7 @@ document.getElementById('docBtn').addEventListener('click', () => {
 async function handleDocFile(file, inputEl) {
   if (!file) return;
   if (isParsing) return;
-  if (!getAiEnabled() || !getAPIKey()) {
+  if (!getAiEnabled() || !hasApiKey()) {
     toast('AI 解析未开启，文档解析不可用');
     if (inputEl) inputEl.value = '';
     return;
@@ -8074,17 +8121,17 @@ document.getElementById('tplButtons').addEventListener('click', (e) => {
 });
 function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
-  if (btn) btn.classList.toggle('disabled', !getVisionFlag() || !getAiEnabled() || !getAPIKey());
+  if (btn) btn.classList.toggle('disabled', !getVisionFlag() || !getAiEnabled() || !hasApiKey());
   // 文档解析依赖 AI 解析（提取文字后走 AI），AI 关闭或无 key 时同样置灰
   const docBtn = document.getElementById('docBtn');
-  if (docBtn) docBtn.classList.toggle('disabled', !getAiEnabled() || !getAPIKey());
+  if (docBtn) docBtn.classList.toggle('disabled', !getAiEnabled() || !hasApiKey());
 }
 document.getElementById('uploadBtn').addEventListener('click', () => {
   if (!getVisionFlag()) {
     toast('当前模型不支持识图，可粘贴文字');
     return;
   }
-  if (!getAiEnabled() || !getAPIKey()) {
+  if (!getAiEnabled() || !hasApiKey()) {
     toast('AI 解析未开启，截图识别不可用');
     return;
   }
@@ -8114,7 +8161,7 @@ async function handleImageFiles(files, inputEl) {
   files = Array.from(files || []).filter(f => f && /^image\//.test(f.type || ''));
   if (!files.length) return;
   if (isParsing) return;
-  if (!getAiEnabled() || !getAPIKey()) {
+  if (!getAiEnabled() || !hasApiKey()) {
     toast('AI 解析未开启，截图识别不可用');
     if (inputEl) inputEl.value = '';
     return;
@@ -8442,6 +8489,12 @@ function initDesktopSettings() {
   initCloseActionSetting(bridge);
   initCloseAsk(bridge);
   initDesktopUpdater(bridge);
+  // 桌面版：从主进程取「是否已保存 key」，页面永不持有明文
+  refreshDesktopKeyState().then(() => {
+    updateApiKeyHint();
+    updateAiToggle();
+    updateUploadBtn();
+  });
 }
 initDesktopSettings();
 
@@ -8510,9 +8563,25 @@ document.getElementById('calWeekendDimToggle').addEventListener('change', (e) =>
 document.getElementById('calDayPanelToggle').addEventListener('change', (e) => saveCalPrefs({ dayPanel: e.target.checked }));
 updateCalendarSettingsUI();
 
+/* API Key 安全约定：桌面版加密保存在系统凭据，页面不留明文、不提供回显 */
+(function initApiKeySecure() {
+  const input = document.getElementById('apiKeyInput');
+  if (!input) return;
+  // 失焦即清空（避免明文停留在输入框里被截图/复制）
+  input.addEventListener('blur', () => {
+    if (getDesktopBridge() && input.value) input.value = '';
+  });
+})();
+
 function updateApiKeyHint() {
   const hint = document.getElementById('apiKeyHint');
   if (!hint) return;
+  if (getDesktopBridge()) {
+    hint.textContent = desktopKeyState.has
+      ? ('已加密保存 ' + (desktopKeyState.tail || '****') + '（系统凭据加密，页面不留明文）')
+      : '未设置 key，填写后点「保存」';
+    return;
+  }
   const key = getAPIKey();
   if (key) {
     hint.textContent = '已保存 key（尾号 ****' + key.slice(-4) + '），留空则保持不变';
@@ -8648,6 +8717,7 @@ function switchSettingsTab(name) {
     p.classList.toggle('hidden', p.dataset.tabPanel !== name);
   });
   if (name === 'about') initUpdateHint();
+  if (name === 'data') { resetCacheArm(); refreshCacheHint(); }
 }
 document.querySelectorAll('#settingsModal .settings-tab-btn').forEach((btn) => {
   btn.addEventListener('click', () => switchSettingsTab(btn.dataset.tab));
@@ -8872,20 +8942,37 @@ document.getElementById('settingsProviders').addEventListener('click', (e) => {
   document.getElementById('visionModelInput').value = p.visionModel;
   document.getElementById('visionFlagInput').checked = p.vision;
 });
-document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+document.getElementById('settingsSaveBtn').addEventListener('click', async () => {
   const baseUrl = document.getElementById('baseUrlInput').value.trim();
-  const key = document.getElementById('apiKeyInput').value.trim();
+  const keyInput = document.getElementById('apiKeyInput');
+  const key = keyInput ? keyInput.value.trim() : '';
   const model = document.getElementById('modelInput').value.trim();
   const visionModel = document.getElementById('visionModelInput').value.trim();
   const visionFlag = document.getElementById('visionFlagInput').checked;
+  const bridge = getDesktopBridge();
   try {
     if (baseUrl) localStorage.setItem(BASE_URL_STORAGE, baseUrl); else localStorage.removeItem(BASE_URL_STORAGE);
-    if (key) localStorage.setItem(API_KEY_STORAGE, key); // 留空保留原 key，不删除
+    // 桌面版：key 交给主进程用 DPAPI 加密保存，页面立即清空、永不回显
+    if (bridge && typeof bridge.saveApiKey === 'function') {
+      if (key) {
+        const r = await bridge.saveApiKey(key);
+        if (r && r.ok) {
+          if (keyInput) keyInput.value = '';
+          await refreshDesktopKeyState();
+        } else {
+          toast('保存失败：' + ((r && r.message) || '系统加密不可用'));
+          return;
+        }
+      }
+    } else if (key) {
+      localStorage.setItem(API_KEY_STORAGE, key); // 网页版：留空保留原 key，不删除
+    }
     if (model) localStorage.setItem(MODEL_STORAGE, model); else localStorage.removeItem(MODEL_STORAGE);
     if (visionModel) localStorage.setItem(VISION_MODEL_STORAGE, visionModel); else localStorage.removeItem(VISION_MODEL_STORAGE);
     localStorage.setItem(VISION_FLAG_STORAGE, visionFlag ? 'true' : 'false');
     setSkipPreview(!!document.getElementById('skipPreviewToggle').checked);
   } catch (e) { /* 存储不可用则忽略 */ }
+  if (bridge) updateApiKeyHint();
   updateUploadBtn();
   updateAiToggle();
   updateSkipPreviewUI();
@@ -8939,7 +9026,7 @@ function updateAiToggle() {
   const toggle = document.getElementById('aiToggle');
   const state = document.getElementById('aiToggleState');
   if (!toggle || !state) return;
-  const hasKey = !!getAPIKey();
+  const hasKey = hasApiKey();
   const enabled = hasKey && getAiEnabled();
   toggle.checked = enabled;
   state.textContent = enabled ? 'AI 解析' : '本地解析';
@@ -8947,7 +9034,7 @@ function updateAiToggle() {
   state.title = hasKey ? 'AI 解析开关' : '配置 API Key 可使用 AI 解析';
 }
 document.getElementById('aiToggle').addEventListener('change', (e) => {
-  if (e.target.checked && !getAPIKey()) {
+  if (e.target.checked && !hasApiKey()) {
     e.target.checked = false;
     updateAiToggle();
     toast('配置 API Key 可使用 AI 解析');
@@ -8960,11 +9047,19 @@ document.getElementById('aiToggle').addEventListener('change', (e) => {
   updateUploadBtn();
 });
 document.getElementById('aiToggleState').addEventListener('click', () => {
-  if (!getAPIKey()) toast('配置 API Key 可使用 AI 解析');
+  if (!hasApiKey()) toast('配置 API Key 可使用 AI 解析');
 });
 
-document.getElementById('clearKeyBtn').addEventListener('click', () => {
-  try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) { /* 忽略 */ }
+document.getElementById('clearKeyBtn').addEventListener('click', async () => {
+  const bridge = getDesktopBridge();
+  try {
+    if (bridge && typeof bridge.clearApiKey === 'function') {
+      await bridge.clearApiKey();
+      await refreshDesktopKeyState();
+    } else {
+      localStorage.removeItem(API_KEY_STORAGE);
+    }
+  } catch (e) { /* 忽略 */ }
   document.getElementById('apiKeyInput').value = '';
   updateApiKeyHint();
   updateAiToggle();
@@ -8973,7 +9068,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.13.2';
+const APP_VERSION = '2.14.0';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
@@ -9190,6 +9285,83 @@ function resetClearAll() {
   const btn = document.getElementById('clearAllBtn');
   if (btn) btn.textContent = '清空所有事项';
 }
+/* ---------- 清理缓存（只清缓存，不动事项/设置/Key/备份） ---------- */
+const CACHE_ARM_MS = 2500;
+let cacheArmed = false;
+let cacheTimer = null;
+function fmtBytes(n) {
+  const b = Number(n) || 0;
+  if (b >= 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+  return b + ' B';
+}
+function resetCacheArm() {
+  cacheArmed = false;
+  if (cacheTimer) { clearTimeout(cacheTimer); cacheTimer = null; }
+  const btn = document.getElementById('clearCacheBtn');
+  if (btn) btn.textContent = '清理缓存';
+}
+async function refreshCacheHint() {
+  const hint = document.getElementById('cacheHint');
+  if (!hint) return;
+  const bridge = getDesktopBridge();
+  try {
+    if (bridge && typeof bridge.getCacheSize === 'function') {
+      const r = await bridge.getCacheSize();
+      hint.textContent = '当前缓存：' + fmtBytes(r && r.bytes) + '（清理后不影响数据）';
+      return;
+    }
+    if (typeof caches !== 'undefined') {
+      let total = 0;
+      const keys = await caches.keys();
+      for (const k of keys) {
+        const c = await caches.open(k);
+        const reqs = await c.keys();
+        total += reqs.length * 1024; // 粗略估算
+      }
+      hint.textContent = '当前缓存：' + keys.length + ' 个缓存空间（约 ' + fmtBytes(total) + '）';
+      return;
+    }
+    hint.textContent = '当前环境不支持缓存统计';
+  } catch (e) {
+    hint.textContent = '缓存统计失败';
+  }
+}
+async function clearAppCache() {
+  const bridge = getDesktopBridge();
+  try {
+    if (bridge && typeof bridge.clearCache === 'function') {
+      const r = await bridge.clearCache();
+      if (r && r.ok === false) throw new Error(r.message || '清理失败');
+    } else if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch (e) {
+    toast('清理失败：' + (e && e.message ? e.message : e));
+    return false;
+  }
+  await refreshCacheHint();
+  return true;
+}
+document.getElementById('clearCacheBtn').addEventListener('click', async () => {
+  if (!cacheArmed) {
+    cacheArmed = true;
+    const btn = document.getElementById('clearCacheBtn');
+    if (btn) btn.textContent = '再点一次确认清理';
+    if (cacheTimer) clearTimeout(cacheTimer);
+    cacheTimer = setTimeout(resetCacheArm, CACHE_ARM_MS);
+    toast('再点一次确认清理缓存');
+    return;
+  }
+  resetCacheArm();
+  const btn = document.getElementById('clearCacheBtn');
+  if (btn) btn.disabled = true;
+  const ok = await clearAppCache();
+  if (btn) btn.disabled = false;
+  if (ok) toast('缓存已清理（事项与设置未受影响）');
+});
+
 document.getElementById('clearAllBtn').addEventListener('click', () => {
   if (!clearAllArmed) {
     clearAllArmed = true;

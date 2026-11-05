@@ -30,11 +30,13 @@ function startServer(port) {
     });
   });
 }
-module.exports = { startServer };
+module.exports = { startServer, setApiKey };
 `);
 
 // 5) 日志文案
 out = out.replace(/console\.log\('DDL 小管家已启动：'\);[\s\S]*?\}\);/g, '');
+// 6) 末尾的 CLI 导出不需要（避免重复定义）
+out = out.replace(/\nmodule\.exports = \{ setApiKey \};\s*$/, '\n');
 
 const outFile = path.join(root, 'desktop', 'server-core.js');
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
