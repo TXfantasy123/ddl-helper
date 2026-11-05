@@ -1373,6 +1373,11 @@
   .settings-tab-btn:hover { color: var(--fg); }
   .settings-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
   .settings-tab-panel { padding-top: 2px; }
+  /* 设置弹窗：头部 + 标签栏固定，仅内容区滚动 */
+  .settings-modal-box { display: flex; flex-direction: column; overflow: hidden; }
+  .settings-modal-box .modal-head { flex: 0 0 auto; }
+  .settings-modal-box .settings-tabs { flex: 0 0 auto; margin-bottom: 12px; }
+  .settings-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding-right: 4px; }
   .danger-text { color: var(--danger) !important; }
   .stats-switch { display: flex; gap: 4px; margin-bottom: 12px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
   .stats-range-btn { flex: 1; height: 30px; font-size: 12px; font-weight: 600; background: transparent; border: 0; color: var(--muted); border-radius: 6px; }
@@ -2013,7 +2018,7 @@
 
   <div id="settingsModal" class="modal hidden">
     <div class="modal-mask"></div>
-    <div class="modal-box">
+    <div class="modal-box settings-modal-box">
       <div class="modal-head">
         <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-settings"></use></svg>设置</h3>
         <button type="button" class="modal-close" id="settingsClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
@@ -2025,6 +2030,7 @@
         <button type="button" class="settings-tab-btn hidden" data-tab="desktop" id="settingsTabDesktop" role="tab">桌面</button>
         <button type="button" class="settings-tab-btn" data-tab="about" role="tab">关于</button>
       </div>
+      <div class="settings-body">
       <div class="settings-tab-panel" data-tab-panel="general">
       <div class="form-row theme-row">
         <label>主题</label>
@@ -2152,7 +2158,7 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.11.0</span>
+        <span class="settings-version">DDL 小管家 v2.11.1</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -2161,6 +2167,7 @@
       </div>
       <div class="settings-hint" id="updateHint">尚未检查更新</div>
       <div class="settings-hint">更新来自 GitHub Releases；若网络不通会提示检查失败。</div>
+      </div>
       </div>
     </div>
   </div>
@@ -4397,6 +4404,14 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('modal-mask')) closeGuideModal();
 });
 const CHANGELOG_FULL = [
+  {
+    "version": "v2.11.1",
+    "title": "设置弹窗：头部与标签栏固定",
+    "items": [
+      "**布局修复**：设置弹窗改为 flex 纵向布局（`.settings-modal-box`），标题栏与五个分类标签固定不动，只有 `.settings-body` 内容区滚动",
+      "**原因**：原来整个 `.modal-box` 一起滚动，滚到下面时标签栏会被推到视野外，看不到也点不到"
+    ]
+  },
   {
     "version": "v2.11.0",
     "title": "关闭窗口：可选后台托盘运行",
@@ -8729,7 +8744,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.11.0';
+const APP_VERSION = '2.11.1';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
