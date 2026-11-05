@@ -1,17 +1,23 @@
 ' ============================================
 '  DDL XiaoGuanJia - hidden launcher
-'  Double-click: start server.js in background (no console window)
-'  and open the browser. If already running, just open the browser.
-'  To stop: use "stop" script.
+'  1) start server.js in background (no console window)
+'  2) open the app in an Edge app window (no address bar, own taskbar icon)
+'  If already running, just open the app window.
+'  To stop: use the "stop" script.
 ' ============================================
 Option Explicit
-Dim fso, sh, dir, ret, running
+Dim fso, sh, dir, ret, running, edge, appUrl
 
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set sh = CreateObject("WScript.Shell")
 
 dir = fso.GetParentFolderName(WScript.ScriptFullName)
 sh.CurrentDirectory = dir
+appUrl = "http://localhost:3000/"
+
+' Edge app-window path (x86 / x64 install)
+edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+If Not fso.FileExists(edge) Then edge = "C:\Program Files\Microsoft\Edge\Application\msedge.exe"
 
 ' 1) Node.js installed?
 ret = sh.Run("cmd /c where node >nul 2>nul", 0, True)
@@ -25,15 +31,15 @@ running = False
 ret = sh.Run("cmd /c netstat -ano | findstr "":3000"" | findstr ""LISTENING"" >nul 2>nul", 0, True)
 If ret = 0 Then running = True
 
-If running Then
-    ' Already running: only open the browser, do not start a second instance
-    sh.Run "http://localhost:3000/", 1, False
-    WScript.Quit
+' 3) Start hidden if needed (0 = hidden window, False = do not wait)
+If Not running Then
+    sh.Run "node server.js", 0, False
+    WScript.Sleep 1800
 End If
 
-' 3) Start hidden (0 = hidden window, False = do not wait)
-sh.Run "node server.js", 0, False
-
-' 4) Wait for the server, then open the browser
-WScript.Sleep 1800
-sh.Run "http://localhost:3000/", 1, False
+' 4) Open as an app window: no tabs, no address bar, own taskbar icon
+If fso.FileExists(edge) Then
+    sh.Run """" & edge & """ --app=" & appUrl, 1, False
+Else
+    sh.Run appUrl, 1, False
+End If

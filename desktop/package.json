@@ -1,0 +1,70 @@
+{
+  "name": "ddl-helper-desktop",
+  "productName": "DDL小管家",
+  "version": "2.11.0",
+  "description": "DDL 小管家 · 桌面版（校园通知一键变提醒）",
+  "main": "main.js",
+  "author": "TXfantasy",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prep": "node ../make-desktop-app.js",
+    "start": "npm run prep && electron .",
+    "dist": "npm run prep && electron-builder --win nsis",
+    "dist:all": "npm run prep && electron-builder --win nsis portable",
+    "dist:installer": "npm run prep && electron-builder --win nsis",
+    "dist:portable": "npm run prep && electron-builder --win portable",
+    "dist:dir": "npm run prep && electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "^45.2.2",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.txfantasy.ddl-helper",
+    "productName": "DDL小管家",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "server-core.js",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "app/icons/app.ico",
+      "executableName": "DDL小管家"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "menuCategory": false,
+      "shortcutName": "DDL小管家",
+      "uninstallDisplayName": "DDL小管家",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "DDL小管家-安装程序-v${version}.${ext}",
+      "installerIcon": "app/icons/app.ico",
+      "uninstallerIcon": "app/icons/app.ico",
+      "installerHeaderIcon": "app/icons/app.ico",
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "language": "2052"
+    },
+    "portable": {
+      "artifactName": "DDL小管家-便携版.${ext}"
+    },
+    "asar": true,
+    "npmRebuild": false,
+    "compression": "normal"
+  }
+}

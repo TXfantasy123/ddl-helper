@@ -1,12 +1,14 @@
 // Service Worker：缓存静态资源，实现离线打开
 // 版本号升级时自动失效旧缓存（发版务必更新）
-const CACHE_NAME = 'ddl-helper-v2.5.1';
+const CACHE_NAME = 'ddl-helper-v2.11.0';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/icon-maskable-192.png',
+  '/icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (e) => {

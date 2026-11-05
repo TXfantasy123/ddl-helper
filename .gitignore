@@ -1,0 +1,13 @@
+# 构建产物
+dist/
+desktop/app/
+desktop/node_modules/
+desktop/release/
+desktop/package-lock.json
+
+# 依赖与缓存
+node_modules/
+.npm-cache/
+
+# 本地临时文件
+*.log

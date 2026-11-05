@@ -3,8 +3,7 @@
 > 一个面向所有大学生（以江汉大学为试点）的校园事务 AI 备忘工具：把班群、教务处的通知文字、截图或 docx/pdf 文档**一键变成提醒**，内置高校高频事务模板，并用日历直观呈现"哪天有 DDL"。
 
 - **赛道**：OPC / 个人创新 · 个人工作流程
-- **版本**：v2.5.1（全新 UI + 明暗主题；月/议程双视图；关闭页面后服务自动退出，不再常驻后台）
-- **决赛 PPT**：[DDL小管家-v1.11.pptx](DDL小管家-v1.11.pptx)（14 页，本目录）
+- **版本**：v2.11.0（关闭窗口可选后台托盘运行；设置分类标签；版本检查升级；离线单文件版；PWA 可安装）
 - **目标用户**：大学生（尤其大一新生，通知多、容易漏截止日）
 
 ---
@@ -56,12 +55,90 @@
 4. 进入页面后，点 **设置** 填自己的 API Key 即可使用（不填也能用本地基础解析，但截图识别需要 Key）。
 5. 主题可在 **设置 → 主题** 或侧边栏底部切换（浅色 / 深色 / 跟随系统）。
 
-### 方式二：部署到 Vercel（可选）
+### 方式二：安装为独立应用（PWA）
+
+页面本身就是一个可安装的 PWA：
+
+- **Edge / Chrome**：打开页面后，点侧边栏底部的「**安装应用**」，或点地址栏右侧的「安装」图标 → 会装成一个**独立窗口应用**（无地址栏、有开始菜单/桌面图标、可离线打开）
+- **iOS Safari**：分享 → 「添加到主屏幕」
+- **Android Chrome**：菜单 → 「安装应用 / 添加到主屏幕」
+
+> 已安装状态下不会再显示「安装应用」按钮。
+
+### 方式三：纯离线单文件版（发给谁都能用，零依赖）
+
+生成一个 **2.8 MB 的 HTML 文件**，里面内联了 docx/pdf 解析依赖：
 
 ```bash
-# 项目已含 Vercel 所需结构，直接导入 GitHub 仓库即可
-# api/parse.js 与 api/parse-image.js 为 serverless 函数
+node build-offline.js
+# → dist/DDL小管家-离线版.html
 ```
+
+把它发给同学，**双击就能用**（不需要 Node、不需要服务器、不需要联网），用 Edge 打开还能「安装为应用」。
+离线版内置本地规则解析；AI 解析需要部署后端（见方式四）。
+
+### 方式四：部署到云端（推荐长期使用）
+
+部署后**不再需要本地 Node.js 和服务进程**，任何设备打开网址即可用。
+
+1. 把仓库推到 GitHub（本项目已在 `github.com/TXfantasy123/ddl-helper`）
+2. 打开 [vercel.com/new](https://vercel.com/new) → 导入该仓库 → 直接 Deploy（无需配置）
+3. 得到形如 `https://ddl-helper-xxx.vercel.app` 的地址
+4. **生成本地快捷方式**：双击 `创建云端快捷方式.vbs` → 粘贴上面的地址 → 会在桌面生成「DDL小管家(云端)」，双击即用**独立窗口**打开云端版（无需本地服务）
+
+> ⚠️ `*.vercel.app` 在国内可能被 DNS 污染导致打不开。面向国内用户建议用国内云（如腾讯云 CloudBase 静态托管 + 云函数，默认域名免备案），或直接用「离线单文件版 / 桌面版」。
+> `api/parse.js`、`api/parse-image.js` 是 serverless 代理，API Key 仍由前端传入、服务端不存储。
+> `vercel.json` 已配置 `sw.js` / `manifest.json` 的缓存策略。
+
+### 方式五：桌面版（Electron，出 exe）
+
+`desktop/` 目录是一个完整的 Electron 工程：内置 HTTP 服务（随机端口）+ 应用窗口，**不需要用户装 Node**，AI 代理也跑在应用内。
+
+#### ⭐ 方式 A：GitHub Actions 自动构建（不用本地装环境，直接下载 exe）
+
+仓库里已配置 `.github/workflows/build-desktop.yml`，由 GitHub 的 Windows 机器帮你编译：
+
+1. 推送到 GitHub
+2. 打开 **Actions** → 左侧选 **Build Windows Installer** → 右侧 **Run workflow** → 选 `main` → 运行
+3. 等 3–5 分钟，进入完成的运行记录，页面底部 **Artifacts** → 下载 `DDL小管家-installer`
+4. 解压得到 **`DDL小管家-安装程序-v2.11.0.exe`** ← 这就是安装程序，直接双击安装
+
+> 更省事的做法：打一个 tag 推送（`git tag v2.9.0 && git push origin v2.9.0`），会自动创建 **Release** 并把 exe 挂上去，得到一个可以发给别人的下载链接。
+
+#### 方式 B：本机打包
+
+双击 `desktop\一键打包.bat`，跑完在 `desktop\release\` 得到 **`DDL小管家-安装程序-v2.11.0.exe`**。
+
+手动方式（注意 cmd 里要用 `cd /d`，否则不会切换盘符）：
+
+```cmd
+cd /d E:\1024\ddl-helper\desktop
+set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+npm install --registry=https://registry.npmmirror.com   :: 首次约 200MB
+npm run dist                                            :: → release\DDL小管家-安装程序-v2.11.0.exe
+```
+
+安装后：程序名 **DDL小管家**、桌面快捷方式「DDL小管家」、开始菜单「DDL小管家」、控制面板可卸载；安装向导里**可自选安装位置**；设置里可开**开机自启动**。
+
+- 默认 `app.disableHardwareAcceleration()`，避免显卡驱动不稳的机器蓝屏（TDR）
+- 数据存在应用自己的存储里（`%APPDATA%\DDL小管家`），与浏览器数据互相独立，迁移用「设置 → 导出/导入」
+- 更详细的说明见 [`desktop/README.md`](desktop/README.md)
+
+### 方式六：桌面安装包（Tauri，可选，需 Rust）
+
+项目结构也可用 [Tauri](https://tauri.app) 打包成 ~10MB 的 exe（需要先装 Rust 工具链）：
+
+```bash
+# 1) 安装 Rust：https://rustup.rs  （一次性，约 1–2 GB）
+# 2) 安装 Tauri CLI
+cargo install tauri-cli --locked
+# 3) 在项目目录初始化并打包
+cargo tauri init --app-name "DDL小管家" --window-title "DDL 小管家" \
+  --dist-dir . --dev-url http://localhost:3000
+cargo tauri build
+```
+
+> 若显卡驱动不稳（曾出现 `nvlddmkm.sys` 蓝屏），打包时给 WebView2 加 `--disable-gpu` 更稳。
 
 ## 四、使用步骤
 

@@ -208,9 +208,28 @@
   }
   textarea:focus { border-color: var(--primary); }
   .input-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .ai-switch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .ai-switch-name { font-size: 14px; font-weight: 600; color: var(--text); }
-  .ai-switch-state { font-size: 12px; font-weight: 700; color: var(--muted); width: 26px; }
+  .primary-actions { position: relative; }
+  .more-actions-panel {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+    display: flex; flex-direction: column; gap: 4px; min-width: 150px;
+    padding: 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-pop);
+  }
+  .more-actions-panel button { justify-content: flex-start; text-align: left; height: 32px; font-size: 12px; }
+  .ai-mini { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-top: 2px; }
+  .ai-mini-switch { width: 36px; height: 20px; }
+  .ai-mini-switch .slider::before { width: 14px; height: 14px; top: 3px; left: 3px; }
+  .ai-mini-switch input:checked + .slider::before { left: calc(100% - 14px - 3px); }
+  .ai-mode-label { font-size: 12px; color: var(--primary); cursor: pointer; white-space: nowrap; }
+  .ai-mode-label.is-local { color: var(--muted); }
+  .tpl-toggle-row { margin-top: 12px; }
+  .tpl-toggle {
+    height: 30px; padding: 0 10px; font-size: 12px; color: var(--muted);
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .tpl-toggle:hover { background: var(--surface-2); color: var(--fg); }
+  .tpl-fold { margin-top: 8px; }
+  .tpl-fold .tpl-row { margin-top: 0; }
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: background .2s; }
@@ -218,6 +237,9 @@
   .slider::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: left .2s; }
   .switch input:checked + .slider { background: var(--primary); }
   .switch input:checked + .slider::before { left: calc(100% - 18px - 3px); transform: none; }
+  .ai-mini .switch { width: 36px; height: 20px; }
+  .ai-mini .switch .slider::before { width: 14px; height: 14px; top: 3px; left: 3px; }
+  .ai-mini .switch input:checked + .slider::before { left: calc(100% - 14px - 3px); }
   button {
     border: none;
     border-radius: 10px;
@@ -1346,6 +1368,11 @@
   .backup-item .backup-count { color: var(--muted); margin-left: 6px; }
   .backup-item button { height: 28px; padding: 0 8px; font-size: 11px; }
   .settings-section-title { margin: 14px 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .settings-tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--border); }
+  .settings-tab-btn { flex: 1; padding: 9px 4px; font-size: 13px; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; }
+  .settings-tab-btn:hover { color: var(--fg); }
+  .settings-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .settings-tab-panel { padding-top: 2px; }
   .danger-text { color: var(--danger) !important; }
   .stats-switch { display: flex; gap: 4px; margin-bottom: 12px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
   .stats-range-btn { flex: 1; height: 30px; font-size: 12px; font-weight: 600; background: transparent; border: 0; color: var(--muted); border-radius: 6px; }
@@ -1459,6 +1486,9 @@
       <button type="button" class="side-nav-item" id="statsBtn" title="统计"><svg class="ic" aria-hidden="true"><use href="#ic-clipboard"></use></svg><span>统计</span></button>
     </nav>
     <div class="sidebar-footer">
+      <button type="button" class="side-nav-item hidden" id="installAppBtn" title="把 DDL 小管家安装为独立应用">
+        <svg class="ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>安装应用</span>
+      </button>
       <button type="button" class="side-nav-item" id="themeToggleBtn" title="切换主题">
         <span id="themeToggleIcon"><svg class="ic" aria-hidden="true"><use href="#ic-monitor"></use></svg></span>
         <span id="themeToggleLabel">跟随系统</span>
@@ -1517,35 +1547,41 @@
       <div class="panel-head">
         <div>
           <h2>解析通知</h2>
-          <p>粘贴班群 / 教务通知，或上传截图、文档，一键生成提醒</p>
+          <p>粘贴通知，或上传截图，一键生成提醒</p>
+        </div>
+        <div class="ai-mini" title="AI 解析开关">
+          <span class="ai-mode-label is-local" id="aiToggleState">本地解析</span>
+          <label class="switch ai-mini-switch">
+            <input type="checkbox" id="aiToggle">
+            <span class="slider"></span>
+          </label>
         </div>
       </div>
-      <div class="ai-switch-row">
-        <span class="ai-switch-name"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bot"></use></svg>AI 解析</span>
-        <label class="switch">
-          <input type="checkbox" id="aiToggle">
-          <span class="slider"></span>
-        </label>
-        <span class="ai-switch-state" id="aiToggleState">ON</span>
-      </div>
       <textarea id="inputText"></textarea>
-      <div class="input-actions">
+      <div class="input-actions primary-actions">
         <button type="button" class="primary" id="parseBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-sparkles"></use></svg>解析成提醒</button>
-        <button type="button" class="ghost" id="exampleBtn">填入示例</button>
-        <button type="button" class="ghost" id="toggleManualBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-plus"></use></svg>手动添加</button>
         <button type="button" class="ghost" id="uploadBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-camera"></use></svg>上传截图</button>
-        <button type="button" class="ghost" id="docBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-file-text"></use></svg>上传文档</button>
+        <button type="button" class="ghost" id="moreActionsBtn" aria-expanded="false">更多 ▾</button>
+        <div id="moreActionsPanel" class="more-actions-panel hidden">
+          <button type="button" class="ghost" id="exampleBtn">填入示例</button>
+          <button type="button" class="ghost" id="toggleManualBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-plus"></use></svg>手动添加</button>
+          <button type="button" class="ghost" id="docBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-file-text"></use></svg>上传文档</button>
+        </div>
         <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
         <input type="file" id="docInput" accept=".docx,.pdf" class="hidden">
       </div>
 
-      <div class="tpl-row">
-        <span class="tpl-label">模板</span>
-        <div class="tpl-buttons" id="tplButtons"></div>
-        <button type="button" class="tpl-edit-btn" id="tplEditBtn">编辑</button>
+      <div class="tpl-toggle-row">
+        <button type="button" class="tpl-toggle" id="tplToggle">模板 · 8 个常用事务 ▾</button>
       </div>
-      <div class="tpl-foot hidden" id="tplFoot">
-        <button type="button" class="tpl-reset" id="tplResetBtn">恢复默认模板</button>
+      <div class="tpl-fold hidden" id="tplFold">
+        <div class="tpl-row">
+          <div class="tpl-buttons" id="tplButtons"></div>
+          <button type="button" class="tpl-edit-btn" id="tplEditBtn">编辑</button>
+        </div>
+        <div class="tpl-foot hidden" id="tplFoot">
+          <button type="button" class="tpl-reset" id="tplResetBtn">恢复默认模板</button>
+        </div>
       </div>
 
       <div class="manual-form hidden" id="manualForm">
@@ -1919,12 +1955,13 @@
         <button type="button" class="modal-close" id="guideClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <ol class="guide-steps">
-        <li><b>粘贴通知</b><span>把班群 / 教务通知粘贴到输入框，或上传截图 / 文档。</span></li>
-        <li><b>确认解析</b><span>检查并修改解析结果，确认后加入事项列表。</span></li>
-        <li><b>设置提醒</b><span>编辑事项并打开提醒，到点会弹窗或发送通知。</span></li>
+        <li><b>粘贴通知</b><span>把班群 / 教务处的通知粘贴进来。</span></li>
+        <li><b>解析确认</b><span>点「解析成提醒」→ 确认字段。</span></li>
+        <li><b>自动提醒</b><span>到期前会自动提醒（可在编辑里设置提前量）。</span></li>
       </ol>
       <div class="input-actions">
         <button type="button" class="primary" id="guideOkBtn">知道了</button>
+        <button type="button" class="ghost" id="guideExampleBtn">先填入示例试试</button>
       </div>
     </div>
   </div>
@@ -1981,6 +2018,14 @@
         <h3><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-settings"></use></svg>设置</h3>
         <button type="button" class="modal-close" id="settingsClose" title="关闭"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
+      <div class="settings-tabs" role="tablist">
+        <button type="button" class="settings-tab-btn active" data-tab="general" role="tab">常规</button>
+        <button type="button" class="settings-tab-btn" data-tab="calendar" role="tab">日历</button>
+        <button type="button" class="settings-tab-btn" data-tab="data" role="tab">数据</button>
+        <button type="button" class="settings-tab-btn hidden" data-tab="desktop" id="settingsTabDesktop" role="tab">桌面</button>
+        <button type="button" class="settings-tab-btn" data-tab="about" role="tab">关于</button>
+      </div>
+      <div class="settings-tab-panel" data-tab-panel="general">
       <div class="form-row theme-row">
         <label>主题</label>
         <div class="theme-segment" id="themeSegment" role="group" aria-label="主题">
@@ -1989,6 +2034,7 @@
           <button type="button" class="theme-seg-btn on" id="themeSystemBtn" data-theme-choice="system" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#ic-monitor"></use></svg>跟随系统</button>
         </div>
       </div>
+      <div class="settings-section-title">AI 配置</div>
       <div class="settings-providers" id="settingsProviders"></div>
       <div class="form-row"><label>API 地址</label><input id="baseUrlInput" placeholder="如 https://api.deepseek.com"></div>
       <div class="form-row"><label>API Key</label><input id="apiKeyInput" type="text" class="key-masked" placeholder="填你自己的 API key" autocomplete="off"></div>
@@ -2002,8 +2048,9 @@
       <div class="form-row"><label>模型</label><input id="modelInput" placeholder="如 deepseek-flash"></div>
       <div class="form-row"><label>识图模型</label><input id="visionModelInput" placeholder="留空则同模型"></div>
       <div class="form-row"><label>支持识图</label><input type="checkbox" id="visionFlagInput"></div>
+      <div class="settings-section-title">提醒通知</div>
       <div class="form-row">
-        <label>浏览器通知</label>
+        <label>通知</label>
         <div class="remind-switch-wrap">
           <label class="switch">
             <input type="checkbox" id="notifyToggle">
@@ -2016,7 +2063,25 @@
       <div class="input-actions notify-test-row">
         <button type="button" class="ghost" id="testNotifyBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-bell"></use></svg>发送测试通知</button>
       </div>
-      <div class="settings-section-title">日历</div>
+      <div class="settings-section-title">解析</div>
+      <div class="form-row">
+        <label>解析后直接添加</label>
+        <div class="remind-switch-wrap">
+          <label class="switch">
+            <input type="checkbox" id="skipPreviewToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="remind-state" id="skipPreviewState">OFF</span>
+        </div>
+      </div>
+      <div class="settings-hint">开启后跳过确认预览；重复项会自动跳过，过期项照常添加。</div>
+      <div class="settings-hint">无 key 走本地基础解析；AI 解析关或模型不支持识图时截图按钮置灰</div>
+      <div class="input-actions">
+        <button type="button" class="primary" id="settingsSaveBtn">保存</button>
+      </div>
+      </div>
+      <div class="settings-tab-panel hidden" data-tab-panel="calendar">
+      <div class="settings-section-title">显示</div>
       <div class="form-row">
         <label>显示样式</label>
         <div class="theme-segment" id="calStyleSegment" role="group" aria-label="日历显示样式">
@@ -2043,10 +2108,31 @@
       <div class="form-row"><label>周末淡化</label><input type="checkbox" id="calWeekendDimToggle" checked></div>
       <div class="form-row"><label>右侧当天面板</label><input type="checkbox" id="calDayPanelToggle" checked></div>
       <div class="settings-hint">宽屏 ≥1200px 时显示右侧当天面板；所有日历设置即时生效。</div>
-      <div class="settings-hint">无 key 走本地基础解析；AI 解析关或模型不支持识图时截图按钮置灰</div>
-      <div class="input-actions">
-        <button type="button" class="primary" id="settingsSaveBtn">保存</button>
       </div>
+      <div class="settings-tab-panel hidden" data-tab-panel="desktop" id="desktopSettingsSection">
+        <div class="settings-section-title">桌面版</div>
+        <div class="form-row">
+          <label>开机自启动</label>
+          <div class="remind-switch-wrap">
+            <label class="switch">
+              <input type="checkbox" id="autoStartToggle">
+              <span class="slider"></span>
+            </label>
+            <span class="remind-state" id="autoStartState">OFF</span>
+          </div>
+        </div>
+        <div class="settings-hint">开机后以最小化方式自动运行，到期提醒照常弹窗；仅桌面版可用。</div>
+        <div class="form-row">
+          <label>关闭窗口时</label>
+          <select id="closeActionSelect">
+            <option value="tray">最小化到托盘（继续提醒）</option>
+            <option value="quit">直接退出</option>
+          </select>
+        </div>
+        <div class="settings-hint">最小化到托盘时会留在后台继续提醒；彻底关闭请右键托盘图标 → 退出。</div>
+      </div>
+      <div class="settings-tab-panel hidden" data-tab-panel="data">
+      <div class="settings-section-title">数据</div>
       <div class="input-actions">
         <button type="button" class="ghost" id="exportBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-download"></use></svg>导出数据</button>
         <button type="button" class="ghost" id="importBtn"><svg class="ic btn-ic" aria-hidden="true"><use href="#ic-upload"></use></svg>导入数据</button>
@@ -2062,9 +2148,47 @@
       <div class="input-actions">
         <button type="button" class="ghost danger-text" id="clearAllBtn">清空所有事项</button>
       </div>
+      </div>
+      <div class="settings-tab-panel hidden" data-tab-panel="about">
+      <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.5.1</span>
+        <span class="settings-version">DDL 小管家 v2.11.0</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
+      </div>
+      <div class="input-actions">
+        <button type="button" class="ghost" id="checkUpdateBtn">检查更新</button>
+        <button type="button" class="ghost hidden" id="downloadUpdateBtn">下载新版本</button>
+      </div>
+      <div class="settings-hint" id="updateHint">尚未检查更新</div>
+      <div class="settings-hint">更新来自 GitHub Releases；若网络不通会提示检查失败。</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="closeAskModal" class="modal hidden">
+    <div class="modal-mask"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>关闭 DDL 小管家</h3>
+        <button type="button" class="modal-close" id="closeAskCancelBtn" title="取消"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
+      </div>
+      <div class="settings-hint">它是提醒工具：关掉窗口后就不再提醒了。</div>
+      <div class="form-row">
+        <label>最小化到托盘（继续提醒）</label>
+        <input type="radio" name="closeAskChoice" id="closeAskTray" value="tray" checked>
+      </div>
+      <div class="form-row">
+        <label>直接退出（不再提醒）</label>
+        <input type="radio" name="closeAskChoice" id="closeAskQuit" value="quit">
+      </div>
+      <div class="form-row">
+        <label>记住我的选择</label>
+        <input type="checkbox" id="closeAskRemember" checked>
+      </div>
+      <div class="settings-hint">之后可在「设置 → 桌面 → 关闭窗口时」修改。</div>
+      <div class="input-actions">
+        <button type="button" class="ghost" id="closeAskCancelBtn2">取消</button>
+        <button type="button" class="primary" id="closeAskOkBtn">确定</button>
       </div>
     </div>
   </div>
@@ -2190,6 +2314,9 @@ function getVisionFlag() { return getSetting(VISION_FLAG_STORAGE, 'true') === 't
 function getVisionModel() { return getSetting(VISION_MODEL_STORAGE, '') || getModel(); }
 const AI_ENABLED_STORAGE = 'ddl_ai_enabled';
 const NOTIFY_ENABLED_STORAGE = 'ddl_notify_enabled';
+const SKIP_PREVIEW_STORAGE = 'ddl_skip_preview';
+const TPL_OPEN_STORAGE = 'ddl_tpl_open';
+const ONBOARDED_STORAGE = 'ddl_onboarded';
 // AI 解析开关：优先用户手动设置，其次按是否有 key 智能默认（有 key=开，无 key=关）
 function getAiEnabled() {
   try {
@@ -2197,6 +2324,12 @@ function getAiEnabled() {
     if (stored !== null) return stored === 'true';
   } catch (e) {}
   return !!getAPIKey();
+}
+function getSkipPreview() {
+  try { return localStorage.getItem(SKIP_PREVIEW_STORAGE) === 'true'; } catch (e) { return false; }
+}
+function setSkipPreview(on) {
+  try { localStorage.setItem(SKIP_PREVIEW_STORAGE, on ? 'true' : 'false'); } catch (e) {}
 }
 function getNotifyEnabled() {
   try { return localStorage.getItem(NOTIFY_ENABLED_STORAGE) === 'true'; } catch (e) { return false; }
@@ -4248,8 +4381,88 @@ function openGuideModal() {
 }
 function closeGuideModal() {
   document.getElementById('guideModal').classList.add('hidden');
+  try { localStorage.setItem(ONBOARDED_STORAGE, '1'); } catch (e) {}
 }
+function maybeShowOnboarding() {
+  try {
+    if (localStorage.getItem(ONBOARDED_STORAGE) === '1') return;
+  } catch (e) { return; }
+  openGuideModal();
+}
+document.getElementById('guideExampleBtn').addEventListener('click', () => {
+  closeGuideModal();
+  document.getElementById('exampleBtn').click();
+});
+document.getElementById('guideModal').addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-mask')) closeGuideModal();
+});
 const CHANGELOG_FULL = [
+  {
+    "version": "v2.11.0",
+    "title": "关闭窗口：可选后台托盘运行",
+    "items": [
+      "**托盘**：桌面版关闭窗口后可最小化到系统托盘（右键菜单：打开主界面 / 开机自启动 / 退出），首次隐藏时弹托盘气泡提示",
+      "**首次询问**：还没选过时，关闭窗口弹出「最小化到托盘（继续提醒）/ 直接退出（不再提醒）」+「记住我的选择」，取消则保持窗口",
+      "**设置可改**：设置 → 桌面 →「关闭窗口时」下拉（最小化到托盘 / 直接退出），改完立即生效",
+      "**兼容**：浏览器版不受影响（无托盘能力时不显示这些项）"
+    ]
+  },
+  {
+    "version": "v2.10.0",
+    "title": "设置分类标签 + 版本检查升级",
+    "items": [
+      "**设置分类**：设置面板拆成「常规 / 日历 / 数据 / 桌面 / 关于」5 个标签页，桌面版才显示「桌面」页",
+      "**常规**：主题 + AI 配置 + 通知开关 + 解析选项（保存按钮随该页）",
+      "**关于**：版本号、查看更新日志、**检查更新**（读取 GitHub Releases，比较版本号，有新版显示「下载新版本」按钮）",
+      "**版本比较**：`compareVerText()` 按数字逐段比较（v2.10.0 > v2.9.0），检查时间记录在 `ddl_update_checked_at`",
+      "**通知改名**：设置里「浏览器通知」统一改为「通知」"
+    ]
+  },
+  {
+    "version": "v2.9.0",
+    "title": "桌面版：开机自启动 + 安装向导可选位置",
+    "items": [
+      "**安装程序**：改为向导式安装，**可选择安装位置**（`oneClick: false` + `allowToChangeInstallationDirectory: true`），默认装到当前用户目录、免管理员",
+      "**开机自启动**：设置面板新增「桌面版」分组与「开机自启动」开关，通过 `preload.js` 暴露的 `window.ddlDesktop` 调用 Electron 登录项（`app.setLoginItemSettings`）",
+      "**静默开机**：自启动带 `--hidden` 参数，启动后最小化到任务栏，不抢焦点、不打断使用",
+      "**兼容**：浏览器版自动隐藏「桌面版」分组（无 `window.ddlDesktop` 时不渲染该选项）"
+    ]
+  },
+  {
+    "version": "v2.8.0",
+    "title": "离线单文件版 + Electron 桌面版工程",
+    "items": [
+      "**离线单文件版**：`node build-offline.js` → `dist/DDL小管家-离线版.html`（2.8MB，内联 mammoth / pdf.js / pdf worker），双击即可用，无需 Node/服务器/联网",
+      "**便携版分发包**：`node build-portable.js` → `dist/DDL小管家-便携版.zip`（离线 HTML + Edge app 窗口启动器 + 图标 + 使用说明）",
+      "**Electron 桌面工程**：`desktop/`（`main.js` + `server-core.js` + `app/`），内置随机端口 HTTP 服务、默认关闭 GPU 加速规避 TDR 蓝屏；`npm run dist` 可直接出便携版 exe",
+      "**构建脚本**：`make-desktop-app.js`（同步前端产物）、`make-desktop-server.js`（由 server.js 生成内嵌服务端）",
+      "**仓库整洁**：新增 `.gitignore`，忽略 `dist/`、`desktop/app/`、`node_modules` 等构建产物"
+    ]
+  },
+  {
+    "version": "v2.7.0",
+    "title": "使用简化：输入区收敛 + 首次引导 + 可跳过预览",
+    "items": [
+      "**输入区收敛**：主行只留「解析成提醒 / 上传截图 / 更多 ▾」；填入示例、手动添加、上传文档收进「更多」面板",
+      "**模板折叠**：默认只显示「模板 · N 个常用事务 ▾」，展开状态记忆（`ddl_tpl_open`）",
+      "**AI 开关弱化**：移到卡片标题右侧小号标签——有 Key 显示「AI 解析」，无 Key 显示「本地解析」",
+      "**首次引导**：首次打开自动弹 3 步说明，附「先填入示例试试」，关闭后不再自动弹（`ddl_onboarded`）",
+      "**可选跳过预览**：设置「高级」新增「解析后直接添加」，默认关；开启后直接入库（重复跳过、保留撤销）",
+      "**设置分组**：AI 配置 / 通知 / 日历 / 高级 / 数据 五组小标题"
+    ]
+  },
+  {
+    "version": "v2.6.0",
+    "title": "安装为独立应用（PWA）+ 云端部署支持",
+    "items": [
+      "**PWA 完善**：manifest 补全名称/描述/scope/display_override/lang，新增 maskable 图标（192/512）",
+      "**安装引导**：侧边栏新增「安装应用」按钮，捕获 `beforeinstallprompt`；iOS 给出「分享 → 添加到主屏幕」提示；已安装时自动隐藏",
+      "**云端部署**：`vercel.json` 增加 `sw.js` / `manifest.json` / `index.html` 的缓存头；部署后无需本地 Node 与服务进程",
+      "**云端快捷方式**：新增 `创建云端快捷方式.vbs`，粘贴部署地址即在桌面生成「DDL小管家(云端)」，用 Edge app 窗口打开",
+      "**独立窗口**：`启动.vbs` 改为用 Edge `--app=` 打开，无地址栏/标签栏，任务栏独立图标",
+      "**桌面安装包**：README 补充 Tauri 打包步骤（需 Rust，约 10MB exe）"
+    ]
+  },
   {
     "version": "v2.5.1",
     "title": "本地服务不再常驻后台",
@@ -5234,6 +5447,47 @@ function confirmPreview() {
   if (skippedDup > 0) msg += '，跳过 ' + skippedDup + ' 条重复';
   toastUndo(msg);
 }
+function parsedDraftFromItem(it) {
+  const rawDeadline = (it && it.deadline) || '';
+  return {
+    title: String((it && it.title) || '').trim() || '未命名事项',
+    time: String((it && it.time) || '').trim(),
+    place: String((it && it.place) || '').trim(),
+    deadline: combineDeadlineValue(toDateInputValue(rawDeadline), toTimeInputValue(rawDeadline)),
+    note: String((it && it.note) || '')
+  };
+}
+function appendParsedDrafts(drafts) {
+  const toAdd = [];
+  let skipped = 0;
+  const seen = new Set(reminders.map(r => String(r.title || '').trim() + '|' + String(r.deadline || '')));
+  (drafts || []).forEach(d => {
+    const key = String(d.title || '').trim() + '|' + String(d.deadline || '');
+    if (seen.has(key)) { skipped++; return; }
+    seen.add(key);
+    toAdd.push(d);
+  });
+  if (toAdd.length) {
+    pushUndo('解析入库');
+    toAdd.forEach(d => {
+      reminders.push({
+        id: genId(), title: d.title, time: d.time, place: d.place, deadline: d.deadline,
+        note: d.note, source: 'ai', done: false, starred: false, color: nextColor(),
+        createdAt: Date.now(), remindOn: false, remindOffsets: [], remindAcked: false,
+        remindFiredAt: null, snoozeUntil: null, hidden: false
+      });
+    });
+    save();
+    render();
+  }
+  let msg = '已添加 ' + toAdd.length + ' 条';
+  if (skipped > 0) msg += '，跳过 ' + skipped + ' 条重复';
+  if (toAdd.length) toastUndo(msg); else toast(msg);
+  return { added: toAdd.length, skipped: skipped };
+}
+function appendParsedResults(results) {
+  return appendParsedDrafts((results || []).map(parsedDraftFromItem));
+}
 document.getElementById('previewList').addEventListener('input', onPreviewEdit);
 document.getElementById('previewList').addEventListener('change', onPreviewEdit);
 document.getElementById('previewList').addEventListener('click', onPreviewAction);
@@ -5269,6 +5523,10 @@ async function doParse(text, opts) {
     lastParseMode = lastParseUsedMode;
     const issue = describeParseIssue(text, results);
     if (issue && issue.kind === 'empty') toast(issue.message);
+    if (getSkipPreview()) {
+      if (results.length) appendParsedResults(results);
+      return results;
+    }
     openPreview(results, {
       sourceText: text,
       sourceMode: lastParseMode,
@@ -5620,6 +5878,51 @@ function buildExampleNotice() {
 
 document.getElementById('exampleBtn').addEventListener('click', () => {
   document.getElementById('inputText').value = buildExampleNotice();
+});
+
+function closeMoreActions() {
+  const panel = document.getElementById('moreActionsPanel');
+  const btn = document.getElementById('moreActionsBtn');
+  if (panel) panel.classList.add('hidden');
+  if (btn) {
+    btn.setAttribute('aria-expanded', 'false');
+    btn.textContent = '更多 ▾';
+  }
+}
+document.getElementById('moreActionsBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const panel = document.getElementById('moreActionsPanel');
+  const btn = document.getElementById('moreActionsBtn');
+  if (!panel) return;
+  const open = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !open);
+  if (btn) {
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.textContent = open ? '更多 ▴' : '更多 ▾';
+  }
+});
+document.getElementById('moreActionsPanel').addEventListener('click', (e) => {
+  if (e.target.closest('button')) closeMoreActions();
+});
+document.addEventListener('click', (e) => {
+  const primary = e.target.closest ? e.target.closest('.primary-actions') : null;
+  if (!primary) closeMoreActions();
+});
+
+function readTplOpen() {
+  try { return localStorage.getItem(TPL_OPEN_STORAGE) === 'true'; } catch (e) { return false; }
+}
+function updateTplFold() {
+  const open = readTplOpen();
+  const fold = document.getElementById('tplFold');
+  const btn = document.getElementById('tplToggle');
+  if (fold) fold.classList.toggle('hidden', !open);
+  if (btn) btn.textContent = open ? '模板 · 收起 ▴' : '模板 · 8 个常用事务 ▾';
+}
+document.getElementById('tplToggle').addEventListener('click', () => {
+  const open = !readTplOpen();
+  try { localStorage.setItem(TPL_OPEN_STORAGE, open ? 'true' : 'false'); } catch (e) {}
+  updateTplFold();
 });
 
 // 占位提示与「填入示例」保持逐字一致，且都跟随本周动态生成
@@ -7726,8 +8029,12 @@ async function handleImageFiles(files, inputEl) {
     toast(total > 1 ? `识别完成：${total} 张截图，请确认` : '识别完成，请确认');
   } else if (directResults.length) {
     lastParseMode = 'ai';
-    openPreview(directResults, { sourceText: '', sourceMode: 'ai' });
-    toast(total > 1 ? `识别完成：${directResults.length} 条，请确认` : '识别完成，请确认');
+    if (getSkipPreview()) {
+      appendParsedResults(directResults);
+    } else {
+      openPreview(directResults, { sourceText: '', sourceMode: 'ai' });
+      toast(total > 1 ? `识别完成：${directResults.length} 条，请确认` : '识别完成，请确认');
+    }
   } else {
     toast('截图识别失败，请改用粘贴文字');
   }
@@ -7960,6 +8267,112 @@ function fillSettingsForm() {
   updateApiKeyHint();
   updateNotifyToggleUI();
   updateCalendarSettingsUI();
+  updateSkipPreviewUI();
+}
+function updateSkipPreviewUI() {
+  const toggle = document.getElementById('skipPreviewToggle');
+  const state = document.getElementById('skipPreviewState');
+  if (toggle) toggle.checked = getSkipPreview();
+  if (state) state.textContent = getSkipPreview() ? 'ON' : 'OFF';
+}
+document.getElementById('skipPreviewToggle').addEventListener('change', (e) => {
+  setSkipPreview(!!e.target.checked);
+  updateSkipPreviewUI();
+});
+
+/* ---------- 桌面版：开机自启动（仅 Electron，通过 preload 暴露的 API） ---------- */
+function getDesktopBridge() {
+  return (typeof window !== 'undefined' && window.ddlDesktop) ? window.ddlDesktop : null;
+}
+function updateAutoStartUI(on) {
+  const t = document.getElementById('autoStartToggle');
+  const s = document.getElementById('autoStartState');
+  if (t) t.checked = !!on;
+  if (s) s.textContent = on ? 'ON' : 'OFF';
+}
+function initDesktopSettings() {
+  const bridge = getDesktopBridge();
+  const tabBtn = document.getElementById('settingsTabDesktop');
+  if (!bridge) return;
+  // 桌面版才显示「桌面」分类
+  if (tabBtn) tabBtn.classList.remove('hidden');
+  Promise.resolve(bridge.getAutoStart())
+    .then((on) => updateAutoStartUI(on))
+    .catch(() => updateAutoStartUI(false));
+  const toggle = document.getElementById('autoStartToggle');
+  if (toggle && !toggle.dataset.bound) {
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('change', async (e) => {
+      const want = !!e.target.checked;
+      try {
+        const now = await bridge.setAutoStart(want);
+        updateAutoStartUI(now);
+        toast(now ? '已开启开机自启动' : '已关闭开机自启动');
+      } catch (err) {
+        updateAutoStartUI(!want);
+        toast('设置失败：' + (err && err.message ? err.message : err));
+      }
+    });
+  }
+  initCloseActionSetting(bridge);
+  initCloseAsk(bridge);
+}
+initDesktopSettings();
+
+/* ---------- 桌面版：关闭窗口行为 ---------- */
+function initCloseActionSetting(bridge) {
+  const select = document.getElementById('closeActionSelect');
+  if (!select || select.dataset.bound) return;
+  select.dataset.bound = '1';
+  Promise.resolve(bridge.getCloseAction())
+    .then((action) => { select.value = action === 'quit' ? 'quit' : 'tray'; })
+    .catch(() => { select.value = 'tray'; });
+  select.addEventListener('change', async (e) => {
+    const v = e.target.value === 'quit' ? 'quit' : 'tray';
+    try {
+      await bridge.setCloseAction(v);
+      toast(v === 'quit' ? '关闭窗口将直接退出' : '关闭窗口将最小化到托盘');
+    } catch (err) {
+      toast('设置失败：' + (err && err.message ? err.message : err));
+    }
+  });
+}
+
+function openCloseAskModal() {
+  const m = document.getElementById('closeAskModal');
+  if (!m) return;
+  const trayRadio = document.getElementById('closeAskTray');
+  if (trayRadio) trayRadio.checked = true;
+  const remember = document.getElementById('closeAskRemember');
+  if (remember) remember.checked = true;
+  m.classList.remove('hidden');
+}
+function closeCloseAskModal() {
+  const m = document.getElementById('closeAskModal');
+  if (m) m.classList.add('hidden');
+}
+function initCloseAsk(bridge) {
+  if (typeof bridge.onAskClose !== 'function') return;
+  bridge.onAskClose(() => openCloseAskModal());
+  const cancel1 = document.getElementById('closeAskCancelBtn');
+  const cancel2 = document.getElementById('closeAskCancelBtn2');
+  const ok = document.getElementById('closeAskOkBtn');
+  if (cancel1) cancel1.addEventListener('click', closeCloseAskModal);
+  if (cancel2) cancel2.addEventListener('click', closeCloseAskModal);
+  if (ok && !ok.dataset.bound) {
+    ok.dataset.bound = '1';
+    ok.addEventListener('click', async () => {
+      const picked = document.querySelector('input[name="closeAskChoice"]:checked');
+      const action = picked && picked.value === 'quit' ? 'quit' : 'tray';
+      const remember = !!(document.getElementById('closeAskRemember') || {}).checked;
+      closeCloseAskModal();
+      try {
+        await bridge.applyClose(action, remember);
+      } catch (err) {
+        toast('操作失败：' + (err && err.message ? err.message : err));
+      }
+    });
+  }
 }
 
 document.getElementById('calStyleTextBtn').addEventListener('click', () => saveCalPrefs({ eventStyle: 'text' }));
@@ -8030,37 +8443,37 @@ document.getElementById('notifyToggle').addEventListener('change', async (e) => 
   if (!notifySupported()) {
     setNotifyEnabled(false);
     updateNotifyToggleUI();
-    toast('当前浏览器不支持通知');
+    toast('当前环境不支持通知');
     return;
   }
   if (Notification.permission === 'granted') {
     setNotifyEnabled(true);
     updateNotifyToggleUI();
-    toast('已开启浏览器通知');
+    toast('已开启通知');
     return;
   }
   if (Notification.permission === 'denied') {
     setNotifyEnabled(false);
     updateNotifyToggleUI();
-    toast('浏览器已拒绝通知权限，请在浏览器设置中开启');
+    toast('通知权限被拒绝，请在系统或浏览器设置中开启');
     return;
   }
   const perm = await requestNotifyPermission();
   if (perm === 'granted') {
     setNotifyEnabled(true);
     updateNotifyToggleUI();
-    toast('已开启浏览器通知');
+    toast('已开启通知');
   } else {
     setNotifyEnabled(false);
     updateNotifyToggleUI();
-    toast('浏览器已拒绝通知权限，请在浏览器设置中开启');
+    toast('通知权限被拒绝，请在系统或浏览器设置中开启');
   }
 });
 
 /* 测试通知：只在通知开关开启且权限已授予时发送 */
 function sendTestNotification() {
   if (!notifySupported() || !getNotifyEnabled() || Notification.permission !== 'granted') {
-    toast('请先开启浏览器通知');
+    toast('请先开启通知');
     return;
   }
   try {
@@ -8099,6 +8512,104 @@ document.getElementById('settingsModal').addEventListener('click', (e) => {
     document.getElementById('settingsModal').classList.add('hidden');
   }
 });
+
+/* ---------- 设置分类标签 ---------- */
+function switchSettingsTab(name) {
+  document.querySelectorAll('#settingsModal .settings-tab-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('#settingsModal .settings-tab-panel').forEach((p) => {
+    p.classList.toggle('hidden', p.dataset.tabPanel !== name);
+  });
+  if (name === 'about') initUpdateHint();
+}
+document.querySelectorAll('#settingsModal .settings-tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => switchSettingsTab(btn.dataset.tab));
+});
+
+/* ---------- 版本检查与升级 ---------- */
+const UPDATE_REPO = 'TXfantasy123/ddl-helper';
+const UPDATE_CHECK_KEY = 'ddl_update_checked_at';
+let pendingUpdateUrl = '';
+
+function parseVerText(v) {
+  return String(v || '').replace(/^v/i, '').split(/[.\-+_]/).map((x) => parseInt(x, 10) || 0);
+}
+function compareVerText(a, b) {
+  const pa = parseVerText(a);
+  const pb = parseVerText(b);
+  const n = Math.max(pa.length, pb.length);
+  for (let i = 0; i < n; i++) {
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+function setUpdateHint(text) {
+  const el = document.getElementById('updateHint');
+  if (el) el.textContent = text;
+}
+function fmtCheckTime(ts) {
+  try {
+    const d = new Date(ts);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  } catch (e) { return ''; }
+}
+function initUpdateHint() {
+  let ts = 0;
+  try { ts = Number(localStorage.getItem(UPDATE_CHECK_KEY) || 0); } catch (e) { ts = 0; }
+  setUpdateHint(ts ? ('上次检查：' + fmtCheckTime(ts)) : '尚未检查更新');
+}
+async function checkForUpdate() {
+  const btn = document.getElementById('checkUpdateBtn');
+  const dl = document.getElementById('downloadUpdateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '检查中…'; }
+  if (dl) dl.classList.add('hidden');
+  setUpdateHint('正在检查…');
+  try {
+    const resp = await fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases/latest', {
+      headers: { 'Accept': 'application/vnd.github+json' },
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const tag = String(data.tag_name || data.name || '').trim();
+    const pageUrl = data.html_url || ('https://github.com/' + UPDATE_REPO + '/releases');
+    const assets = Array.isArray(data.assets) ? data.assets : [];
+    const exeAsset = assets.find((a) => /\.exe$/i.test(String(a.name || ''))) || null;
+    pendingUpdateUrl = exeAsset ? exeAsset.browser_download_url : pageUrl;
+    try { localStorage.setItem(UPDATE_CHECK_KEY, String(Date.now())); } catch (e) { /* 忽略 */ }
+    if (!tag) throw new Error('未找到版本号');
+    if (compareVerText(tag, APP_VERSION) > 0) {
+      setUpdateHint('发现新版本 ' + tag + '（当前 v' + APP_VERSION + '）');
+      if (dl) {
+        dl.dataset.url = pendingUpdateUrl;
+        dl.classList.remove('hidden');
+      }
+      toast('发现新版本 ' + tag);
+    } else {
+      setUpdateHint('已是最新版本（v' + APP_VERSION + '）');
+      toast('已是最新版本');
+    }
+  } catch (e) {
+    setUpdateHint('检查失败：' + (e && e.message ? e.message : e) + '（网络不通，或仓库还没发布 Release）');
+    toast('检查更新失败');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '检查更新'; }
+  }
+}
+const checkUpdateBtnEl = document.getElementById('checkUpdateBtn');
+if (checkUpdateBtnEl) checkUpdateBtnEl.addEventListener('click', checkForUpdate);
+const downloadUpdateBtnEl = document.getElementById('downloadUpdateBtn');
+if (downloadUpdateBtnEl) {
+  downloadUpdateBtnEl.addEventListener('click', () => {
+    const url = downloadUpdateBtnEl.dataset.url || pendingUpdateUrl;
+    if (url) window.open(url, '_blank');
+  });
+}
+initUpdateHint();
 document.getElementById('settingsProviders').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-provider]');
   if (!btn) return;
@@ -8129,8 +8640,11 @@ document.getElementById('settingsSaveBtn').addEventListener('click', () => {
     if (model) localStorage.setItem(MODEL_STORAGE, model); else localStorage.removeItem(MODEL_STORAGE);
     if (visionModel) localStorage.setItem(VISION_MODEL_STORAGE, visionModel); else localStorage.removeItem(VISION_MODEL_STORAGE);
     localStorage.setItem(VISION_FLAG_STORAGE, visionFlag ? 'true' : 'false');
+    setSkipPreview(!!document.getElementById('skipPreviewToggle').checked);
   } catch (e) { /* 存储不可用则忽略 */ }
   updateUploadBtn();
+  updateAiToggle();
+  updateSkipPreviewUI();
   document.getElementById('settingsModal').classList.add('hidden');
   toast('已保存');
 });
@@ -8181,14 +8695,18 @@ function updateAiToggle() {
   const toggle = document.getElementById('aiToggle');
   const state = document.getElementById('aiToggleState');
   if (!toggle || !state) return;
-  toggle.checked = getAiEnabled();
-  state.textContent = toggle.checked ? 'ON' : 'OFF';
+  const hasKey = !!getAPIKey();
+  const enabled = hasKey && getAiEnabled();
+  toggle.checked = enabled;
+  state.textContent = enabled ? 'AI 解析' : '本地解析';
+  state.classList.toggle('is-local', !enabled);
+  state.title = hasKey ? 'AI 解析开关' : '配置 API Key 可使用 AI 解析';
 }
 document.getElementById('aiToggle').addEventListener('change', (e) => {
   if (e.target.checked && !getAPIKey()) {
     e.target.checked = false;
     updateAiToggle();
-    toast('请先填写 API Key');
+    toast('配置 API Key 可使用 AI 解析');
     return;
   }
   try {
@@ -8197,16 +8715,21 @@ document.getElementById('aiToggle').addEventListener('change', (e) => {
   updateAiToggle();
   updateUploadBtn();
 });
+document.getElementById('aiToggleState').addEventListener('click', () => {
+  if (!getAPIKey()) toast('配置 API Key 可使用 AI 解析');
+});
 
 document.getElementById('clearKeyBtn').addEventListener('click', () => {
   try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) { /* 忽略 */ }
   document.getElementById('apiKeyInput').value = '';
   updateApiKeyHint();
+  updateAiToggle();
+  updateUploadBtn();
   toast('已清除 key');
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.5.1';
+const APP_VERSION = '2.11.0';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
@@ -8620,6 +9143,58 @@ window.addEventListener('pagehide', () => {
   } catch (e) { /* 忽略 */ }
 });
 
+/* ---------- PWA：安装为独立应用 ---------- */
+let deferredInstallPrompt = null;
+const installAppBtn = document.getElementById('installAppBtn');
+function isStandaloneApp() {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+      window.navigator.standalone === true;
+  } catch (e) { return false; }
+}
+function isIOSDevice() {
+  const ua = navigator.userAgent || '';
+  return /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function updateInstallUI() {
+  if (!installAppBtn) return;
+  const installed = isStandaloneApp();
+  const canPrompt = !!deferredInstallPrompt;
+  const iosManual = isIOSDevice() && !installed;
+  installAppBtn.classList.toggle('hidden', installed || (!canPrompt && !iosManual));
+  installAppBtn.title = canPrompt
+    ? '把 DDL 小管家安装为独立应用'
+    : 'iOS：点浏览器「分享」→「添加到主屏幕」';
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallUI();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateInstallUI();
+  toast('已安装为独立应用，可从桌面/开始菜单直接打开');
+});
+if (installAppBtn) {
+  installAppBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) {
+      toast('请用浏览器菜单：安装此站点为应用 / 添加到主屏幕');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    try {
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') toast('正在安装…');
+    } catch (e) { /* 忽略 */ }
+    deferredInstallPrompt = null;
+    updateInstallUI();
+  });
+}
+updateInstallUI();
+
+
 /* ---------- 启动 ---------- */
 checkStorage();
 load();
@@ -8631,11 +9206,14 @@ renderTemplates();
 renderProviders();
 updateUploadBtn();
 updateAiToggle();
+updateTplFold();
+updateSkipPreviewUI();
 updateStorageHint();
 checkRemindersOnStartup();
 startReminderPolling();
 updateNotifyToggleUI();
 initTheme();
+maybeShowOnboarding();
 </script>
 </body>
 </html>
