@@ -2,7 +2,7 @@
 
 > 校园事务 AI 备忘工具：把班群、教务处的通知文字、截图或 docx/pdf 文档**一键变成提醒**，内置高校高频事务模板，并用日历直观呈现"哪天有 DDL"。
 
-- **版本**：v2.14.0
+- **版本**：v2.14.1
 - **目标用户**：大学生（尤其大一新生，通知多、容易漏截止日）
 - **形态**：**Windows 桌面版为主**（exe 安装包），网页版作为「下载前的试用」同时保留
 
@@ -126,22 +126,30 @@ git tag vX.Y.Z; git push origin vX.Y.Z
 
 ---
 
-## 七、国内可用的更新源（可选）
+## 七、更新源（由发布者固定，用户不可改）
 
-默认更新源是 GitHub Releases，但 `api.github.com` 在部分网络下不可达。可以改用任意国内可达的静态目录：
+默认更新源是 **GitHub Releases**。更新源刻意做成**只读**，不开放用户填写——否则任何人都能把更新指向自己的服务器，伪造 `latest.yml` 让应用下载运行任意程序。
 
-1. 打包后，把 `desktop/release/` 里的两样东西上传到你的静态存储
-   （腾讯云 COS / 阿里云 OSS / Gitee Release / 自建 Nginx 都行）：
+设置里只显示：
+```
+更新源
+  来源   官方 GitHub Releases
+```
+
+### 换成国内镜像（发版者操作）
+
+1. 把 `desktop/release/` 里的两样东西上传到你的静态存储（腾讯云 COS / 阿里云 OSS / Gitee Release / 自建 Nginx）：
    ```
    DDLHelper-Setup-vX.Y.Z.exe
    latest.yml
    ```
-2. 记下目录地址，例如 `https://cdn.example.com/ddl/`
-3. 应用内：**设置 → 关于 → 更新源 → 填入地址 → 保存更新源**
-4. 之后「检查更新」会从该地址读取 `latest.yml`，再下载同目录的安装包
+2. 修改 `desktop/main.js` 里的常量：
+   ```js
+   const FIXED_UPDATE_FEED = 'https://cdn.example.com/ddl';  // 留空 = GitHub
+   ```
+3. 重新打包发版。之后所有用户都会从该地址检查/下载更新。
 
-> `latest.yml` 里的 `path` / `files[].url` 必须是同目录下的真实文件名——构建脚本 `desktop/fix-update-yml.js` 已自动改写。
-> 清空输入框保存即可恢复默认（GitHub）。
+> `latest.yml` 里的 `path` / `files[].url` 必须与该目录下的真实文件名一致。
 
 ---
 

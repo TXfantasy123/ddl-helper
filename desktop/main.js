@@ -125,6 +125,9 @@ ipcMain.handle('autostart:get', () => isAutoStartOn());
 ipcMain.handle('autostart:set', (_e, on) => setAutoStart(on));
 
 /* ---------- 软件内更新（electron-updater：默认 GitHub，可切换国内源） ---------- */
+// 更新源由发版者固定，不开放给用户修改（防止被指向恶意 latest.yml 下载任意程序）
+// 需要用国内镜像时：改这里 → 重新发版。留空 = GitHub Releases（build.publish 配置）
+const FIXED_UPDATE_FEED = '';
 let autoUpdater = null;
 function getUpdater() {
   if (autoUpdater) return autoUpdater;
@@ -285,20 +288,18 @@ ipcMain.handle('cache:clear', async () => {
   }
 });
 
-/* 更新源：留空走 GitHub Releases；填地址则走 generic（国内镜像 / 自建静态目录） */
+/* 更新源：由发版者固定（FIXED_UPDATE_FEED 为空 = 走 GitHub Releases） */
 function applyUpdateFeed(up) {
   if (!up) return;
-  const feed = String(settings.updateFeed || '').trim();
+  const feed = String(FIXED_UPDATE_FEED || '').trim();
   if (!feed) return;
   try {
     up.setFeedURL({ provider: 'generic', url: feed.replace(/\/+$/, '') + '/' });
   } catch (e) { /* 忽略无效地址 */ }
 }
-ipcMain.handle('update:feed-get', () => settings.updateFeed || '');
-ipcMain.handle('update:feed-set', (_e, url) => {
-  settings.updateFeed = String(url || '').trim();
-  saveSettings();
-  return settings.updateFeed;
+ipcMain.handle('update:feed-get', () => {
+  const feed = String(FIXED_UPDATE_FEED || '').trim();
+  return feed || 'https://github.com/TXfantasy123/ddl-helper/releases';
 });
 
 ipcMain.handle('close:get', () => settings.closeAction || null);

@@ -27,8 +27,7 @@ contextBridge.exposeInMainWorld('ddlDesktop', {
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
-  getUpdateFeed: () => ipcRenderer.invoke('update:feed-get'),
-  setUpdateFeed: (url) => ipcRenderer.invoke('update:feed-set', url),
+  getUpdateFeed: () => ipcRenderer.invoke('update:feed-get'), // 只读：展示用
 
   // 缓存（只清缓存，不动用户数据）
   getCacheSize: () => ipcRenderer.invoke('cache:size'),
