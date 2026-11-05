@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld('ddlDesktop', {
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
+  getUpdateFeed: () => ipcRenderer.invoke('update:feed-get'),
+  setUpdateFeed: (url) => ipcRenderer.invoke('update:feed-set', url),
   onUpdateStatus: (cb) => {
     const handler = (_e, payload) => { try { cb(payload); } catch (e) { /* 忽略 */ } };
     ipcRenderer.on('update:status', handler);

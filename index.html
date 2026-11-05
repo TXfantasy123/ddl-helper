@@ -210,12 +210,14 @@
   .input-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .primary-actions { position: relative; }
   .more-actions-panel {
-    position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
     display: flex; flex-direction: column; gap: 4px; min-width: 150px;
     padding: 6px; background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); box-shadow: var(--shadow-pop);
+    max-height: 60vh; overflow-y: auto;
   }
-  .more-actions-panel button { justify-content: flex-start; text-align: left; height: 32px; font-size: 12px; }
+  .more-actions-panel.open-up { top: auto; bottom: calc(100% + 6px); }
+  .more-actions-panel button { justify-content: flex-start; text-align: left; height: 32px; font-size: 12px; flex: 0 0 auto; }
   .ai-mini { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-top: 2px; }
   .ai-mini-switch { width: 36px; height: 20px; }
   .ai-mini-switch .slider::before { width: 14px; height: 14px; top: 3px; left: 3px; }
@@ -1378,6 +1380,21 @@
   .settings-modal-box .modal-head { flex: 0 0 auto; }
   .settings-modal-box .settings-tabs { flex: 0 0 auto; margin-bottom: 12px; }
   .settings-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding-right: 4px; }
+  /* 关闭窗口确认框：整行可点的选项卡 */
+  .close-opt-group { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 4px; }
+  .close-opt {
+    display: flex; align-items: flex-start; gap: 10px; width: 100%;
+    padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .close-opt:hover { border-color: var(--primary); }
+  .close-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+  .close-opt input { margin-top: 2px; flex: 0 0 auto; }
+  .close-opt-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .close-opt-title { font-size: 14px; font-weight: 600; }
+  .close-opt-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .close-remember { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .close-remember input { flex: 0 0 auto; }
   .danger-text { color: var(--danger) !important; }
   .stats-switch { display: flex; gap: 4px; margin-bottom: 12px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
   .stats-range-btn { flex: 1; height: 30px; font-size: 12px; font-weight: 600; background: transparent; border: 0; color: var(--muted); border-radius: 6px; }
@@ -2158,7 +2175,7 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.12.1</span>
+        <span class="settings-version">DDL 小管家 v2.13.0</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -2168,6 +2185,17 @@
       </div>
       <div class="settings-hint" id="updateHint">尚未检查更新</div>
       <div class="settings-hint">更新来自 GitHub Releases；若网络不通会提示检查失败。</div>
+      <div id="updateFeedSection" class="hidden">
+        <div class="settings-section-title">更新源</div>
+        <div class="form-row">
+          <label>自定义地址</label>
+          <input id="updateFeedInput" placeholder="留空 = GitHub Releases">
+        </div>
+        <div class="input-actions">
+          <button type="button" class="ghost" id="saveUpdateFeedBtn">保存更新源</button>
+        </div>
+        <div class="settings-hint">国内打不开 api.github.com 时：把安装包和 latest.yml 放到任意静态目录（腾讯云 COS / Gitee Release / 自建），把该目录地址填在这里。</div>
+      </div>
       </div>
       </div>
     </div>
@@ -2181,19 +2209,26 @@
         <button type="button" class="modal-close" id="closeAskCancelBtn" title="取消"><svg class="ic" aria-hidden="true"><use href="#ic-x"></use></svg></button>
       </div>
       <div class="settings-hint">它是提醒工具：关掉窗口后就不再提醒了。</div>
-      <div class="form-row">
-        <label>最小化到托盘（继续提醒）</label>
-        <input type="radio" name="closeAskChoice" id="closeAskTray" value="tray" checked>
+      <div class="close-opt-group">
+        <label class="close-opt">
+          <input type="radio" name="closeAskChoice" id="closeAskTray" value="tray" checked>
+          <span class="close-opt-body">
+            <span class="close-opt-title">最小化到托盘（继续提醒）</span>
+            <span class="close-opt-desc">仍在后台运行，到期会弹提醒；右键托盘图标可退出</span>
+          </span>
+        </label>
+        <label class="close-opt">
+          <input type="radio" name="closeAskChoice" id="closeAskQuit" value="quit">
+          <span class="close-opt-body">
+            <span class="close-opt-title">直接退出</span>
+            <span class="close-opt-desc">完全关闭程序，之后不会再提醒</span>
+          </span>
+        </label>
       </div>
-      <div class="form-row">
-        <label>直接退出（不再提醒）</label>
-        <input type="radio" name="closeAskChoice" id="closeAskQuit" value="quit">
-      </div>
-      <div class="form-row">
-        <label>记住我的选择</label>
+      <label class="close-remember">
         <input type="checkbox" id="closeAskRemember" checked>
-      </div>
-      <div class="settings-hint">之后可在「设置 → 桌面 → 关闭窗口时」修改。</div>
+        <span>记住我的选择（之后可在 设置 → 桌面 修改）</span>
+      </label>
       <div class="input-actions">
         <button type="button" class="ghost" id="closeAskCancelBtn2">取消</button>
         <button type="button" class="primary" id="closeAskOkBtn">确定</button>
@@ -4409,6 +4444,15 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
 });
 const CHANGELOG_FULL = [
   {
+    "version": "v2.13.0",
+    "title": "国内更新源 + 菜单不被裁切 + 关闭询问排版",
+    "items": [
+      "**国内更新源**：设置 → 关于 → 更新源，可填任意国内可达的静态目录（COS/OSS/Gitee/自建），应用改用 generic provider 读取该目录的 `latest.yml`；留空恢复 GitHub",
+      "**「更多」菜单**：下方空间不足时自动向上展开，并限制最大高度滚动，避免被窗口底边裁切",
+      "**关闭询问框**：改成整行可点的选项卡（标题 + 说明 + 选中高亮），不再是一行文字挤在左边、右侧大片空白"
+    ]
+  },
+  {
     "version": "v2.12.1",
     "title": "Toast 去重",
     "items": [
@@ -5925,6 +5969,25 @@ function closeMoreActions() {
     btn.textContent = '更多 ▾';
   }
 }
+/* 下拉方向自适应：下方空间不够时向上展开 */
+function positionMorePanel() {
+  const panel = document.getElementById('moreActionsPanel');
+  const btn = document.getElementById('moreActionsBtn');
+  if (!panel || !btn || panel.classList.contains('hidden')) return;
+  panel.classList.remove('open-up');
+  panel.style.maxHeight = '';
+  const gap = 10;
+  const rect = btn.getBoundingClientRect();
+  const panelH = panel.scrollHeight + 12;
+  const spaceBelow = window.innerHeight - rect.bottom - gap;
+  const spaceAbove = rect.top - gap;
+  if (spaceBelow < panelH && spaceAbove > spaceBelow) {
+    panel.classList.add('open-up');
+    panel.style.maxHeight = Math.max(120, spaceAbove - 8) + 'px';
+  } else {
+    panel.style.maxHeight = Math.max(120, spaceBelow - 8) + 'px';
+  }
+}
 document.getElementById('moreActionsBtn').addEventListener('click', (e) => {
   e.stopPropagation();
   const panel = document.getElementById('moreActionsPanel');
@@ -5936,7 +5999,10 @@ document.getElementById('moreActionsBtn').addEventListener('click', (e) => {
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     btn.textContent = open ? '更多 ▴' : '更多 ▾';
   }
+  if (open) positionMorePanel();
 });
+window.addEventListener('resize', positionMorePanel);
+window.addEventListener('scroll', positionMorePanel, true);
 document.getElementById('moreActionsPanel').addEventListener('click', (e) => {
   if (e.target.closest('button')) closeMoreActions();
 });
@@ -8714,6 +8780,29 @@ function initDesktopUpdater(bridge) {
       try { await bridge.installUpdate(); } catch (e) { setUpdateHint('安装失败：' + (e && e.message ? e.message : e)); }
     });
   }
+  // 更新源（国内镜像 / 自建静态目录）
+  const feedSection = document.getElementById('updateFeedSection');
+  if (feedSection && typeof bridge.getUpdateFeed === 'function') {
+    feedSection.classList.remove('hidden');
+    const input = document.getElementById('updateFeedInput');
+    const saveBtn = document.getElementById('saveUpdateFeedBtn');
+    Promise.resolve(bridge.getUpdateFeed())
+      .then((url) => { if (input) input.value = url || ''; })
+      .catch(() => {});
+    if (saveBtn && !saveBtn.dataset.bound) {
+      saveBtn.dataset.bound = '1';
+      saveBtn.addEventListener('click', async () => {
+        const url = input ? input.value.trim() : '';
+        try {
+          await bridge.setUpdateFeed(url);
+          toast(url ? '已切换到自定义更新源' : '已恢复默认更新源（GitHub）');
+          setUpdateHint(url ? ('当前更新源：' + url) : '当前更新源：GitHub Releases');
+        } catch (e) {
+          toast('保存失败：' + (e && e.message ? e.message : e));
+        }
+      });
+    }
+  }
 }
 
 const checkUpdateBtnEl = document.getElementById('checkUpdateBtn');
@@ -8847,7 +8936,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.12.1';
+const APP_VERSION = '2.13.0';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key

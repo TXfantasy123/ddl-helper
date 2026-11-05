@@ -124,7 +124,7 @@ function hideToTray() {
 ipcMain.handle('autostart:get', () => isAutoStartOn());
 ipcMain.handle('autostart:set', (_e, on) => setAutoStart(on));
 
-/* ---------- 软件内更新（electron-updater，走 GitHub Releases） ---------- */
+/* ---------- 软件内更新（electron-updater：默认 GitHub，可切换国内源） ---------- */
 let autoUpdater = null;
 function getUpdater() {
   if (autoUpdater) return autoUpdater;
@@ -139,6 +139,7 @@ function getUpdater() {
     autoUpdater.on('download-progress', (p) => sendUpdateStatus({ state: 'downloading', percent: Math.round((p && p.percent) || 0) }));
     autoUpdater.on('update-downloaded', (info) => sendUpdateStatus({ state: 'downloaded', version: info && info.version }));
     autoUpdater.on('error', (err) => sendUpdateStatus({ state: 'error', message: String((err && err.message) || err) }));
+    applyUpdateFeed(autoUpdater);
   } catch (e) {
     autoUpdater = null;
   }
@@ -155,6 +156,7 @@ ipcMain.handle('update:check', async () => {
   const up = getUpdater();
   if (!up) return { ok: false, state: 'error', message: '更新模块不可用' };
   try {
+    applyUpdateFeed(up);
     const r = await up.checkForUpdates();
     return { ok: true, state: 'checking', version: r && r.updateInfo && r.updateInfo.version };
   } catch (e) {
@@ -184,6 +186,22 @@ ipcMain.handle('update:install', () => {
   return { ok: true };
 });
 ipcMain.handle('update:get-version', () => app.getVersion());
+
+/* 更新源：留空走 GitHub Releases；填地址则走 generic（国内镜像 / 自建静态目录） */
+function applyUpdateFeed(up) {
+  if (!up) return;
+  const feed = String(settings.updateFeed || '').trim();
+  if (!feed) return;
+  try {
+    up.setFeedURL({ provider: 'generic', url: feed.replace(/\/+$/, '') + '/' });
+  } catch (e) { /* 忽略无效地址 */ }
+}
+ipcMain.handle('update:feed-get', () => settings.updateFeed || '');
+ipcMain.handle('update:feed-set', (_e, url) => {
+  settings.updateFeed = String(url || '').trim();
+  saveSettings();
+  return settings.updateFeed;
+});
 
 ipcMain.handle('close:get', () => settings.closeAction || null);
 ipcMain.handle('close:set', (_e, action) => {
