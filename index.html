@@ -2175,7 +2175,7 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.13.1</span>
+        <span class="settings-version">DDL 小管家 v2.13.2</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -4443,6 +4443,15 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('modal-mask')) closeGuideModal();
 });
 const CHANGELOG_FULL = [
+  {
+    "version": "v2.13.2",
+    "title": "检查更新改为「取版本号最大的 Release」",
+    "items": [
+      "**更可靠**：网页版检查更新不再依赖 GitHub 的 `latest` 标记，而是拉 `releases?per_page=30` 列表、按版本号取最大者（避免发布顺序错乱导致\"最新\"指向旧版本）",
+      "**选对安装包**：优先挑 ASCII 命名的 `DDLHelper-Setup-*.exe`，避免中文资产名 404",
+      "**桌面版防呆**：若 electron-updater 报出的版本号不高于当前版本，按\"已是最新\"处理，不显示无效的下载按钮"
+    ]
+  },
   {
     "version": "v2.13.1",
     "title": "修复软件内更新下载 404",
@@ -8703,17 +8712,28 @@ async function checkForUpdate() {
     }
     return;
   }
-  // 网页版：读 GitHub Releases 简单比对
+  // 网页版：拉 releases 列表，取版本号最大的那个（比 /releases/latest 可靠）
   try {
-    const resp = await fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases/latest', {
+    const resp = await fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases?per_page=30', {
       headers: { 'Accept': 'application/vnd.github+json' },
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const tag = String(data.tag_name || data.name || '').trim();
-    const pageUrl = data.html_url || ('https://github.com/' + UPDATE_REPO + '/releases');
-    const assets = Array.isArray(data.assets) ? data.assets : [];
-    const exeAsset = assets.find((a) => /\.exe$/i.test(String(a.name || ''))) || null;
+    const list = await resp.json();
+    if (!Array.isArray(list) || !list.length) throw new Error('仓库还没有发布 Release');
+    const candidates = list.filter((r) => r && !r.draft && r.tag_name);
+    if (!candidates.length) throw new Error('没有可用的 Release');
+    // 取版本号最大者（忽略顺序，避免 GitHub latest 被发布时间影响）
+    let best = candidates[0];
+    for (const r of candidates) {
+      if (compareVerText(r.tag_name, best.tag_name) > 0) best = r;
+    }
+    const tag = String(best.tag_name || best.name || '').trim();
+    const pageUrl = best.html_url || ('https://github.com/' + UPDATE_REPO + '/releases');
+    const assets = Array.isArray(best.assets) ? best.assets : [];
+    // 优先用 ASCII 命名的安装包（GitHub 会清洗中文资产名，中文名 URL 会 404）
+    const asciiAsset = assets.find((a) => /^DDLHelper-Setup-.*\.exe$/i.test(String(a.name || '')));
+    const anyExe = assets.find((a) => /\.exe$/i.test(String(a.name || '')) && !/uninstaller/i.test(String(a.name || '')));
+    const exeAsset = asciiAsset || anyExe || null;
     pendingUpdateUrl = exeAsset ? exeAsset.browser_download_url : pageUrl;
     try { localStorage.setItem(UPDATE_CHECK_KEY, String(Date.now())); } catch (e) { /* 忽略 */ }
     if (!tag) throw new Error('未找到版本号');
@@ -8752,9 +8772,17 @@ function handleDesktopUpdateStatus(payload) {
     setUpdateHint('正在检查…');
     setUpdateButtons({});
   } else if (st === 'available') {
-    setUpdateHint('发现新版本 v' + (payload.version || '') + '（当前 v' + APP_VERSION + '）');
+    const v = String(payload.version || '').replace(/^v/i, '');
+    // 防呆：检查到的版本不高于当前（GitHub latest 可能被发布时间影响）→ 按已最新处理
+    if (v && compareVerText(v, APP_VERSION) <= 0) {
+      setUpdateHint('已是最新版本（v' + APP_VERSION + '）');
+      setUpdateButtons({});
+      toast('已是最新版本');
+      return;
+    }
+    setUpdateHint('发现新版本 v' + v + '（当前 v' + APP_VERSION + '）');
     setUpdateButtons({ download: true });
-    toast('发现新版本 v' + (payload.version || ''));
+    toast('发现新版本 v' + v);
   } else if (st === 'latest') {
     setUpdateHint('已是最新版本（v' + APP_VERSION + '）');
     setUpdateButtons({});
@@ -8945,7 +8973,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.13.1';
+const APP_VERSION = '2.13.2';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
