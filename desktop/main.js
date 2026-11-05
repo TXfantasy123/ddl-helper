@@ -75,6 +75,14 @@ function rebuildTrayMenu() {
       checked: isAutoStartOn(),
       click: (item) => { setAutoStart(item.checked); rebuildTrayMenu(); },
     },
+    {
+      label: '检查更新…',
+      click: () => {
+        showWindow();
+        const up = getUpdater();
+        if (up && app.isPackaged) up.checkForUpdates().catch(() => {});
+      },
+    },
     { type: 'separator' },
     { label: '退出 DDL 小管家', click: () => { quitting = true; app.quit(); } },
   ]);
@@ -115,6 +123,67 @@ function hideToTray() {
 /* ---------- IPC ---------- */
 ipcMain.handle('autostart:get', () => isAutoStartOn());
 ipcMain.handle('autostart:set', (_e, on) => setAutoStart(on));
+
+/* ---------- 软件内更新（electron-updater，走 GitHub Releases） ---------- */
+let autoUpdater = null;
+function getUpdater() {
+  if (autoUpdater) return autoUpdater;
+  try {
+    // 延迟 require：开发环境没有 app-update.yml 时不至于报错
+    autoUpdater = require('electron-updater').autoUpdater;
+    autoUpdater.autoDownload = false;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('checking-for-update', () => sendUpdateStatus({ state: 'checking' }));
+    autoUpdater.on('update-available', (info) => sendUpdateStatus({ state: 'available', version: info && info.version }));
+    autoUpdater.on('update-not-available', (info) => sendUpdateStatus({ state: 'latest', version: info && info.version }));
+    autoUpdater.on('download-progress', (p) => sendUpdateStatus({ state: 'downloading', percent: Math.round((p && p.percent) || 0) }));
+    autoUpdater.on('update-downloaded', (info) => sendUpdateStatus({ state: 'downloaded', version: info && info.version }));
+    autoUpdater.on('error', (err) => sendUpdateStatus({ state: 'error', message: String((err && err.message) || err) }));
+  } catch (e) {
+    autoUpdater = null;
+  }
+  return autoUpdater;
+}
+function sendUpdateStatus(payload) {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('update:status', payload);
+  }
+}
+
+ipcMain.handle('update:check', async () => {
+  if (!app.isPackaged) return { ok: false, state: 'dev', message: '开发模式不检查更新' };
+  const up = getUpdater();
+  if (!up) return { ok: false, state: 'error', message: '更新模块不可用' };
+  try {
+    const r = await up.checkForUpdates();
+    return { ok: true, state: 'checking', version: r && r.updateInfo && r.updateInfo.version };
+  } catch (e) {
+    return { ok: false, state: 'error', message: String((e && e.message) || e) };
+  }
+});
+ipcMain.handle('update:download', async () => {
+  const up = getUpdater();
+  if (!up) return { ok: false, message: '更新模块不可用' };
+  try {
+    await up.downloadUpdate();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: String((e && e.message) || e) };
+  }
+});
+ipcMain.handle('update:install', () => {
+  const up = getUpdater();
+  if (!up) return { ok: false };
+  quitting = true;
+  try {
+    up.quitAndInstall();
+  } catch (e) {
+    quitting = false;
+    return { ok: false, message: String((e && e.message) || e) };
+  }
+  return { ok: true };
+});
+ipcMain.handle('update:get-version', () => app.getVersion());
 
 ipcMain.handle('close:get', () => settings.closeAction || null);
 ipcMain.handle('close:set', (_e, action) => {
@@ -210,6 +279,13 @@ async function createWindow() {
 app.whenReady().then(() => {
   loadSettings();
   createWindow();
+  // 安装版启动 10 秒后静默检查一次更新（不打扰使用）
+  if (app.isPackaged) {
+    setTimeout(() => {
+      const up = getUpdater();
+      if (up) up.checkForUpdates().catch(() => {});
+    }, 10000);
+  }
 });
 
 app.on('window-all-closed', () => {

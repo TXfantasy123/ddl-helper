@@ -2,7 +2,7 @@ name: Build Windows Installer
 
 # 触发方式：
 #   1) 手动：仓库 Actions 页面 → 选这个 workflow → Run workflow
-#   2) 打标签：git tag v2.9.0 && git push origin v2.9.0
+#   2) 打标签：git tag v2.12.0 && git push origin v2.12.0
 on:
   workflow_dispatch:
   push:
@@ -28,27 +28,32 @@ jobs:
         working-directory: desktop
         run: npm install --no-audit --no-fund
 
+      # --publish never：只本地生成产物（含 latest.yml），发布交给下一步
       - name: Build installer
         working-directory: desktop
-        run: npm run dist
+        run: npm run dist:ci
 
       - name: List output
         working-directory: desktop
         run: dir release
 
-      - name: Upload installer artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: DDL小管家-installer
-          path: desktop/release/*.exe
+          path: |
+            desktop/release/*.exe
+            desktop/release/*.yml
           if-no-files-found: error
 
-      # 打标签时自动创建 Release 并附上 exe，方便直接发给别人
+      # 打标签时创建 Release：exe + latest.yml（软件内更新必需）
       - name: Attach to Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: desktop/release/*.exe
+          files: |
+            desktop/release/*.exe
+            desktop/release/*.yml
           name: DDL小管家 ${{ github.ref_name }}
           draft: false
           generate_release_notes: true

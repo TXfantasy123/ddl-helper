@@ -1,182 +1,140 @@
 # DDL 小管家
 
-> 一个面向所有大学生（以江汉大学为试点）的校园事务 AI 备忘工具：把班群、教务处的通知文字、截图或 docx/pdf 文档**一键变成提醒**，内置高校高频事务模板，并用日历直观呈现"哪天有 DDL"。
+> 校园事务 AI 备忘工具：把班群、教务处的通知文字、截图或 docx/pdf 文档**一键变成提醒**，内置高校高频事务模板，并用日历直观呈现"哪天有 DDL"。
 
-- **赛道**：OPC / 个人创新 · 个人工作流程
-- **版本**：v2.11.1（设置分类标签栏固定；关闭窗口可选后台托盘运行；版本检查升级；离线单文件版；PWA 可安装）
+- **版本**：v2.12.0
 - **目标用户**：大学生（尤其大一新生，通知多、容易漏截止日）
+- **形态**：**Windows 桌面版为主**（exe 安装包），网页版作为「下载前的试用」同时保留
 
 ---
 
-## 一、解决什么问题
+## 一、两种用法
 
-大学生每天被大量零散通知淹没（班群、教务处、社团），关键的时间/地点/截止日埋在冗长文字里，容易漏掉选课、四六级报名、体测、缴费等硬性截止日。通用备忘录要手动输入，且不懂大学事务。
+| | 桌面版（推荐） | 网页版（试用） |
+|---|---|---|
+| 获取 | 下载 `DDL小管家-安装程序-v2.12.0.exe` 安装 | 打开网址即可 |
+| 系统通知 / 托盘 / 开机自启 | ✅ | ❌（受浏览器限制） |
+| 软件内更新 | ✅ 一键下载并重启安装 | ❌ |
+| 离线使用 | ✅ | 需要联网首次加载 |
+| 数据 | 存在应用自己目录（`%APPDATA%\DDL小管家`） | 存在浏览器 localStorage |
 
-**本工具**：粘贴文字 / 截图 / 上传文档 → AI 提取「事项 / 时间 / 地点 / 截止时间」→ 生成提醒 + 日历 + 统计。
+> 两者数据互相独立，迁移用「设置 → 数据 → 导出/导入」。
 
-## 二、核心功能
+---
 
-| 功能 | 说明 |
-|---|---|
-| 📄 文字解析 | 粘贴一条或多条通知，AI 自动提取结构化字段；无 Key / 离线时自动降级本地规则解析 |
-| ✅ 解析预览 | 解析结果先预览：可勾选、可编辑字段、可拆分/合并、可换方式（AI/离线）重解析，确认后才入库 |
-| 📷 截图识别 | 上传截图 → 前端压缩 → AI 逐字 OCR → **识别原文可编辑** → 再解析 |
-| 📄 文档解析 | 上传 docx / pdf，本地提取文字后解析；扫描件会引导改用截图识别 |
-| ⏱️ 截止时间 | 截止日期 + 可选具体时刻；提醒按「截止前 X 天 X 小时」精确触发 |
-| 📅 日历视图 | 月视图 / **周视图**；每任务一色跨天连线、截止日圆点；**拖拽改期**、回到今天、双击新建 |
-| 🗂️ 模板库 | 10 个高校高频事务一键预填，支持自定义添加 / 移除 / 恢复默认 |
-| ⏰ 提醒 | 待提醒清单（按今天/本周/以后分组）、到点自动弹窗 + 浏览器通知、稍后提醒（含自定义）、提醒历史、下次提醒时间 |
-| 📊 统计 | 本周/本月：新增、完成、未完成、逾期、完成率、平均提前量 |
-| 🔍 搜索与筛选 | 关键词高亮；快捷筛选「今天 / 本周 / 已逾期」；只看未完成；显示隐藏事项 |
-| ↕️ 排序与整理 | 排序切换（默认/截止/创建/完成）、拖拽排序、卡片详情折叠、批量完成/隐藏/删除/**改期** |
-| ⌨️ 快捷键 | `Ctrl/Cmd+K` 搜索、`N` 新建、`Esc` 关闭弹窗 |
-| 💾 数据 | 本地 localStorage + **IndexedDB 每日自动备份（保留 7 份）**；导入预览（新增/重复/无效）可选合并或覆盖 |
-| 🔐 安全 | API Key 仅存本地、掩码显示、可测试连接；数据不出本机 |
-| 🎨 主题 | 浅色 / 深色 / 跟随系统，切换无闪烁 |
+## 二、桌面版（主推）
 
-## 三、快速开始（电脑端）
+### 安装
 
-> 当前以**电脑端**为主，手机端暂不做适配。
+1. 到 [Releases](https://github.com/TXfantasy123/ddl-helper/releases) 下载最新的 `DDL小管家-安装程序-vX.Y.Z.exe`
+2. 双击 → **选择安装位置** → 安装
+3. 自动创建桌面图标 + 开始菜单项，装完自动启动
 
-### 方式一：本地运行（推荐，演示/日常用）
+安装后：程序名「DDL小管家」、控制面板可卸载。
 
-> 💡 **最快方式（推荐）**：双击 **`DDL小管家.lnk`**（或 `启动.vbs`）——**无任何黑色终端窗口**，后台静默启动并自动打开浏览器。
-> - 已启动过再双击：只打开浏览器，不会重复启动第二个服务
-> - **关闭网页后约 90 秒，后台服务会自动退出**（不会一直占着后台/锁住文件夹）
-> - 想立刻停止：双击 **`停止.bat`**
-> - 想让它常驻（比如随时从书签打开）：用 `node server.js --keep-alive`
-> - 想把它放到桌面：把 `DDL小管家.lnk` 复制到桌面即可（图标已内置）
+### 特性
 
-> 需要看日志/调试时可以用 `start.bat`（也会静默启动并立即关闭窗口，日志请用 `node server.js` 手动跑）。
+- **系统托盘**：关闭窗口可选「最小化到托盘（继续提醒）」或「直接退出」，首次关闭时询问并可记住选择
+- **开机自启动**：设置 → 桌面 → 开机自启动（开机后最小化启动，不抢焦点）
+- **软件内更新**：设置 → 关于 → 检查更新（基于 electron-updater，直接下载并重启安装）
+- **内置服务**：AI 解析代理跑在应用内（随机端口、仅监听本机），不需要另装 Node
 
-1. 安装 [Node.js](https://nodejs.org)（18 或更高版本）。装好后，命令行输入 `node -v` 能显示版本号即成功。
-2. 双击 `DDL小管家.lnk`（或 `启动.vbs`）。
-3. 浏览器会自动打开 `http://localhost:3000/`（没自动打开就手动访问）。
-4. 进入页面后，点 **设置** 填自己的 API Key 即可使用（不填也能用本地基础解析，但截图识别需要 Key）。
-5. 主题可在 **设置 → 主题** 或侧边栏底部切换（浅色 / 深色 / 跟随系统）。
-
-### 方式二：安装为独立应用（PWA）
-
-页面本身就是一个可安装的 PWA：
-
-- **Edge / Chrome**：打开页面后，点侧边栏底部的「**安装应用**」，或点地址栏右侧的「安装」图标 → 会装成一个**独立窗口应用**（无地址栏、有开始菜单/桌面图标、可离线打开）
-- **iOS Safari**：分享 → 「添加到主屏幕」
-- **Android Chrome**：菜单 → 「安装应用 / 添加到主屏幕」
-
-> 已安装状态下不会再显示「安装应用」按钮。
-
-### 方式三：纯离线单文件版（发给谁都能用，零依赖）
-
-生成一个 **2.8 MB 的 HTML 文件**，里面内联了 docx/pdf 解析依赖：
-
-```bash
-node build-offline.js
-# → dist/DDL小管家-离线版.html
-```
-
-把它发给同学，**双击就能用**（不需要 Node、不需要服务器、不需要联网），用 Edge 打开还能「安装为应用」。
-离线版内置本地规则解析；AI 解析需要部署后端（见方式四）。
-
-### 方式四：部署到云端（推荐长期使用）
-
-部署后**不再需要本地 Node.js 和服务进程**，任何设备打开网址即可用。
-
-1. 把仓库推到 GitHub（本项目已在 `github.com/TXfantasy123/ddl-helper`）
-2. 打开 [vercel.com/new](https://vercel.com/new) → 导入该仓库 → 直接 Deploy（无需配置）
-3. 得到形如 `https://ddl-helper-xxx.vercel.app` 的地址
-4. **生成本地快捷方式**：双击 `创建云端快捷方式.vbs` → 粘贴上面的地址 → 会在桌面生成「DDL小管家(云端)」，双击即用**独立窗口**打开云端版（无需本地服务）
-
-> ⚠️ `*.vercel.app` 在国内可能被 DNS 污染导致打不开。面向国内用户建议用国内云（如腾讯云 CloudBase 静态托管 + 云函数，默认域名免备案），或直接用「离线单文件版 / 桌面版」。
-> `api/parse.js`、`api/parse-image.js` 是 serverless 代理，API Key 仍由前端传入、服务端不存储。
-> `vercel.json` 已配置 `sw.js` / `manifest.json` 的缓存策略。
-
-### 方式五：桌面版（Electron，出 exe）
-
-`desktop/` 目录是一个完整的 Electron 工程：内置 HTTP 服务（随机端口）+ 应用窗口，**不需要用户装 Node**，AI 代理也跑在应用内。
-
-#### ⭐ 方式 A：GitHub Actions 自动构建（不用本地装环境，直接下载 exe）
-
-仓库里已配置 `.github/workflows/build-desktop.yml`，由 GitHub 的 Windows 机器帮你编译：
-
-1. 推送到 GitHub
-2. 打开 **Actions** → 左侧选 **Build Windows Installer** → 右侧 **Run workflow** → 选 `main` → 运行
-3. 等 3–5 分钟，进入完成的运行记录，页面底部 **Artifacts** → 下载 `DDL小管家-installer`
-4. 解压得到 **`DDL小管家-安装程序-v2.11.0.exe`** ← 这就是安装程序，直接双击安装
-
-> 更省事的做法：打一个 tag 推送（`git tag v2.9.0 && git push origin v2.9.0`），会自动创建 **Release** 并把 exe 挂上去，得到一个可以发给别人的下载链接。
-
-#### 方式 B：本机打包
-
-双击 `desktop\一键打包.bat`，跑完在 `desktop\release\` 得到 **`DDL小管家-安装程序-v2.11.0.exe`**。
-
-手动方式（注意 cmd 里要用 `cd /d`，否则不会切换盘符）：
+### 自己构建
 
 ```cmd
 cd /d E:\1024\ddl-helper\desktop
 set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
-npm install --registry=https://registry.npmmirror.com   :: 首次约 200MB
-npm run dist                                            :: → release\DDL小管家-安装程序-v2.11.0.exe
+npm install --registry=https://registry.npmmirror.com
+npm run dist
 ```
 
-安装后：程序名 **DDL小管家**、桌面快捷方式「DDL小管家」、开始菜单「DDL小管家」、控制面板可卸载；安装向导里**可自选安装位置**；设置里可开**开机自启动**。
+产物：`desktop\release\DDL小管家-安装程序-v{版本}.exe`
 
-- 默认 `app.disableHardwareAcceleration()`，避免显卡驱动不稳的机器蓝屏（TDR）
-- 数据存在应用自己的存储里（`%APPDATA%\DDL小管家`），与浏览器数据互相独立，迁移用「设置 → 导出/导入」
-- 更详细的说明见 [`desktop/README.md`](desktop/README.md)
+> ⚠️ 构建产物不要放在 DSH 沙箱工作区里运行（那里文件被标为低完整性，双击安装会报 `Error writing temporary file`），复制到桌面或其他盘再用。
 
-### 方式六：桌面安装包（Tauri，可选，需 Rust）
+---
 
-项目结构也可用 [Tauri](https://tauri.app) 打包成 ~10MB 的 exe（需要先装 Rust 工具链）：
+## 三、网页版（试用 / 在线使用）
 
-```bash
-# 1) 安装 Rust：https://rustup.rs  （一次性，约 1–2 GB）
-# 2) 安装 Tauri CLI
-cargo install tauri-cli --locked
-# 3) 在项目目录初始化并打包
-cargo tauri init --app-name "DDL小管家" --window-title "DDL 小管家" \
-  --dist-dir . --dev-url http://localhost:3000
-cargo tauri build
-```
+### 直接访问
 
-> 若显卡驱动不稳（曾出现 `nvlddmkm.sys` 蓝屏），打包时给 WebView2 加 `--disable-gpu` 更稳。
+部署后打开网址即可，登录后同样可以解析通知、看日历、收提醒（需页面保持打开）。
 
-## 四、使用步骤
+### 自行部署
 
-1. 点右上角 **⚙️ 设置**
-2. 选服务商（DeepSeek / 通义千问 / 智谱GLM / Kimi / OpenAI / 自定义），填自己的 **API Key**，保存
-3. 粘贴通知文字（多条可用空行分隔）、点「📷 上传截图」或「📄 上传文档」（docx/pdf）
-4. 点「✨ 解析成提醒」→ 列表生成提醒
-5. 切到「日历」查看哪天有 DDL
-6. 需要快速添加可点模板按钮
+- **Vercel**：导入本仓库 → Deploy（`api/` 下已有 serverless 代理）
+  > `*.vercel.app` 在国内可能被 DNS 污染，国内用户建议用国内云（如腾讯云 CloudBase）或直接用桌面版
+- **本地运行**：`node server.js` → 打开 http://localhost:3000
+- **PWA 安装**：浏览器打开后点侧边栏「安装应用」，可装成独立窗口（`manifest.json` + `sw.js` 已配置）
 
-> 💡 **未填 API Key 也能用**：会自动降级为本地基础解析（正则），不调用任何 API；截图识别需要 Key。
+网页版数据存在浏览器 localStorage，清理浏览器数据会丢，重要数据请导出备份。
 
-## 五、技术架构
+---
 
-- **前端**：单文件 `index.html`（HTML+CSS+JS 内联，无框架、无构建）
-- **后端**：`server.js`（本地）/ `api/*.js`（Vercel serverless），统一走 OpenAI 兼容接口 `/chat/completions`
-- **存储**：localStorage 持久化（try-catch 降级内存模式）
-- **AI**：多模型可配置，`response_format=json_object`，AI 失败自动回退本地正则解析
+## 四、功能一览
 
-## 六、目录结构
+| 模块 | 说明 |
+|---|---|
+| **解析** | 粘贴文字 / 上传截图（需 AI Key）/ 上传 docx·pdf；AI 与本地规则双通道，AI 失败自动回退 |
+| **预览确认** | 拆分、合并、改字段；可开启「解析后直接添加」跳过确认 |
+| **提醒** | 自定义提前量（年/月/周/天/小时/分钟，最多 6 组）；到期弹窗 + 系统通知 |
+| **日历** | 月视图（事件文字，可配置密度/条数/悬停/右侧面板）+ 议程视图（按天分组） |
+| **列表** | 搜索、筛选、排序、批量操作、拖拽排序、快捷键、分页 |
+| **数据** | 导出/导入 JSON、每日自动备份（IndexedDB）、重复事项一键合并、全局撤销 |
+| **设置** | 常规 / 日历 / 数据 / 桌面 / 关于 五个分类 |
+
+> 不填 API Key 也能用：自动走本地规则解析，覆盖常见校园通知格式。
+
+---
+
+## 五、目录结构
 
 ```
 ddl-helper/
-├── index.html            # 主程序（单文件）
-├── server.js             # 本地后端（托管页面 + 代理接口）
-├── api/
-│   ├── parse.js          # 文字解析代理（Vercel serverless）
-│   └── parse-image.js    # 截图识别代理（Vercel serverless）
-├── vercel.json           # Vercel 配置
-├── manifest.json         # PWA 清单（可添加到主屏幕）
-├── sw.js                 # PWA service worker（离线缓存）
-├── icons/                # PWA 图标
-└── vendor/               # 文档解析依赖（mammoth.js / pdf.js，本地离线）
+├─ index.html              主程序（单文件，HTML+CSS+JS 内联，无构建）
+├─ server.js               本地 / 桌面版内置后端（AI 代理 + 静态托管）
+├─ api/                    Vercel serverless 代理（网页版部署用）
+├─ vendor/                 docx / pdf 解析依赖（本地优先）
+├─ icons/                  应用图标（app.ico） + PWA 图标
+├─ manifest.json  sw.js    PWA（网页版安装为独立窗口）
+├─ desktop/                Electron 桌面版工程
+│   ├─ main.js             主进程（窗口 / 托盘 / 自启 / 更新 / 关闭行为）
+│   ├─ preload.js          受限 IPC 桥
+│   ├─ server-core.js      内嵌 HTTP 服务（由 server.js 生成）
+│   ├─ package.json        打包配置（NSIS、publish、electron-updater）
+│   └─ 一键打包.bat         双击出安装包
+├─ make-desktop-app.js     同步前端产物到 desktop/app
+├─ make-desktop-server.js  由 server.js 生成 desktop/server-core.js
+├─ .github/workflows/      GitHub Actions：推送 tag 自动构建安装包 + 发 Release
+└─ 更新日志.md
 ```
 
-## 七、注意事项
+---
 
-- **API Key 安全**：Key 仅保存在浏览器 localStorage，不硬编码在源码中；每个用户填自己的 Key，互不影响。
-- **隐私**：提醒数据仅保存在本机浏览器，不会上传到任何服务器。
-- **降级策略**：AI 调用失败或无 Key 时，自动回退本地正则解析，保证离线可用。
-- **文档解析**：docx/pdf 用本地 `vendor/` 依赖解析（离线可用）；**扫描版 PDF 提取不出文字**，请改用截图识别。
+## 六、发版流程
+
+```powershell
+# 1. 改版本号（index.html 的 APP_VERSION / desktop/package.json / 更新日志）
+git add -A; git commit -m "更新 vX.Y.Z：..."
+git push origin main
+# 2. 打 tag → GitHub Actions 自动构建安装包并创建 Release
+git tag vX.Y.Z; git push origin vX.Y.Z
+```
+
+用户端：设置 → 关于 → 检查更新 → 发现新版本 → 下载 → 重启并安装。
+
+---
+
+## 七、常见问题
+
+**Q：安装时提示「Windows 已保护你的电脑」？**
+A：因为没有代码签名证书。点「更多信息」→「仍要运行」即可。
+
+**Q：安装包双击报 `Error writing temporary file`？**
+A：安装包被放在了受限目录（如 DSH 沙箱工作区）。复制到桌面/其他盘再运行。
+
+**Q：AI 解析要花钱吗？**
+A：用自己的 API Key（DeepSeek 等），解析一条通知通常不到 0.001 元；不填 Key 也能用本地规则解析。
+
+**Q：手机能用吗？**
+A：网页版部署后手机浏览器可打开并「添加到主屏幕」，但目前未做移动端专门适配。

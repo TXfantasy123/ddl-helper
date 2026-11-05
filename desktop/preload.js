@@ -21,4 +21,15 @@ contextBridge.exposeInMainWorld('ddlDesktop', {
     ipcRenderer.on('app:ask-close', handler);
     return () => ipcRenderer.removeListener('app:ask-close', handler);
   },
+
+  // 软件内更新（electron-updater）
+  getAppVersion: () => ipcRenderer.invoke('update:get-version'),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdateStatus: (cb) => {
+    const handler = (_e, payload) => { try { cb(payload); } catch (e) { /* 忽略 */ } };
+    ipcRenderer.on('update:status', handler);
+    return () => ipcRenderer.removeListener('update:status', handler);
+  },
 });

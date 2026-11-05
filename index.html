@@ -2158,12 +2158,13 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.11.1</span>
+        <span class="settings-version">DDL 小管家 v2.12.0</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
         <button type="button" class="ghost" id="checkUpdateBtn">检查更新</button>
         <button type="button" class="ghost hidden" id="downloadUpdateBtn">下载新版本</button>
+        <button type="button" class="ghost hidden" id="installUpdateBtn">重启并安装</button>
       </div>
       <div class="settings-hint" id="updateHint">尚未检查更新</div>
       <div class="settings-hint">更新来自 GitHub Releases；若网络不通会提示检查失败。</div>
@@ -4404,6 +4405,16 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('modal-mask')) closeGuideModal();
 });
 const CHANGELOG_FULL = [
+  {
+    "version": "v2.12.0",
+    "title": "软件内更新 + 以桌面版为主",
+    "items": [
+      "**软件内更新**：接入 electron-updater，设置 → 关于 → 检查更新 会真正下载新版本，点「重启并安装」直接升级（不再跳转浏览器）",
+      "**更新推送**：打包配置加入 `build.publish`（GitHub Releases），构建时生成 `latest.yml`；安装版启动 10 秒后静默检查一次，托盘菜单也有「检查更新…」",
+      "**定位调整**：以 Windows 桌面版（exe）为主，网页版保留作为下载前试用；移除本地启动脚本、离线单文件/便携版构建产物",
+      "**界面**：下载/安装按钮随更新状态显示（发现新版本 → 下载 → 已下载 → 重启安装），带下载进度百分比"
+    ]
+  },
   {
     "version": "v2.11.1",
     "title": "设置弹窗：头部与标签栏固定",
@@ -8331,6 +8342,7 @@ function initDesktopSettings() {
   }
   initCloseActionSetting(bridge);
   initCloseAsk(bridge);
+  initDesktopUpdater(bridge);
 }
 initDesktopSettings();
 
@@ -8579,11 +8591,29 @@ function initUpdateHint() {
   setUpdateHint(ts ? ('上次检查：' + fmtCheckTime(ts)) : '尚未检查更新');
 }
 async function checkForUpdate() {
+  const bridge = getDesktopBridge();
   const btn = document.getElementById('checkUpdateBtn');
   const dl = document.getElementById('downloadUpdateBtn');
   if (btn) { btn.disabled = true; btn.textContent = '检查中…'; }
   if (dl) dl.classList.add('hidden');
+  setUpdateButtons({});
   setUpdateHint('正在检查…');
+  // 桌面版：走 electron-updater（真正的软件内更新）
+  if (bridge && typeof bridge.checkUpdate === 'function') {
+    try {
+      const r = await bridge.checkUpdate();
+      if (r && r.ok === false) {
+        setUpdateHint('检查失败：' + (r.message || '未知错误'));
+        toast('检查更新失败');
+      }
+    } catch (e) {
+      setUpdateHint('检查失败：' + (e && e.message ? e.message : e));
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '检查更新'; }
+    }
+    return;
+  }
+  // 网页版：读 GitHub Releases 简单比对
   try {
     const resp = await fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases/latest', {
       headers: { 'Accept': 'application/vnd.github+json' },
@@ -8615,11 +8645,69 @@ async function checkForUpdate() {
     if (btn) { btn.disabled = false; btn.textContent = '检查更新'; }
   }
 }
+
+/* 桌面版更新按钮状态 */
+function setUpdateButtons(opts) {
+  const o = opts || {};
+  const dl = document.getElementById('downloadUpdateBtn');
+  const ins = document.getElementById('installUpdateBtn');
+  if (dl) dl.classList.toggle('hidden', !o.download);
+  if (ins) ins.classList.toggle('hidden', !o.install);
+}
+/* 桌面版更新状态回调（electron-updater 事件） */
+function handleDesktopUpdateStatus(payload) {
+  if (!payload) return;
+  const st = payload.state;
+  if (st === 'checking') {
+    setUpdateHint('正在检查…');
+    setUpdateButtons({});
+  } else if (st === 'available') {
+    setUpdateHint('发现新版本 v' + (payload.version || '') + '（当前 v' + APP_VERSION + '）');
+    setUpdateButtons({ download: true });
+    toast('发现新版本 v' + (payload.version || ''));
+  } else if (st === 'latest') {
+    setUpdateHint('已是最新版本（v' + APP_VERSION + '）');
+    setUpdateButtons({});
+    toast('已是最新版本');
+  } else if (st === 'downloading') {
+    setUpdateHint('正在下载更新… ' + (payload.percent || 0) + '%');
+    setUpdateButtons({});
+  } else if (st === 'downloaded') {
+    setUpdateHint('更新已下载，点「重启并安装」生效');
+    setUpdateButtons({ install: true });
+    toast('更新已下载，可重启安装');
+  } else if (st === 'error') {
+    setUpdateHint('检查失败：' + (payload.message || '未知错误'));
+    setUpdateButtons({});
+  }
+}
+function initDesktopUpdater(bridge) {
+  if (!bridge || typeof bridge.onUpdateStatus !== 'function') return;
+  bridge.onUpdateStatus(handleDesktopUpdateStatus);
+  const dl = document.getElementById('downloadUpdateBtn');
+  if (dl && !dl.dataset.desktopBound) {
+    dl.dataset.desktopBound = '1';
+    dl.addEventListener('click', async () => {
+      setUpdateHint('开始下载…');
+      try { await bridge.downloadUpdate(); } catch (e) { setUpdateHint('下载失败：' + (e && e.message ? e.message : e)); }
+    }, true);
+  }
+  const ins = document.getElementById('installUpdateBtn');
+  if (ins && !ins.dataset.desktopBound) {
+    ins.dataset.desktopBound = '1';
+    ins.addEventListener('click', async () => {
+      try { await bridge.installUpdate(); } catch (e) { setUpdateHint('安装失败：' + (e && e.message ? e.message : e)); }
+    });
+  }
+}
+
 const checkUpdateBtnEl = document.getElementById('checkUpdateBtn');
 if (checkUpdateBtnEl) checkUpdateBtnEl.addEventListener('click', checkForUpdate);
 const downloadUpdateBtnEl = document.getElementById('downloadUpdateBtn');
 if (downloadUpdateBtnEl) {
   downloadUpdateBtnEl.addEventListener('click', () => {
+    // 桌面版由 initDesktopUpdater 的捕获阶段监听处理
+    if (getDesktopBridge() && typeof getDesktopBridge().downloadUpdate === 'function') return;
     const url = downloadUpdateBtnEl.dataset.url || pendingUpdateUrl;
     if (url) window.open(url, '_blank');
   });
@@ -8744,7 +8832,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.11.1';
+const APP_VERSION = '2.12.0';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
