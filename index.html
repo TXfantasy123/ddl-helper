@@ -2158,7 +2158,7 @@
       <div class="settings-tab-panel hidden" data-tab-panel="about">
       <div class="settings-section-title">版本</div>
       <div class="settings-version-row">
-        <span class="settings-version">DDL 小管家 v2.12.0</span>
+        <span class="settings-version">DDL 小管家 v2.12.1</span>
         <button type="button" class="ghost" id="changelogBtn">查看更新日志</button>
       </div>
       <div class="input-actions">
@@ -2380,6 +2380,9 @@ let corruptedBackupKey = null;
 const undoStack = [];
 const UNDO_MAX = 20;
 let activeUndoAction = null;
+// toast 去重：记录上一条文案与时间
+let lastToastText = '';
+let lastToastAt = 0;
 
 /* ---------- 存储 ---------- */
 function checkStorage() {
@@ -4406,6 +4409,13 @@ document.getElementById('guideModal').addEventListener('click', (e) => {
 });
 const CHANGELOG_FULL = [
   {
+    "version": "v2.12.1",
+    "title": "Toast 去重",
+    "items": [
+      "**连续点击不再刷屏**：相同文案的 toast 在 2 秒内只显示一次（连续点「检查更新」不会再叠三条）"
+    ]
+  },
+  {
     "version": "v2.12.0",
     "title": "软件内更新 + 以桌面版为主",
     "items": [
@@ -5963,6 +5973,11 @@ function toast(msg, opts) {
   opts = opts || {};
   const stack = document.getElementById('toast');
   if (!stack) return;
+  // 相同文案 2 秒内不重复弹（避免连续点按钮时刷屏）
+  const plain = String(msg == null ? '' : msg);
+  const now = Date.now();
+  if (!opts.actionLabel && plain === lastToastText && now - lastToastAt < 2000) return;
+  if (!opts.actionLabel) { lastToastText = plain; lastToastAt = now; }
   const item = document.createElement('div');
   item.className = 'toast-item';
   const text = document.createElement('span');
@@ -8832,7 +8847,7 @@ document.getElementById('clearKeyBtn').addEventListener('click', () => {
 });
 
 /* ---------- 数据导出 / 导入 ---------- */
-const APP_VERSION = '2.12.0';
+const APP_VERSION = '2.12.1';
 const EXPORT_SCHEMA_VERSION = 1;
 document.getElementById('exportBtn').addEventListener('click', () => {
   // 只导出提醒数据，不导出 API key
