@@ -8,7 +8,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const APP_DIR = path.join(APP_DIR, 'app');
+const APP_DIR = path.join(__dirname, 'app');
+
 
 const PORT = 0;
 // 默认行为：浏览器页面关闭后（收到 /api/bye）等待宽限期自动退出，避免 node 常驻后台。

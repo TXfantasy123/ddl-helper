@@ -3,7 +3,14 @@
 const { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage, session, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const serverCore = require('./server-core.js');
+// 内嵌服务：加载失败也不能让整个应用崩掉（退化为本地文件模式，离线解析仍可用）
+let serverCore = null;
+try {
+  serverCore = require('./server-core.js');
+} catch (e) {
+  console.error('[main] server-core 加载失败：', e && e.message);
+  serverCore = null;
+}
 
 // 显卡驱动不稳定的机器（曾出现 nvlddmkm.sys 0x116 蓝屏）默认关掉 GPU 加速
 app.disableHardwareAcceleration();
@@ -211,7 +218,7 @@ function decryptKey() {
 }
 function syncApiKeyToServer() {
   const key = decryptKey();
-  try { serverCore.setApiKey(key); } catch (e) { /* 忽略 */ }
+  try { if (serverCore) serverCore.setApiKey(key); } catch (e) { /* 忽略 */ }
   return key;
 }
 ipcMain.handle('key:save', (_e, plain) => {
@@ -327,6 +334,7 @@ ipcMain.handle('close:apply', (_e, action, remember) => {
 async function createWindow() {
   let url = null;
   try {
+    if (!serverCore) throw new Error('内嵌服务不可用');
     const port = await serverCore.startServer(0);
     url = 'http://127.0.0.1:' + port + '/';
   } catch (e) {
